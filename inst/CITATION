@@ -1,0 +1,16 @@
+citHeader("To cite bcf in publications use:")
+
+citEntry(entry = "misc",
+  title        = "Bayesian regression tree models for causal inference: regularization, confounding, and heterogeneous effects",
+  author       = personList(as.person("P. Richard Hahn"),
+                   as.person("Jared S. Murray"),
+                   as.person("Carlos M. Carvalho")),
+  year         = "2017",
+  eprint       = "arXiv:1706.09523",
+  url          = "https://arxiv.org/abs/1706.09523",
+
+  textVersion  =
+  paste("Hahn, P. Richard, Jared S. Murray, and Carlos M. Carvalho (2017).",
+        "Bayesian regression tree models for causal inference: regularization, confounding, and heterogeneous effects.",
+        "URL https://arxiv.org/abs/1706.09523.")
+)

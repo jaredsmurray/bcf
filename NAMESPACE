@@ -1,0 +1,5 @@
+useDynLib(bcf)
+# exportPattern("^[[:alpha:]]+")
+export("bcf")
+import( Rcpp )
+importFrom("stats", "approxfun", "lm", "qchisq", "quantile", "sd")

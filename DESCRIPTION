@@ -1,0 +1,17 @@
+Package: bcf
+Type: Package
+Title: Causal Inference for a Binary Treatment and Continuous Outcome
+        using Bayesian Causal Forests
+Version: 1.2.1
+Date: 2018-09-19
+Author: P. Richard Hahn, Jared S. Murray, and Carlos Carvalho
+Maintainer: Jared S. Murray <jared.murray@mccombs.utexas.edu>
+Description: Causal inference for a binary treatment and continuous outcome using Bayesian Causal Forests. See Hahn, Murray and Carvalho (2017) <arXiv:1706.09523> for additional information. This implementation relies on code originally accompanying Pratola et. al. (2013) <arXiv:1309.1906>.
+License: GPL-3
+Depends: Rcpp (>= 0.10.4)
+LinkingTo: Rcpp, RcppArmadillo
+NeedsCompilation: yes
+RoxygenNote: 6.0.1
+Packaged: 2018-09-19 21:17:11 UTC; jared
+Repository: CRAN
+Date/Publication: 2018-09-19 22:20:02 UTC
