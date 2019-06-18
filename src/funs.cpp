@@ -195,7 +195,12 @@ void getpertLU(tree::tree_p pertnode, size_t pertvar, xinfo& xi, int* L, int* U)
 
 //--------------------------------------------------
 //get sufficients stats for all bottom nodes
-void allsuff(tree& x, xinfo& xi, dinfo& di, tree::npv& bnv, std::vector<sinfo>& sv)
+void allsuff(tree& x,
+   		     xinfo& xi, 
+			 dinfo& di, 
+			 double* weight,
+			 tree::npv& bnv, 
+			 std::vector<sinfo>& sv)
 {
 	tree::tree_cp tbn; //the pointer to the bottom node for the current observations
 	size_t ni;         //the  index into vector of the current bottom node
@@ -203,36 +208,9 @@ void allsuff(tree& x, xinfo& xi, dinfo& di, tree::npv& bnv, std::vector<sinfo>& 
 	double y;          //current y
 	
 	bnv.clear();
-	x.getbots(bnv);
-	
-	typedef tree::npv::size_type bvsz;
-	bvsz nb = bnv.size();
-	sv.resize(nb);
-	
-	std::map<tree::tree_cp,size_t> bnmap;
-	for(bvsz i=0;i!=bnv.size();i++) bnmap[bnv[i]]=i;
-	
-	for(size_t i=0;i<di.n;i++) {
-		xx = di.x + i*di.p;
-		y=di.y[i];
-		
-		tbn = x.bn(xx,xi);
-		ni = bnmap[tbn];
-		
-		++(sv[ni].n);
-		sv[ni].sy += y;
-		sv[ni].sy2 += y*y;
-	}
-}
 
-void allsuffhet(tree& x, xinfo& xi, dinfo& di, double* phi, tree::npv& bnv, std::vector<sinfo>& sv)
-{
-  tree::tree_cp tbn; //the pointer to the bottom node for the current observations
-	size_t ni;         //the  index into vector of the current bottom node
-	double *xx;        //current x
-	double y;          //current y
-	
-	bnv.clear();
+	// This appears to get the bottom nodes from tree x
+	// and save them into the bottom node pointer vector bnv
 	x.getbots(bnv);
 	
 	typedef tree::npv::size_type bvsz;
@@ -242,22 +220,27 @@ void allsuffhet(tree& x, xinfo& xi, dinfo& di, double* phi, tree::npv& bnv, std:
 	std::map<tree::tree_cp,size_t> bnmap;
 	for(bvsz i=0;i!=bnv.size();i++) bnmap[bnv[i]]=i;
 	
+	// It seems like it's using a tree defined by x, with node xi
+	// to calculate stuff from data on di
+	// 
 	for(size_t i=0;i<di.n;i++) {
 		xx = di.x + i*di.p;
-		y=di.y[i];
+		y=di.y[i]; // @peter I suspect that di.y is the Rj, this trees residual thing
 		
-		tbn = x.bn(xx,xi);
+		tbn = x.bn(xx,xi); // gets the bottom node for xx from xi
 		ni = bnmap[tbn];
+		
 		/*
 		++(sv[ni].n);
 		sv[ni].sy += y;
 		sv[ni].sy2 += y*y;
-    */
-    sv[ni].n0 += 1;
-    sv[ni].n += phi[i];
-    sv[ni].sy += phi[i]*y;
-		sv[ni].sy2 += phi[i]*y*y;
-    
+		*/
+
+	sv[ni].n0 += 1;
+    sv[ni].n += weight[i];
+    sv[ni].sy += weight[i]*y;
+	sv[ni].sy2 += weight[i]*y*y;
+
 	}
 }
 
@@ -354,13 +337,7 @@ void update_counts(int i, std::vector<int>& cts, tree& x, xinfo& xi,
   size_t ni;         //the  index into vector of the current bottom node
   double *xx;        //current x
   double y;          //current y
-  /*
-	typedef tree::npv::size_type bvsz;
-	bvsz nb = bnv.size();
-	
-	std::map<tree::tree_cp,size_t> bnmap;
-	for(bvsz ii=0;ii!=bnv.size();ii++) bnmap[bnv[ii]]=ii; // bnmap[pointer] gives linear index
-	*/
+
 	xx = di.x + i*di.p;
 	y=di.y[i];
 	
@@ -476,31 +453,8 @@ void MPIslaveallsuff(tree& x, xinfo& xi, dinfo& di, tree::npv& bnv)
 #endif
 //--------------------------------------------------
 //get sufficient stats for children (v,c) of node nx in tree x
-void getsuff(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di, sinfo& sl, sinfo& sr)
-{
-	double *xx;//current x
-	double y;  //current y
-	sl.n=0;sl.sy=0.0;sl.sy2=0.0;
-	sr.n=0;sr.sy=0.0;sr.sy2=0.0;
-	
-	for(size_t i=0;i<di.n;i++) {
-		xx = di.x + i*di.p;
-		if(nx==x.bn(xx,xi)) { //does the bottom node = xx's bottom node
-			y = di.y[i];
-			if(xx[v] < xi[v][c]) {
-				sl.n++;
-				sl.sy += y;
-				sl.sy2 += y*y;
-			} else {
-				sr.n++;
-				sr.sy += y;
-				sr.sy2 += y*y;
-			}
-		}
-	}
-}
-//for het, n = sum_i phi_i, sumy = \sum \phi_iy_i, sumy^2 \sum \phi_iy_i^2
-void getsuffhet(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
+//n = sum_i phi_i, sumy = \sum \phi_iy_i, sumy^2 \sum \phi_iy_i^2
+void getsuff(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
 {
   double *xx;//current x
 	double y;  //current y
@@ -512,12 +466,12 @@ void getsuffhet(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo&
 		if(nx==x.bn(xx,xi)) { //does the bottom node = xx's bottom node
 			y = di.y[i];
 			if(xx[v] < xi[v][c]) {
-        sl.n0 += 1;
+        		sl.n0 += 1;
 				sl.n += phi[i];
 				sl.sy += phi[i]*y;
 				sl.sy2 += phi[i]*y*y;
 			} else {
-        sr.n0 += 1;
+       			sr.n0 += 1;
 				sr.n += phi[i];
 				sr.sy += phi[i]*y;
 				sr.sy2 += phi[i]*y*y;
@@ -528,33 +482,9 @@ void getsuffhet(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo&
 
 //--------------------------------------------------
 //get sufficient stats for pair of bottom children nl(left) and nr(right) in tree x
-void getsuff(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, sinfo& sl, sinfo& sr)
+void getsuff(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
 {
-	double *xx;//current x
-	double y;  //current y
-	sl.n=0;sl.sy=0.0;sl.sy2=0.0;
-	sr.n=0;sr.sy=0.0;sr.sy2=0.0;
-	
-	for(size_t i=0;i<di.n;i++) {
-		xx = di.x + i*di.p;
-		tree::tree_cp bn = x.bn(xx,xi);
-		if(bn==nl) {
-			y = di.y[i];
-			sl.n++;
-			sl.sy += y;
-			sl.sy2 += y*y;
-		}
-		if(bn==nr) {
-			y = di.y[i];
-			sr.n++;
-			sr.sy += y;
-			sr.sy2 += y*y;
-		}
-	}
-}
-void getsuffhet(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
-{
-  double *xx;//current x
+  	double *xx;//current x
 	double y;  //current y
 	sl.n=0;sl.sy=0.0;sl.sy2=0.0;
 	sr.n=0;sr.sy=0.0;sr.sy2=0.0;
@@ -820,26 +750,10 @@ void MPIslavegetsuff(tree& x, xinfo& xi, dinfo& di)
 //log of the integrated likelihood
 double lil(double n, double sy, double sy2, double sigma, double tau)
 {
-	double yb,yb2,S,sig2,d;
-	double sum, rv;
-	
-	yb = sy/n;
-	yb2 = yb*yb;
-	S = sy2 - (n*yb2);
-	sig2 = sigma*sigma;
-	d = n*tau*tau + sig2;
-	sum = S/sig2 + (n*yb2)/d;
-	rv = -(n*LTPI/2.0) - (n-1)*log(sigma) -log(d)/2.0;
-	rv = rv -sum/2.0;
-	return rv;
-}
-
-double lilhet(double n, double sy, double sy2, double sigma, double tau)
-{
   double d = 1/(tau*tau) + n;// n is \sum phi_i for het
   
   double out = -log(tau) - 0.5*log(d);
-  out += 0.5*sy*sy/d - 0.5*sy2;
+  out += 0.5*sy*sy/d;
   return out;
 }
 //--------------------------------------------------
@@ -884,51 +798,34 @@ void partition(tree& t, xinfo& xi, dinfo& di, std::vector<size_t>& pv)
 //--------------------------------------------------
 // draw all the bottom node mu's
 
-void drmu(tree& t, xinfo& xi, dinfo& di, pinfo& pi, RNG& gen)
+void drmu(tree& t, xinfo& xi, dinfo& di, pinfo& pi, double* weight, RNG& gen)
 {
-	tree::npv bnv;
-	std::vector<sinfo> sv;
-	allsuff(t,xi,di,bnv,sv);
-	
-	double a = 1.0/(pi.tau * pi.tau);
-	double sig2 = pi.sigma * pi.sigma;
-	double b,ybar;
-	
-	for(tree::npv::size_type i=0;i!=bnv.size();i++) {
-		b = sv[i].n/sig2;
-		ybar = sv[i].sy/sv[i].n;
-		bnv[i]->setm(b*ybar/(a+b) + gen.normal()/sqrt(a+b));
-    if(bnv[i]->getm() != bnv[i]->getm()) {
-      for(int i=0; i<di.n; ++i) Rcout << *(di.x + i*di.p) <<" "; //*(x + p*i+j)
-      Rcout << endl<<" a "<< a<<" b "<<b<<" svi[n] "<<sv[i].n<<" i "<<i;
-      Rcout << endl << t;
-      Rcpp::stop("drmu failed");
-    }
-	}
-}
 
-void drmuhet(tree& t, xinfo& xi, dinfo& di, double* phi, pinfo& pi, RNG& gen)
-{
-  tree::npv bnv;
+
+  //  typedef std::vector<tree_p> npv;   //Node Pointer Vector
+	tree::npv bnv;
+
 	std::vector<sinfo> sv;
-	allsuffhet(t,xi,di,phi,bnv,sv);
+
+
+	// get sufficients stats for all bottom nodes
+	// sv seems to store the stats of the residuals
+	// bnv is the bottom node vector of tree t
 	
-	double a = 1.0/(pi.tau * pi.tau);
-	double sig2 = pi.sigma * pi.sigma;
-	double b,ybar;
+	allsuff(t,xi,di,weight,bnv,sv);
 	
 	for(tree::npv::size_type i=0;i!=bnv.size();i++) {
-    double fcvar = 1.0/(a+sv[i].n);
-    double fcmean = sv[i].sy*fcvar;
-    
+	
+		double fcvar = 1.0/(1.0/(pi.tau * pi.tau)+sv[i].n);
+		double fcmean = sv[i].sy*fcvar;
 		bnv[i]->setm(fcmean + gen.normal()*sqrt(fcvar));
-    if(bnv[i]->getm() != bnv[i]->getm()) {
-      for(int ii=0; ii<di.n; ++ii) Rcout << *(di.x + ii*di.p) <<" "; //*(x + p*i+j)
-      Rcout << endl<<" a "<< a<<" b "<<b<<" svi[n] "<<sv[i].n<<" i "<<i;
-      Rcout << endl<<" svi[n0] " << sv[i].n0 << endl;
-      Rcout << endl << t;
-      Rcpp::stop("drmuhet failed");
-    }
+
+	  if(bnv[i]->getm() != bnv[i]->getm()) { 
+		for(int j=0; j<di.n; ++j) Rcout << *(di.x + j*di.p) <<" "; //*(x + p*i+j)
+		Rcout << endl <<" fcvar "<< fcvar <<" svi[n] "<< sv[i].n <<" i "<<i;
+		Rcout << endl << t;
+		Rcpp::stop("drmu failed");
+		}
 	}
 }
 

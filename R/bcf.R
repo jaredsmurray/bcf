@@ -59,6 +59,7 @@
 #' @param x_control Design matrix for the "prognostic" function mu(x)
 #' @param x_moderate Design matrix for the covariate-dependent treatment effects tau(x)
 #' @param pihat Length n estimates of
+#' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
 #' @param nburn Number of burn-in MCMC iterations
 #' @param nsim Number of MCMC iterations to save after burn-in
 #' @param nthin Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.
@@ -90,7 +91,7 @@
 #' # data generating process
 #' p = 3 #two control variables and one moderator
 #' n = 250
-#' #
+#' 
 #' set.seed(1)
 #'
 #' x = matrix(rnorm(n*p), nrow=n)
@@ -156,15 +157,19 @@
 #'
 #' pihat = pnorm(q)
 #'
-#' bcf_fit = bcf(y, z, x, x, pihat, nburn=10, nsim=10)
+#' bcf_fit = bcf(y, z, x, x, pihat, nburn=100, nsim=10)
 #'
 #' # Get posterior of treatment effects
 #' tau_post = bcf_fit$tau
 #' tauhat = colMeans(tau_post)
 #' plot(tau, tauhat); abline(0,1)
-#'
 #'}
-bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
+#'
+#' @useDynLib bcf2
+#' @import Rcpp
+#' @importFrom stats approxfun lm qchisq quantile sd
+#' @export
+bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
@@ -177,19 +182,23 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE
 ) {
+  
+  if(is.null(w)){
+    w <- matrix(1, ncol = 1, nrow = length(y))
+    }
 
   pihat = as.matrix(pihat)
-  if( !.ident(length(y),
-              length(z),
-              nrow(x_control),
-              nrow(x_moderate),
-              nrow(pihat)
-  )
-  ) {
-
+  if(!.ident(length(y),
+             length(z),
+             length(w),
+             nrow(x_control),
+             nrow(x_moderate),
+             nrow(pihat))
+    ) {
     stop("Data size mismatch. The following should all be equal:
          length(y): ", length(y), "\n",
          "length(z): ", length(z), "\n",
+         "length(w): ", length(w), "\n",
          "nrow(x_control): ", nrow(x_control), "\n",
          "nrow(x_moderate): ", nrow(x_moderate), "\n",
          "nrow(pihat): ", nrow(pihat),"\n"
@@ -198,12 +207,14 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
 
   if(any(is.na(y))) stop("Missing values in y")
   if(any(is.na(z))) stop("Missing values in z")
+  if(any(is.na(w))) stop("Missing values in w")
   if(any(is.na(x_control))) stop("Missing values in x_control")
   if(any(is.na(x_moderate))) stop("Missing values in x_moderate")
   if(any(is.na(pihat))) stop("Missing values in pihat")
 
   if(any(!is.finite(y))) stop("Non-numeric values in y")
   if(any(!is.finite(z))) stop("Non-numeric values in z")
+  if(any(!is.finite(w))) stop("Non-numeric values in w")
   if(any(!is.finite(x_control))) stop("Non-numeric values in x_control")
   if(any(!is.finite(x_moderate))) stop("Non-numeric values in x_moderate")
   if(any(!is.finite(pihat))) stop("Non-numeric values in pihat")
@@ -249,7 +260,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
 
   perm = order(z, decreasing=TRUE)
 
-  fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), t(x_m[1,,drop=FALSE]),
+  cat("Calling bcfoverparRcppClean From R\n")
+  fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], w[perm],
+                        t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), t(x_m[1,,drop=FALSE]),
                         cutpoint_list_c, cutpoint_list_m,
                         random_des = matrix(1),
                         random_var = matrix(1),
@@ -262,6 +275,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
                         base_moderate, power_moderate, base_control, power_control,
                         "tmp", status_interval = update_interval,
                         use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE)
+  cat(" bcfoverparRcppClean returned to R\n")
+
 
   #B = drop(fit$post_B)
   #B0 = fit$b0
@@ -288,4 +303,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
        perm = perm
   )
 
+}
+
+#' @export
+verify_install <- function() {
+    cat("BCF2 Installed Correctly\n")
 }
