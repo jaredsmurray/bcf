@@ -243,13 +243,14 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   cutpoint_list_c = lapply(1:ncol(x_c), function(i) .cp_quantile(x_c[,i]))
   cutpoint_list_m = lapply(1:ncol(x_m), function(i) .cp_quantile(x_m[,i]))
 
-  yscale = scale(y)
-  sdy = sd(y)
-  muy = mean(y)
+  sdy = sqrt(Hmisc::wtd.var(y, w))
+  muy = weighted.mean(y, w)
+  yscale = (y-muy)/sdy
+
 
   if(is.null(lambda)) {
     if(is.null(sighat)) {
-      lmf = lm(yscale~z+as.matrix(x_c))
+      lmf = lm(yscale~z+as.matrix(x_c), weights = w)
       sighat = summary(lmf)$sigma #sd(y) #summary(lmf)$sigma
     }
     qchi = qchisq(1.0-sigq,nu)
