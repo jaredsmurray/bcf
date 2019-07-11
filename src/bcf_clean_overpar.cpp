@@ -42,7 +42,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
                   CharacterVector treef_name_,
                   int status_interval=100,
                   bool RJ= false, bool use_mscale=true, bool use_bscale=true, bool b_half_normal=true,
-                  double trt_init = 1.0)
+                  double trt_init = 1.0, bool verbose_sigma=false)
 {
 
   bool randeff = true;
@@ -361,9 +361,11 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
     // verbose_itr = iIter>=burn;
     verbose_itr = false;
 
-    if(iIter%status_interval==0) {
-      Rcout << "iteration: " << iIter << " sigma: "<< sigma << endl;
+  if(verbose_sigma){
+      if(iIter%status_interval==0) {
+        Rcout << "iteration: " << iIter << " sigma: "<< sigma << endl;
     }
+  }
 
     logger.setLevel(verbose_itr);
 

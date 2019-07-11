@@ -10,7 +10,7 @@ bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL, nburn,
   ntree_moderate = 50, sd_moderate = sd(y), base_moderate = 0.25,
   power_moderate = 3, nu = 3, lambda = NULL, sigq = 0.9,
   sighat = NULL, include_pi = "control", use_muscale = TRUE,
-  use_tauscale = TRUE)
+  use_tauscale = TRUE, verbose = FALSE)
 }
 \arguments{
 \item{y}{Response variable}
@@ -64,6 +64,8 @@ or "both" are HIGHLY recommended with observational data.}
 \item{use_muscale}{Use a half-Cauchy hyperprior on the scale of mu.}
 
 \item{use_tauscale}{Use a half-Normal prior on the scale of tau.}
+
+\item{verbose}{logical, whether to print log of MCMC iterations, defaults to FALSE.}
 }
 \value{
 A list with elements

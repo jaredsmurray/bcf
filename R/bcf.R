@@ -81,6 +81,7 @@
 #' or "both" are HIGHLY recommended with observational data.
 #' @param use_muscale Use a half-Cauchy hyperprior on the scale of mu.
 #' @param use_tauscale Use a half-Normal prior on the scale of tau.
+#' @param verbose logical, whether to print log of MCMC iterations, defaults to FALSE.
 #' @return A list with elements
 #' \item{tau}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
 #' \item{mu}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
@@ -180,7 +181,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 base_moderate = 0.25,
                 power_moderate = 3,
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
-                include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE
+                include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
 ) {
   
   if(is.null(w)){
@@ -275,7 +276,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                         mod_sd = ifelse(abs(sdy - sd_moderate)<1e-6, 1, sd_moderate/sdy)/ifelse(use_tauscale,0.674,1), # if HN make sd_moderate the prior median
                         base_moderate, power_moderate, base_control, power_control,
                         "tmp", status_interval = update_interval,
-                        use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE)
+                        use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
   cat(" bcfoverparRcppClean returned to R\n")
 
 
