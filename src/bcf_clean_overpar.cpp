@@ -203,7 +203,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   pi_mod.alpha = mod_alpha; //prior prob a bot node splits is alpha/(1+d)^beta, d is depth of node
   pi_mod.beta  = mod_beta;  //2 for bart means it is harder to build big trees.
-  pi_mod.tau   = con_sd/(sqrt(delta_mod)*sqrt((double) ntree_mod)); //sigma_mu, variance on leaf parameters
+  pi_mod.tau   = mod_sd/(sqrt(delta_mod)*sqrt((double) ntree_mod)); //sigma_mu, variance on leaf parameters
   pi_mod.sigma = shat; //resid variance is \sigma^2_y/bscale^2 in the backfitting update
 
   pinfo pi_con;
@@ -750,10 +750,13 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       }
       if(verbose_itr){
         Rcout << "Original pi_mod.tau : " <<  pi_mod.tau << "\n";
-        pi_mod.tau   = con_sd/(sqrt(delta_mod)*sqrt((double) ntree_mod));
+      }
+      
+      pi_mod.tau   = mod_sd/(sqrt(delta_mod)*sqrt((double) ntree_mod));
+      
+      if(verbose_itr){
         Rcout << "New pi_mod.tau : " <<  pi_mod.tau << "\n\n";
       }
-
 
     } else {
       bscale0 = -0.5;
@@ -825,10 +828,14 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       if(verbose_itr){
         logger.log("Updating pi_con.tau");
         Rcout << "Original pi_con.tau : " <<  pi_con.tau << "\n";
-        pi_con.tau   = con_sd/(sqrt(delta_con)*sqrt((double) ntree_con));
+      }
+      
+      pi_con.tau   = con_sd/(sqrt(delta_con)*sqrt((double) ntree_con));
+      
+      if(verbose_itr){
         Rcout << "New pi_con.tau : " <<  pi_con.tau << "\n\n";
       }
-
+      
 
     } else {
       mscale = 1.0;
