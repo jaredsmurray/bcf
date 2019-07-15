@@ -329,13 +329,13 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   //  NumericMatrix spred2(nd,dip.n);
 
-  /*
   //save stuff to tree file
+  int thin = 1;
   treef << xi << endl; //cutpoints
   treef << m << endl;  //number of trees
   treef << p << endl;  //dimension of x's
   treef << (int)(nd/thin) << endl;
-  */
+
 
   //*****************************************************************************
   /* MCMC
@@ -920,6 +920,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
     pi_mod.sigma = sigma;
 
     if( ((iIter>=burn) & (iIter % thin==0)) )  {
+
+      for(size_t j=0;j<m;j++) treef << t[j] << endl; // save trees
 
       msd_post(save_ctr) = fabs(mscale)*con_sd;
       bsd_post(save_ctr) = fabs(bscale1-bscale0)*mod_sd;

@@ -58,6 +58,7 @@
 #' @param z Treatment variable
 #' @param x_control Design matrix for the "prognostic" function mu(x)
 #' @param x_moderate Design matrix for the covariate-dependent treatment effects tau(x)
+#' @param x_pred matrix of covariates for predictions (optional)
 #' @param pihat Length n estimates of
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
 #' @param nburn Number of burn-in MCMC iterations
@@ -170,7 +171,7 @@
 #' @import Rcpp
 #' @importFrom stats approxfun lm qchisq quantile sd
 #' @export
-bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
+bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w = NULL,
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
@@ -186,6 +187,12 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   
   if(is.null(w)){
     w <- matrix(1, ncol = 1, nrow = length(y))
+    }
+
+  if(is.null(x_pred)){
+      x_predict <- x_moderate
+    }else{
+      x_predict <- x_pred
     }
 
   pihat = as.matrix(pihat)
@@ -211,6 +218,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   if(any(is.na(w))) stop("Missing values in w")
   if(any(is.na(x_control))) stop("Missing values in x_control")
   if(any(is.na(x_moderate))) stop("Missing values in x_moderate")
+  if(any(is.na(x_predict))) stop("Missing values in x_pred")
   if(any(is.na(pihat))) stop("Missing values in pihat")
 
   if(any(!is.finite(y))) stop("Non-numeric values in y")
@@ -218,6 +226,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   if(any(!is.finite(w))) stop("Non-numeric values in w")
   if(any(!is.finite(x_control))) stop("Non-numeric values in x_control")
   if(any(!is.finite(x_moderate))) stop("Non-numeric values in x_moderate")
+  if(any(!is.finite(x_predict))) stop("Non-numeric values in x_pred")
   if(any(!is.finite(pihat))) stop("Non-numeric values in pihat")
 
   if(!all(sort(unique(z)) == c(0,1))) stop("z must be a vector of 0's and 1's, with at least one of each")
@@ -235,6 +244,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   ###
   x_c = matrix(x_control, ncol=ncol(x_control))
   x_m = matrix(x_moderate, ncol=ncol(x_moderate))
+  x_p = matrix(x_predict, ncol=ncol(x_predict))
   if(include_pi=="both" | include_pi=="control") {
     x_c = cbind(x_control, pihat)
   }
@@ -264,7 +274,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
   cat("Calling bcfoverparRcppClean From R\n")
   fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], w[perm],
-                        t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), t(x_m[1,,drop=FALSE]),
+                        t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), t(x_p[1,,drop=FALSE]),
                         cutpoint_list_c, cutpoint_list_m,
                         random_des = matrix(1),
                         random_var = matrix(1),
@@ -275,7 +285,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                         con_sd = ifelse(abs(2*sdy - sd_control)<1e-6, 2, sd_control/sdy),
                         mod_sd = ifelse(abs(sdy - sd_moderate)<1e-6, 1, sd_moderate/sdy)/ifelse(use_tauscale,0.674,1), # if HN make sd_moderate the prior median
                         base_moderate, power_moderate, base_control, power_control,
-                        "tmp", status_interval = update_interval,
+                        "trees.txt", status_interval = update_interval,
                         use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
   cat(" bcfoverparRcppClean returned to R\n")
 
@@ -296,13 +306,23 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   #yhat_post[,z[perm]==1] = yhat_post[,z[perm]==1] + sdy*fitbcf$b_post
   #yhat_post = yhat_post[,order(perm)]
 
+  if(x_pred != NULL){
+    ts = TreeSamples$new()
+    ts$load("trees.txt")
+    preds = ts$predict(t(x_p))
+  }else{
+    preds = NULL
+  }
+
+
   list(sigma = sdy*fitbcf$sigma,
        yhat = muy + sdy*fitbcf$yhat_post[,order(perm)],
 #       mu  = m_post,
        tau = tau_post,
        mu_scale = fitbcf$msd*sdy,
        tau_scale = fitbcf$bsd*sdy,
-       perm = perm
+       perm = perm,
+       predictions = preds
   )
 
 }
