@@ -167,7 +167,7 @@
 #'}
 #'
 #' @useDynLib bcf2
-#' @import Rcpp
+#' @import Rcpp RcppArmadillo RcppParallel
 #' @importFrom stats approxfun lm qchisq quantile sd
 #' @export
 bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
