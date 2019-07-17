@@ -32,9 +32,6 @@ sigma <- diff(range(q + tau*pi))/8
 y <- mu + sigma*rnorm(n)
 
 
-library(RcppParallel)
-setThreadOptions(numThreads = defaultNumThreads())
-
 out2 <- bcf2::bcf(y          = y,
                   z          = z,
                   x_control  = x,
