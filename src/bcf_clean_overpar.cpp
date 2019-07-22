@@ -39,7 +39,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
                   double mod_sd, // Var(b(x)) = mod_sd^2 marginally a priori (approx)
                   double con_alpha, double con_beta,
                   double mod_alpha, double mod_beta,
-                  CharacterVector treef_name_,
+                  CharacterVector treef_con_name_, CharacterVector treef_mod_name_,
                   int status_interval=100,
                   bool RJ= false, bool use_mscale=true, bool use_bscale=true, bool b_half_normal=true,
                   double trt_init = 1.0, bool verbose_sigma=false)
@@ -52,8 +52,11 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   if(randeff) Rcout << "Using random effects." << std::endl;
 
-  std::string treef_name = as<std::string>(treef_name_);
-  std::ofstream treef(treef_name.c_str());
+  std::string treef_con_name = as<std::string>(treef_con_name_);
+  std::ofstream tree_con(treef_con_name_.c_str());
+
+  std::string treef_mod_name = as<std::string>(treef_mod_name_);
+  std::ofstream tree_mod(treef_mod_name.c_str());
 
   RNGScope scope;
   RNG gen; //this one random number generator is used in all draws
@@ -330,12 +333,15 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   //  NumericMatrix spred2(nd,dip.n);
 
   //save stuff to tree file
-  int thin = 1;
-  treef << xi << endl; //cutpoints
-  treef << m << endl;  //number of trees
-  treef << p << endl;  //dimension of x's
-  treef << (int)(nd/thin) << endl;
+  treef_con_name << xi_con << endl; //cutpoints
+  treef_con_name << ntree_con << endl;  //number of trees
+  treef_con_name << dinfo.p << endl;  //dimension of x's
+  treef_con_name << (int)(nd/thin) << endl;
 
+  treef_mod_name << xi_mod << endl; //cutpoints
+  treef_mod_name << ntree_mod << endl;  //number of trees
+  treef_mod_name << dinfo.p << endl;  //dimension of x's
+  treef_mod_name << (int)(nd/thin) << endl;
 
   //*****************************************************************************
   /* MCMC
@@ -921,7 +927,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
     if( ((iIter>=burn) & (iIter % thin==0)) )  {
 
-      for(size_t j=0;j<m;j++) treef << t[j] << endl; // save trees
+      for(size_t j=0;j<ntree_con;j++) treef_con_name << t_con[j] << endl; // save trees
+      for(size_t j=0;j<ntree_mod;j++) treef_mod_name << t_mod[j] << endl; // save trees
 
       msd_post(save_ctr) = fabs(mscale)*con_sd;
       bsd_post(save_ctr) = fabs(bscale1-bscale0)*mod_sd;
@@ -960,7 +967,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   delete[] r_con;
   delete[] ftemp;
 
-  treef.close();
+  treef_con_name.close();
+  treef_mod_name.close();
 
   return(List::create(_["yhat_post"] = yhat_post, _["b_post"] = b_post, _["b_est_post"] = b_est_post,
                       _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post,

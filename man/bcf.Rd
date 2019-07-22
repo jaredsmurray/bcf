@@ -4,13 +4,13 @@
 \alias{bcf}
 \title{Fit Bayesian Causal Forests}
 \usage{
-bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL, nburn,
-  nsim, nthin = 1, update_interval = 100, ntree_control = 200,
-  sd_control = 2 * sd(y), base_control = 0.95, power_control = 2,
-  ntree_moderate = 50, sd_moderate = sd(y), base_moderate = 0.25,
-  power_moderate = 3, nu = 3, lambda = NULL, sigq = 0.9,
-  sighat = NULL, include_pi = "control", use_muscale = TRUE,
-  use_tauscale = TRUE, verbose = FALSE)
+bcf(y, z, x_control, x_moderate = x_control, x_pred = NULL, pihat,
+  w = NULL, nburn, nsim, nthin = 1, update_interval = 100,
+  ntree_control = 200, sd_control = 2 * sd(y), base_control = 0.95,
+  power_control = 2, ntree_moderate = 50, sd_moderate = sd(y),
+  base_moderate = 0.25, power_moderate = 3, nu = 3, lambda = NULL,
+  sigq = 0.9, sighat = NULL, include_pi = "control",
+  use_muscale = TRUE, use_tauscale = TRUE, verbose = FALSE)
 }
 \arguments{
 \item{y}{Response variable}
@@ -20,6 +20,8 @@ bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL, nburn,
 \item{x_control}{Design matrix for the "prognostic" function mu(x)}
 
 \item{x_moderate}{Design matrix for the covariate-dependent treatment effects tau(x)}
+
+\item{x_pred}{matrix of covariates for predictions (optional)}
 
 \item{pihat}{Length n estimates of}
 

@@ -285,7 +285,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
                         con_sd = ifelse(abs(2*sdy - sd_control)<1e-6, 2, sd_control/sdy),
                         mod_sd = ifelse(abs(sdy - sd_moderate)<1e-6, 1, sd_moderate/sdy)/ifelse(use_tauscale,0.674,1), # if HN make sd_moderate the prior median
                         base_moderate, power_moderate, base_control, power_control,
-                        "trees.txt", status_interval = update_interval,
+                        "tautrees.txt", "mutrees.txt", status_interval = update_interval,
                         use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
   cat(" bcfoverparRcppClean returned to R\n")
 
@@ -307,13 +307,20 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
   #yhat_post = yhat_post[,order(perm)]
 
   if(x_pred != NULL){
-    ts = TreeSamples$new()
-    ts$load("trees.txt")
-    preds = ts$predict(t(x_p))
+    tauts = TreeSamples$new()
+    tauts$load("tautrees.txt")
+    tau_preds = tauts$predict(t(x_p))
+
+    muts = TreeSamples$new()
+    muts$load("mutrees.txt")
+    mu_preds = muts$predict(t(x_p))
+
+    preds = tau_preds + mu_preds
   }else{
     preds = NULL
   }
 
+  #unlink("trees.txt")
 
   list(sigma = sdy*fitbcf$sigma,
        yhat = muy + sdy*fitbcf$yhat_post[,order(perm)],
@@ -322,7 +329,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
        mu_scale = fitbcf$msd*sdy,
        tau_scale = fitbcf$bsd*sdy,
        perm = perm,
-       predictions = preds
+       preds = preds
+       mu_preds = mu_preds
   )
 
 }
