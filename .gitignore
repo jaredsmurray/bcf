@@ -21,6 +21,9 @@
 # RStudio files
 .Rproj.user/
 
+# Visual Studio Code files
+.vscode/
+
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
@@ -70,3 +73,5 @@ tmp
 *.out
 *.app
 
+Testing scripts
+scripts/
