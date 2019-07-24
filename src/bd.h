@@ -6,7 +6,6 @@
 #include "tree.h"
 #include "logging.h"
 
-
 #ifdef MPIBART
 bool bd(tree& x, xinfo& xi, pinfo& pi, RNG& gen, size_t numslaves);
 #else
