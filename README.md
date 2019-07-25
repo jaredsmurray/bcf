@@ -9,3 +9,5 @@ CPC+: Rstudio, Check function
 CPC+: usethis, vinyetts, packagedown
 CPC+: Vinyetts
 CPC+: Cores Max of number available minus 1 or one,
+CPC+: Get rid of y2
+CPC+: Get rid of di.w
