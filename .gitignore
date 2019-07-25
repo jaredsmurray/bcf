@@ -8,3 +8,4 @@ src/*.dll
 tmp
 scripts/
 *.vscode/
+*.pdf

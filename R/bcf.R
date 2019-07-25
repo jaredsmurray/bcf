@@ -285,7 +285,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
                         con_sd = ifelse(abs(2*sdy - sd_control)<1e-6, 2, sd_control/sdy),
                         mod_sd = ifelse(abs(sdy - sd_moderate)<1e-6, 1, sd_moderate/sdy)/ifelse(use_tauscale,0.674,1), # if HN make sd_moderate the prior median
                         base_moderate, power_moderate, base_control, power_control,
-                        "tautrees.txt", "mutrees.txt", status_interval = update_interval,
+                        "mutrees.txt", "tautrees.txt", status_interval = update_interval,
                         use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
   cat(" bcfoverparRcppClean returned to R\n")
 
@@ -306,21 +306,30 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
   #yhat_post[,z[perm]==1] = yhat_post[,z[perm]==1] + sdy*fitbcf$b_post
   #yhat_post = yhat_post[,order(perm)]
 
-  if(x_pred != NULL){
+ 
+  if(!is.null(x_pred)){
+    sourceCpp("src/TreeSamples.cpp")
     tauts = TreeSamples$new()
+   # tauts = new(TreeSamples)
     tauts$load("tautrees.txt")
     tau_preds = tauts$predict(t(x_p))
 
     muts = TreeSamples$new()
+    #muts = new(TreeSamples)
     muts$load("mutrees.txt")
     mu_preds = muts$predict(t(x_p))
 
-    preds = tau_preds + mu_preds
+    yhat_preds = mu_preds + tau_preds*z
   }else{
-    preds = NULL
+    yhat_preds = NULL
+    mu_preds = NULL
   }
 
-  #unlink("trees.txt")
+  cat("Got predictions")
+
+  # Removing tree files
+  unlink("mutrees.txt")
+  unlink("tautrees.txt")
 
   list(sigma = sdy*fitbcf$sigma,
        yhat = muy + sdy*fitbcf$yhat_post[,order(perm)],
@@ -329,10 +338,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
        mu_scale = fitbcf$msd*sdy,
        tau_scale = fitbcf$bsd*sdy,
        perm = perm,
-       preds = preds
-       mu_preds = mu_preds
+       yhat_preds = yhat_preds,
+       tau_preds = tau_preds
   )
-
 }
 
 #' @export
