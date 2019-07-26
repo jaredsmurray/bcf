@@ -3,6 +3,8 @@
 export(bcf)
 export(verify_install)
 import(Rcpp)
+import(RcppArmadillo)
+import(RcppParallel)
 importFrom(stats,approxfun)
 importFrom(stats,lm)
 importFrom(stats,qchisq)

@@ -27,6 +27,8 @@ bcf(y, z, x_control, x_moderate = x_control, x_pred = NULL, pihat,
 
 \item{w}{An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.}
 
+\item{n_threads}{An optional integer of the number of threads to parallelize bcf operations on}
+
 \item{nburn}{Number of burn-in MCMC iterations}
 
 \item{nsim}{Number of MCMC iterations to save after burn-in}

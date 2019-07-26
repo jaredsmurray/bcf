@@ -151,7 +151,7 @@ std::istream& operator>>(std::istream& is, xinfo& xi)
 //    double m;       //mu
 // };
 
-// x is a pionter to a feature vector
+// x is a pointer to a feature vector
 // xi is a Node 
 // if the v'th value of x is less than cut point 
 

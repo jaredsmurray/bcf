@@ -61,6 +61,7 @@
 #' @param x_pred matrix of covariates for predictions (optional)
 #' @param pihat Length n estimates of
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
+#' @param n_threads An optional integer of the number of threads to parallelize bcf operations on
 #' @param nburn Number of burn-in MCMC iterations
 #' @param nsim Number of MCMC iterations to save after burn-in
 #' @param nthin Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.
@@ -168,10 +169,10 @@
 #'}
 #'
 #' @useDynLib bcf2
-#' @import Rcpp
+#' @import Rcpp RcppArmadillo RcppParallel
 #' @importFrom stats approxfun lm qchisq quantile sd
 #' @export
-bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w = NULL,
+bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w = NULL, n_threads = RcppParallel::defaultNumThreads()/2,
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
@@ -271,6 +272,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
   dir = tempdir()
 
   perm = order(z, decreasing=TRUE)
+
+  RcppParallel::setThreadOptions(numThreads=n_threads)
 
   cat("Calling bcfoverparRcppClean From R\n")
   fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], w[perm],

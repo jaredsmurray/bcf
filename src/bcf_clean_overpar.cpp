@@ -387,6 +387,17 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       Rcout << "Current Fit : " <<  logBuff << "\n";
     }
 
+    for (int k=0; k<n; ++k){
+      weight[k] = w[k]*mscale*mscale/(sigma * sigma); // for non-het case, weights need to be divided by sigma square to make it similar to phi
+    }
+
+    for(size_t k=0; k<ntrt; ++k) {
+      weight_het[k] = w[k]*bscale1*bscale1/(sigma*sigma);
+    }
+    for(size_t k=ntrt; k<n; ++k) {
+      weight_het[k] = w[k]*bscale0*bscale0/(sigma*sigma);
+    }
+
 
     logger.log("=====================================");
     logger.log("- Tree Processing");
@@ -452,9 +463,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       }
 
       
-      for (int k=0; k<n; ++k){
-        weight[k] = w[k]*mscale*mscale/(sigma * sigma); // for non-het case, weights need to be divided by sigma square to make it similar to phi
-      }
+
       if(verbose_itr){
         logger.getVectorHead(weight, logBuff);
         Rcout << "\n weight: " <<  logBuff << "\n\n";
@@ -542,13 +551,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
 
  
-    //draw trees for b(x)
-    for(size_t k=0; k<ntrt; ++k) {
-      weight_het[k] = w[k]*bscale1*bscale1/(sigma*sigma);
-    }
-    for(size_t k=ntrt; k<n; ++k) {
-      weight_het[k] = w[k]*bscale0*bscale0/(sigma*sigma);
-    }
+
 
     for(size_t iTreeMod=0;iTreeMod<ntree_mod;iTreeMod++) {
       logger.log("==================================");

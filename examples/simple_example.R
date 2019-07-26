@@ -1,9 +1,9 @@
 set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
-n <- 10
-n_burn <- 10
-n_sim <- 15
+n <- 10000
+n_burn <- 100
+n_sim <- 150
 
 
 x <- matrix(rnorm(n*p), nrow=n)
@@ -30,7 +30,6 @@ sigma <- diff(range(q + tau*pi))/8
 
 # draw the response variable with additive error
 y <- mu + sigma*rnorm(n)
-
 
 
 out2 <- bcf2::bcf(y          = y,
