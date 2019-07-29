@@ -246,7 +246,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, n_thread
   cutpoint_list_m = lapply(1:ncol(x_m), function(i) .cp_quantile(x_m[,i]))
 
   sdy = sqrt(Hmisc::wtd.var(y, w))
-  muy = weighted.mean(y, w)
+  muy = stats::weighted.mean(y, w)
   yscale = (y-muy)/sdy
 
 
@@ -308,9 +308,4 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, n_thread
        perm = perm
   )
 
-}
-
-#' @export
-verify_install <- function() {
-    cat("BCF2 Installed Correctly\n")
 }
