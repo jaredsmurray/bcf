@@ -1,6 +1,6 @@
 # Bayesian Causal Forests
 
-Implementation of Bayesian causal forests (BCF): [https://arxiv.org/pdf/1706.09523.pdf](https://arxiv.org/pdf/1706.09523.pdf).
+Implementation of Bayesian causal forests (BCF): [https://arxiv.org/pdf/1706.09523.pdf](https://arxiv.org/pdf/1706.09523.pdf).it 
 
 # TODO:
 CPC+: Regress and add tests
@@ -20,4 +20,4 @@ CPC+: Get rid of y2
 CPC+: Get rid of di.w
 CPC+: Get rid of unnessisary logging
 
-CPC+: Add R build ignore, add examples directory to build ignore, take a look at anough R. 
+[Done] CPC+: Add R build ignore, add examples directory to build ignore, take a look at anough R. 

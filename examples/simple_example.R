@@ -1,7 +1,7 @@
 set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
-n <- 10000
+n <- 100
 n_burn <- 100
 n_sim <- 150
 

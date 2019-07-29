@@ -171,7 +171,7 @@
 #' @import Rcpp RcppArmadillo RcppParallel
 #' @importFrom stats approxfun lm qchisq quantile sd
 #' @export
-bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, n_threads = RcppParallel::defaultNumThreads()/2,
+bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, n_threads = max(RcppParallel::defaultNumThreads()/2,1),
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
