@@ -7,7 +7,7 @@ CPC+: Regress and add tests
 
 [Done] CPC+: Rstudio, Check function
 
-CPC+: usethis,
+[Done] CPC+: usethis,
 - makes it easy to setup directories for things like vinyetts
 
 CPC+: packagedown

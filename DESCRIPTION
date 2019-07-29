@@ -17,5 +17,10 @@ Date/Publication: 2018-09-19 22:20:02 UTC
 Imports: Rcpp, RcppArmadillo, RcppParallel, Hmisc 
 Suggests: 
     testthat,
-    bcf
+    bcf,
+    spelling,
+    knitr,
+    rmarkdown
 SystemRequirements: GNU make
+Language: en-US
+VignetteBuilder: knitr
