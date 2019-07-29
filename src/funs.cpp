@@ -203,9 +203,9 @@ struct AllSuffWorker: public Worker
 	tree& x;
 	xinfo& xi;
 	dinfo& di;
+	size_t nb;
 	std::map<tree::tree_cp,size_t> bnmap;
 	double* weight;
-	size_t nb;
 
 	// -------------------
 	// Internal State
@@ -226,7 +226,7 @@ struct AllSuffWorker: public Worker
 								dinfo& di,
 								std::map<tree::tree_cp,size_t> bnmap,
 								size_t nb,
-								double* weight):x(x),xi(xi),di(di),bnmap(bnmap),nb(nb),weight(weight) {
+								double* weight):x(x),xi(xi),di(di),nb(nb),bnmap(bnmap),weight(weight) {
 		n=0.0;
 		sy=0.0;
 		sy2=0.0;
@@ -234,7 +234,7 @@ struct AllSuffWorker: public Worker
 		sv_tmp.resize(nb);
 	}
 
-	AllSuffWorker(const AllSuffWorker& asw, Split):x(asw.x),xi(asw.xi),di(asw.di),bnmap(asw.bnmap),nb(asw.nb),weight(asw.weight) {
+	AllSuffWorker(const AllSuffWorker& asw, Split):x(asw.x),xi(asw.xi),di(asw.di),nb(asw.nb),bnmap(asw.bnmap),weight(asw.weight) {
 		n=0.0;
 		sy=0.0;
 		sy2=0.0;
@@ -933,14 +933,14 @@ double lil(double n, double sy, double sy2, double sigma, double tau)
 struct FitWorker : public Worker
 {
    // source arguments
-  std::vector<double>& fv; // node means
-	dinfo& di; // number of observations from dinfo
+  	tree& t; // tree
 	xinfo& xi; // split rules from xinfo
-	tree& t; // tree
-
+	dinfo& di; // number of observations from dinfo
 	// internal args
 	double *xx;
 	tree::tree_cp bn;
+	std::vector<double>& fv; // node means
+
    
    // constructing the constructor
    FitWorker(tree& t, 

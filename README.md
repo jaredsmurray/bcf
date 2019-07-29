@@ -6,12 +6,16 @@ Implementation of Bayesian causal forests (BCF): [https://arxiv.org/pdf/1706.095
 CPC+: Regress and add tests
 
 [Done] CPC+: Rstudio, Check function
-CPC+: packagedown
-- makes a site webpage
+
 CPC+: usethis,
 - makes it easy to setup directories for things like vinyetts
 
+CPC+: packagedown
+- makes a site webpage
 
+<!-- Description
+Creates a new tutorial below inst/tutorials/. Tutorials are interactive R Markdown documents
+built with the learnr package. use_tutorial() does this setup -->
 
 CPC+: Vinyetts
 

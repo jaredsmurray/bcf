@@ -13,11 +13,11 @@
 #include "logging.h"
 
 using namespace Rcpp;
-
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wcomment"
-#pragma GCC diagnostic ignored "-Wformat"
-#pragma GCC diagnostic ignored "-Wsign-compare"
+// Rstudios check's suggest not ignoring these
+// #pragma GCC diagnostic ignored "-Wunused-parameter"
+// #pragma GCC diagnostic ignored "-Wcomment"
+// #pragma GCC diagnostic ignored "-Wformat"
+// #pragma GCC diagnostic ignored "-Wsign-compare"
 
 // y = m(x) + b(x)z + e, e~N(0, sigma^2_y
 
