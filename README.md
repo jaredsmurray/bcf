@@ -10,14 +10,14 @@ CPC+: Regress and add tests
 [Done] CPC+: usethis,
 - makes it easy to setup directories for things like vinyetts
 
-CPC+: packagedown
+[Done] CPC+: packagedown
 - makes a site webpage
 
 <!-- Description
 Creates a new tutorial below inst/tutorials/. Tutorials are interactive R Markdown documents
 built with the learnr package. use_tutorial() does this setup -->
 
-CPC+: Vinyetts
+[Done]CPC+: Vinyetts
 
 [Done] CPC+: Cores Max of number available minus 1 or one,
 CPC+: Get rid of y2

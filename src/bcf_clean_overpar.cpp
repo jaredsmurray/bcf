@@ -231,7 +231,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_con.p = p_con; 
   di_con.x = &x_con[0]; 
   di_con.y = r_con; //the y for each draw will be the residual
-  di_con.w = w;
 
   //--------------------------------------------------
   //dinfo for trt effect function b(x)
@@ -243,7 +242,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_mod.p=p_mod; 
   di_mod.x = &x_mod[0]; 
   di_mod.y = r_mod; //the y for each draw will be the residual
-  di_mod.w = w;
 
   //--------------------------------------------------
   //dinfo and design for trt effect function out of sample
@@ -263,7 +261,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_mod_est.p=p_mod; 
   di_mod_est.x = &x_mod_est[0]; 
   di_mod_est.y=0; //there are no y's!
-  di_mod_est.w = w;
 
 
   //  }
