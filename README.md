@@ -21,7 +21,7 @@ built with the learnr package. use_tutorial() does this setup -->
 
 [Done] CPC+: Cores Max of number available minus 1 or one,
 CPC+: Get rid of y2
-CPC+: Get rid of di.w
+[Done] CPC+: Get rid of di.w
 CPC+: Get rid of unnessisary logging
 
 [Done] CPC+: Add R build ignore, add examples directory to build ignore, take a look at anough R. 

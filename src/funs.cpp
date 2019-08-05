@@ -921,7 +921,7 @@ void MPIslavegetsuff(tree& x, xinfo& xi, dinfo& di)
 #endif
 //--------------------------------------------------
 //log of the integrated likelihood
-double lil(double n, double sy, double sy2, double sigma, double tau)
+double lil(double n, double sy, double sigma, double tau)
 {
   double d = 1/(tau*tau) + n;// n is \sum phi_i for het
   
