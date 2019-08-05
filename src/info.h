@@ -41,11 +41,10 @@ public:
 class sinfo
 {
 public:
-   sinfo() {n0=0.0;n=0;sy=0.0;sy2=0.0;}
+   sinfo() {n0=0.0;n=0;sy=0.0;}
    double n0; //unweighted sample counts
    double n;
    double sy;
-   double sy2;
 };
 
 #endif

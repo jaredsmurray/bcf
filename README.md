@@ -20,7 +20,7 @@ built with the learnr package. use_tutorial() does this setup -->
 [Done]CPC+: Vinyetts
 
 [Done] CPC+: Cores Max of number available minus 1 or one,
-CPC+: Get rid of y2
+[Done] CPC+: Get rid of y2
 [Done] CPC+: Get rid of di.w
 CPC+: Get rid of unnessisary logging
 
