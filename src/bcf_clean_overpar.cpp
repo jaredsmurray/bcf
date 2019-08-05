@@ -93,19 +93,20 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   std::vector<double> y; //storage for y
   double miny = INFINITY, maxy = -INFINITY;
   sinfo allys;       //sufficient stats for all of y, use to initialize the bart trees.
+  double allys_y2 = 0;
 
   for(NumericVector::iterator it=y_.begin(); it!=y_.end(); ++it) {
     y.push_back(*it);
     if(*it<miny) miny=*it;
     if(*it>maxy) maxy=*it;
     allys.sy += *it; // sum of y
-    allys.sy2 += (*it)*(*it); // sum of y^2
+    allys_y2 += (*it)*(*it); // sum of y^2
   }
   size_t n = y.size();
   allys.n = n;
 
   double ybar = allys.sy/n; //sample mean
-  double shat = sqrt((allys.sy2-n*ybar*ybar)/(n-1)); //sample standard deviation
+  double shat = sqrt((allys_y2-n*ybar*ybar)/(n-1)); //sample standard deviation
   /*****************************************************************************
   /* Read, format  weights 
   *****************************************************************************/
