@@ -59,6 +59,7 @@
 #' @param x_control Design matrix for the "prognostic" function mu(x)
 #' @param x_moderate Design matrix for the covariate-dependent treatment effects tau(x)
 #' @param x_pred matrix of covariates for predictions (optional)
+#' @param z_pred Treatment variable for predictions (optional except if x_pre is not empty)
 #' @param pihat Length n estimates of
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
 #' @param n_threads An optional integer of the number of threads to parallelize bcf operations on
@@ -172,7 +173,7 @@
 #' @import Rcpp RcppArmadillo RcppParallel
 #' @importFrom stats approxfun lm qchisq quantile sd
 #' @export
-bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w = NULL, n_threads = RcppParallel::defaultNumThreads()/2,
+bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, z_pred = NULL, pihat, w = NULL, n_threads = RcppParallel::defaultNumThreads()/2,
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
@@ -214,8 +215,18 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
     )
   }
 
+  if(!.ident(length(z_pred),
+             nrow(x_pred))
+    ) {
+    stop("Data size mismatch. The following should all be equal:
+         length(z_pred): ", length(z_pred), "\n",
+         "nrow(x_pred): ", nrow(x_pred), "\n"
+    )
+  }
+
   if(any(is.na(y))) stop("Missing values in y")
   if(any(is.na(z))) stop("Missing values in z")
+  if(any(is.na(z_pred))) stop("Missing values in z_pred")
   if(any(is.na(w))) stop("Missing values in w")
   if(any(is.na(x_control))) stop("Missing values in x_control")
   if(any(is.na(x_moderate))) stop("Missing values in x_moderate")
@@ -231,6 +242,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
   if(any(!is.finite(pihat))) stop("Non-numeric values in pihat")
 
   if(!all(sort(unique(z)) == c(0,1))) stop("z must be a vector of 0's and 1's, with at least one of each")
+  if(!all(sort(unique(z_pred)) == c(0,1))) stop("z_pred must be a vector of 0's and 1's, with at least one of each")
 
   if(length(unique(y))<5) warning("y appears to be discrete")
 
@@ -288,7 +300,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
                         con_sd = ifelse(abs(2*sdy - sd_control)<1e-6, 2, sd_control/sdy),
                         mod_sd = ifelse(abs(sdy - sd_moderate)<1e-6, 1, sd_moderate/sdy)/ifelse(use_tauscale,0.674,1), # if HN make sd_moderate the prior median
                         base_moderate, power_moderate, base_control, power_control,
-                        "mutrees.txt", "tautrees.txt", status_interval = update_interval,
+                        "con_trees.txt", "mod_trees.txt", status_interval = update_interval,
                         use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
   cat(" bcfoverparRcppClean returned to R\n")
 
@@ -308,24 +320,28 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
   #yhat_post = (muy + sdy*fitbcf$m_post)
   #yhat_post[,z[perm]==1] = yhat_post[,z[perm]==1] + sdy*fitbcf$b_post
   #yhat_post = yhat_post[,order(perm)]
-
  
   if(!is.null(x_pred)){
     sourceCpp("src/TreeSamples.cpp")
-    tauts = TreeSamples$new()
+    mods = TreeSamples$new()
    # tauts = new(TreeSamples)
-    tauts$load("tautrees.txt")
-    tau_preds = tauts$predict(t(x_p))
+    mods$load("mod_trees.txt")
+    mod_preds = mods$predict(t(x_p))
 
-    muts = TreeSamples$new()
+    cons = TreeSamples$new()
     #muts = new(TreeSamples)
-    muts$load("mutrees.txt")
-    mu_preds = muts$predict(t(x_p))
+    cons$load("con_trees.txt")
+    con_preds = cons$predict(t(x_p))
 
-    yhat_preds = mu_preds + tau_preds*z
+  # Questions: 
+  ## do we need to time tau_preds by sdy?
+  ## do we need to add muy to y_preds and time by sdy? 
+  tau_preds = sdy*mod_preds
+  yhat_preds = muy + sdy*(con_preds + mod_preds)
+   #yhat_preds = con_preds + mod_preds*z
   }else{
     yhat_preds = NULL
-    mu_preds = NULL
+    mod_preds = NULL
   }
 
   cat("Got predictions")
@@ -341,7 +357,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, pihat, w =
        mu_scale = fitbcf$msd*sdy,
        tau_scale = fitbcf$bsd*sdy,
        perm = perm,
-       yhat_preds = yhat_preds,
+       y_preds = yhat_preds,
        tau_preds = tau_preds
   )
 }
