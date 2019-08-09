@@ -42,7 +42,10 @@ out2 <- bcf2::bcf(y          = y,
                   w          = weights, 
                   update_interval = 100)
 
-                  
-cat("BCF run complete\n")
+cat("Saving results \n")
 
 
+ saveRDS(out2, file = "examples/data_0001w.rds")
+
+
+ cat("BCF run complete\n")
