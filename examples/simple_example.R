@@ -1,14 +1,13 @@
 set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
-n <- 10000
+n <- 1000
 n_burn <- 100
 n_sim <- 150
 
 
 x <- matrix(rnorm(n*p), nrow=n)
 
-weights <- 1.0*rep(1, n)
 
 
 # create targeted selection, whereby a practice's likelihood of joining the intervention (pi) is related to their expected outcome (mu)
@@ -31,6 +30,7 @@ sigma <- diff(range(q + tau*pi))/8
 # draw the response variable with additive error
 y <- mu + sigma*rnorm(n)
 
+weights <- 1000.0*rep(1, n)
 
 out2 <- bcf2::bcf(y          = y,
                   z          = z,
@@ -42,7 +42,9 @@ out2 <- bcf2::bcf(y          = y,
                   w          = weights, 
                   update_interval = 100)
 
-                  
+cat("Saving results \n")
+
+saveRDS(out2, file = "examples/data_1000w.rds")
+
+
 cat("BCF run complete\n")
-
-

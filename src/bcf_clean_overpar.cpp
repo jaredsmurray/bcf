@@ -370,7 +370,9 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
     logger.setLevel(verbose_itr);
 
     logger.log("==============================================");
-    sprintf(logBuff, "MCMC iteration: %d of %d, sigma %f", iIter + 1, nd*thin+burn, sigma);
+    sprintf(logBuff, "MCMC iteration: %d of %d", iIter + 1, nd*thin+burn);
+    logger.log(logBuff);
+    sprintf(logBuff, "sigma %f, mscale %f, bscale0 %f, bscale1 %f",sigma, mscale, bscale0, bscale1);
     logger.log(logBuff);
     logger.log("==============================================");
     if (verbose_itr){
@@ -676,10 +678,10 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       double s2 = sigma*sigma;
       for(size_t k=0; k<n; ++k) {
         double bscale = (k<ntrt) ? bscale1 : bscale0;
-        double w = s2*bscale*bscale/(allfit_mod[k]*allfit_mod[k]);
+        double scale_factor = (w[k]*allfit_mod[k]*allfit_mod[k])/(s2*bscale*bscale);
 
-        if(w!=w) {
-          Rcout << " w " << w << endl;
+        if(scale_factor!=scale_factor) {
+          Rcout << " scale_factor " << scale_factor << endl;
           stop("");
         }
 
@@ -692,11 +694,11 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
           stop("");
         }
         if(k<ntrt) {
-          ww1 += 1/w;
-          rw1 += r/w;
+          ww1 += scale_factor;
+          rw1 += r*scale_factor;
         } else {
-          ww0 += 1/w;
-          rw0 += r/w;
+          ww0 += scale_factor;
+          rw0 += r*scale_factor;
         }
       }
       logger.log("Drawing bscale 1");
@@ -775,9 +777,9 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       double rw = 0.;
       double s2 = sigma*sigma;
       for(size_t k=0; k<n; ++k) {
-        double w = s2*mscale*mscale/(allfit_con[k]*allfit_con[k]);
-        if(w!=w) {
-          Rcout << " w " << w << endl;
+        double scale_factor = (w[k]*allfit_con[k]*allfit_con[k])/(s2*mscale*mscale);
+        if(scale_factor!=scale_factor) {
+          Rcout << " scale_factor " << scale_factor << endl;
           stop("");
         }
 
@@ -788,8 +790,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
           Rcout << "mscale " << k << " r " << r << " mscale " <<mscale<< " b*z " << allfit_mod[k]*z_[k] << " bscale " << bscale0 << " " <<bscale1 << endl;
           stop("");
         }
-        ww += 1/w;
-        rw += r/w;
+        ww += scale_factor;
+        rw += r*scale_factor;
       }
 
       logger.log("Drawing mscale");
@@ -910,8 +912,9 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       }
     }
 
+    // ---------------------------------------------------------
     logger.log("Draw Sigma");
-    //draw sigma
+    // ---------------------------------------------------------
     double rss = 0.0;
     double restemp = 0.0;
     for(size_t k=0;k<n;k++) {
@@ -920,7 +923,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
     }
     sigma = sqrt((nu*lambda + rss)/gen.chi_square(nu+n));
     pi_con.sigma = sigma/fabs(mscale);
-    pi_mod.sigma = sigma;
+    pi_mod.sigma = sigma; // Is this another copy paste Error?
 
     if( ((iIter>=burn) & (iIter % thin==0)) )  {
 
