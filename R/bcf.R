@@ -333,12 +333,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, z_pred = N
     cons$load("con_trees.txt")
     con_preds = cons$predict(t(x_p))
 
-  # Questions: 
-  ## do we need to time tau_preds by sdy?
-  ## do we need to add muy to y_preds and time by sdy? 
   tau_preds = sdy*mod_preds
-  yhat_preds = muy + sdy*(con_preds + mod_preds)
-   #yhat_preds = con_preds + mod_preds*z
+  yhat_preds = muy + sdy*(con_preds + mod_preds*(z_pred-0.5)*2)
+
   }else{
     yhat_preds = NULL
     mod_preds = NULL

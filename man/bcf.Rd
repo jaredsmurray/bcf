@@ -4,13 +4,15 @@
 \alias{bcf}
 \title{Fit Bayesian Causal Forests}
 \usage{
-bcf(y, z, x_control, x_moderate = x_control, x_pred = NULL, pihat,
-  w = NULL, nburn, nsim, nthin = 1, update_interval = 100,
-  ntree_control = 200, sd_control = 2 * sd(y), base_control = 0.95,
-  power_control = 2, ntree_moderate = 50, sd_moderate = sd(y),
-  base_moderate = 0.25, power_moderate = 3, nu = 3, lambda = NULL,
-  sigq = 0.9, sighat = NULL, include_pi = "control",
-  use_muscale = TRUE, use_tauscale = TRUE, verbose = FALSE)
+bcf(y, z, x_control, x_moderate = x_control, x_pred = NULL,
+  z_pred = NULL, pihat, w = NULL,
+  n_threads = RcppParallel::defaultNumThreads()/2, nburn, nsim,
+  nthin = 1, update_interval = 100, ntree_control = 200,
+  sd_control = 2 * sd(y), base_control = 0.95, power_control = 2,
+  ntree_moderate = 50, sd_moderate = sd(y), base_moderate = 0.25,
+  power_moderate = 3, nu = 3, lambda = NULL, sigq = 0.9,
+  sighat = NULL, include_pi = "control", use_muscale = TRUE,
+  use_tauscale = TRUE, verbose = FALSE)
 }
 \arguments{
 \item{y}{Response variable}
@@ -22,6 +24,8 @@ bcf(y, z, x_control, x_moderate = x_control, x_pred = NULL, pihat,
 \item{x_moderate}{Design matrix for the covariate-dependent treatment effects tau(x)}
 
 \item{x_pred}{matrix of covariates for predictions (optional)}
+
+\item{z_pred}{Treatment variable for predictions (optional except if x_pre is not empty)}
 
 \item{pihat}{Length n estimates of}
 
