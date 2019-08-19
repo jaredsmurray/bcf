@@ -61,6 +61,7 @@
 #' @param x_pred matrix of covariates for predictions (optional)
 #' @param z_pred Treatment variable for predictions (optional except if x_pre is not empty)
 #' @param pihat Length n estimates of
+#' @param pi_pred pi for prediction
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
 #' @param n_threads An optional integer of the number of threads to parallelize bcf operations on
 #' @param nburn Number of burn-in MCMC iterations
@@ -173,7 +174,7 @@
 #' @import Rcpp RcppArmadillo RcppParallel
 #' @importFrom stats approxfun lm qchisq quantile sd
 #' @export
-bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, z_pred = NULL, pihat, w = NULL, n_threads = RcppParallel::defaultNumThreads()/2,
+bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, z_pred = NULL, pihat, pi_pred, w = NULL, n_threads = RcppParallel::defaultNumThreads()/2,
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
@@ -196,6 +197,11 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, z_pred = N
     }else{
       x_predict <- x_pred
     }
+
+  if(!is.null(x_pred)){
+    if(use_muscale == TRUE) stop("You cannot run predictions if use_muscale is TRUE")
+    if(use_tauscale == TRUE) stop("You cannot run predictions if use_tauscale is TRUE")
+  }
 
   pihat = as.matrix(pihat)
   if(!.ident(length(y),
@@ -331,7 +337,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, z_pred = N
     cons = TreeSamples$new()
     #muts = new(TreeSamples)
     cons$load("con_trees.txt")
-    con_preds = cons$predict(t(x_p))
+    con_preds = cons$predict(t(cbind(x_p, pi_pred)))
 
   tau_preds = sdy*mod_preds
   yhat_preds = muy + sdy*(con_preds + mod_preds*(z_pred-0.5)*2)
@@ -349,6 +355,10 @@ bcf <- function(y, z, x_control, x_moderate=x_control, x_pred = NULL, z_pred = N
 
   list(sigma = sdy*fitbcf$sigma,
        yhat = muy + sdy*fitbcf$yhat_post[,order(perm)],
+       mu_pred = con_preds,
+       mod_pred = mod_preds,
+       sdy = sdy,
+       muy = muy,
 #       mu  = m_post,
        tau = tau_post,
        mu_scale = fitbcf$msd*sdy,
