@@ -36,7 +36,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_,
                   double mod_alpha, double mod_beta,
                   CharacterVector treef_name_,
                   int status_interval=100,
-                  bool RJ= false, bool use_mscale=true, bool use_bscale=true, bool b_half_normal=true,
+                  bool RJ= false, bool use_mscale=true, bool use_bscale=true, bool b_half_normal=true, bool prior_sample=false,
                   double trt_init = 1.0)
 {
 
@@ -140,7 +140,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_,
   *****************************************************************************/
   //--------------------------------------------------
   //trees
-  //make trt_init a parameter later
   std::vector<tree> t_mod(ntree_mod);
   for(size_t i=0;i<ntree_mod;i++) t_mod[i].setm(trt_init/(double)ntree_mod);
 
@@ -149,7 +148,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_,
 
   //--------------------------------------------------
   //prior parameters
-  // PX scale parameter for b: b(x) = bscale*b_0(x), bscale ~ N(0,1/bscale_prec)
+  // PX scale parameter for b: 
   double bscale_prec = 2;
   double bscale0 = -0.5;
   double bscale1 = 0.5;
@@ -165,7 +164,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_,
 
   pi_mod.alpha = mod_alpha; //prior prob a bot node splits is alpha/(1+d)^beta, d is depth of node
   pi_mod.beta  = mod_beta;  //2 for bart means it is harder to build big trees.
-  pi_mod.tau   = con_sd/(sqrt(delta_mod)*sqrt((double) ntree_mod)); //sigma_mu, variance on leaf parameters
+  pi_mod.tau   = mod_sd/(sqrt(delta_mod)*sqrt((double) ntree_mod)); //sigma_mu, variance on leaf parameters
   pi_mod.sigma = shat; //resid variance is \sigma^2_y/bscale^2 in the backfitting update
 
   pinfo pi_con;
@@ -296,6 +295,10 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_,
 
   size_t save_ctr = 0;
   for(size_t i=0;i<(nd*thin+burn);i++) {
+    
+    if(prior_sample) {
+      for(int k=0; k<n; k++) y[k] = gen.normal(allfit[k], sigma);
+    }
 
     if(i%status_interval==0) {
       Rcout << "iteration: " << i << " sigma: "<< sigma << endl;
@@ -431,7 +434,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_,
 
 
       // update delta_mod
-      if(b_half_normal) {
+      if(!b_half_normal) {
         double ssq = 0.0;
         tree::npv bnv;
         typedef tree::npv::size_type bvsz;
@@ -465,7 +468,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_,
     // where w_i = \sigma^2_y/b(x_i)^2
     //       r_i = (y_i-m(x_i))/b(x)
 
-    if(use_mscale) {
+  if(use_mscale) {
       double ww = 0.;
       double rw = 0.;
       double s2 = sigma*sigma;
