@@ -259,7 +259,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
                         ntree_moderate, ntree_control, lambda, nu,
                         con_sd = ifelse(abs(2*sdy - sd_control)<1e-6, 2, sd_control/sdy),
                         mod_sd = ifelse(abs(sdy - sd_moderate)<1e-6, 1, sd_moderate/sdy)/ifelse(use_tauscale,0.674,1), # if HN make sd_moderate the prior median
-                        base_moderate, power_moderate, base_control, power_control,
+                        base_control, power_control, base_moderate, power_moderate, 
                         "tmp", status_interval = update_interval,
                         use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE)
 
