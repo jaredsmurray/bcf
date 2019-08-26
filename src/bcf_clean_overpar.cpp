@@ -27,7 +27,8 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
-                  NumericVector x_con_, NumericVector x_mod_, NumericVector x_mod_est_,
+                  NumericVector x_con_, NumericVector x_mod_, 
+                  NumericVector x_mod_est_, NumericVector x_con_est_,
                   List x_con_info_list, List x_mod_info_list, 
                   arma::mat random_des, //needs to come in with n rows no matter what(?)
                   arma::mat random_var, arma::mat random_var_ix, //random_var_ix*random_var = diag(Var(random effects))
@@ -268,6 +269,25 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_mod_est.y=0; //there are no y's!
   di_mod_est.w = w;
 
+ //--------------------------------------------------
+  //dinfo and design for trt effect function out of sample
+  //x for predictions
+  dinfo di_con_est; //data information for prediction
+  std::vector<double> x_con_est;     //stored like x
+  size_t n_con_est;
+  //  if(x_mod_est_.size()) {
+  for(NumericVector::iterator it=x_con_est_.begin(); it!=x_con_est_.end(); ++it) {
+    x_con_est.push_back(*it);
+  }
+  n_con_est = x_con_est.size()/p_con;
+//  Rcout << "n_mod_est " << n_mod_est << std::endl;
+  if(x_con_est.size() != n_con_est*p_con) stop("error, wrong number of elements in effect estimate data set\n");
+  //if(n_mod_est)
+  di_con_est.n=n_con_est; 
+  di_con_est.p=p_con; 
+  di_con_est.x = &x_con_est[0]; 
+  di_con_est.y=0; //there are no y's!
+  di_con_est.w = w;
 
   //  }
   //--------------------------------------------------
@@ -976,7 +996,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   treef_con.close();
   treef_mod.close();
 
-  return(List::create(_["yhat_post"] = yhat_post, _["b_post"] = b_post, _["b_est_post"] = b_est_post,
+  return(List::create(_["yhat_post"] = yhat_post, _["m_post"] = m_post, _["b_post"] = b_post,
+                      _["b_est_post"] = b_est_post,
                       _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post,
                       _["gamma"] = gamma_post, _["random_var_post"] = random_var_post
   ));

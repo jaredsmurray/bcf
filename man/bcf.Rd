@@ -4,8 +4,8 @@
 \alias{bcf}
 \title{Fit Bayesian Causal Forests}
 \usage{
-bcf(y, z, x_control, x_moderate = x_control, x_pred = NULL,
-  z_pred = NULL, pihat, pi_pred, w = NULL,
+bcf(y, z, x_control, x_moderate = x_control, pihat, z_pred = NULL,
+  x_pred_moderate = NULL, x_pred_control = NULL, pi_pred, w = NULL,
   n_threads = RcppParallel::defaultNumThreads()/2, nburn, nsim,
   nthin = 1, update_interval = 100, ntree_control = 200,
   sd_control = 2 * sd(y), base_control = 0.95, power_control = 2,
@@ -23,13 +23,15 @@ bcf(y, z, x_control, x_moderate = x_control, x_pred = NULL,
 
 \item{x_moderate}{Design matrix for the covariate-dependent treatment effects tau(x)}
 
-\item{x_pred}{matrix of covariates for predictions (optional)}
+\item{pihat}{Length n estimates of propensity score}
 
 \item{z_pred}{Treatment variable for predictions (optional except if x_pre is not empty)}
 
-\item{pihat}{Length n estimates of}
+\item{x_pred_moderate}{matrix of covariates for the covariate-dependent treatment effects tau(x) for predictions (optional)}
 
-\item{pi_pred}{pi for prediction}
+\item{x_pred_control}{matrix of covariates for the "prognostic" function mu(x) for predictions (optional)}
+
+\item{pi_pred}{propensity score for prediction}
 
 \item{w}{An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.}
 
