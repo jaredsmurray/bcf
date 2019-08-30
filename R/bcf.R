@@ -361,7 +361,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
     con_preds_noscale = sdy*con_preds
     mu_preds = con_preds_noscale*fitbcf$msd/con_sd
 
-    yhat_preds = muy + mu_preds + tau_preds
+    yhat_preds = muy + mu_preds + tau_preds*z_pred
     
   }else{
     y_preds = NULL
