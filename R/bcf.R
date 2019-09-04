@@ -358,7 +358,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
     cons = TreeSamples$new()
     cons$load("con_trees.txt")
     con_preds = cons$predict(t(x_pc))
-    con_preds_noscale = sdy*con_preds
+    con_preds_noscale = con_preds*sdy
     mu_preds = con_preds_noscale*fitbcf$msd/con_sd
 
     yhat_preds = muy + mu_preds + tau_preds*z_pred
