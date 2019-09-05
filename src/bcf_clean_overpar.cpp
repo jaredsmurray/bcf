@@ -13,11 +13,11 @@
 #include "logging.h"
 
 using namespace Rcpp;
-
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wcomment"
-#pragma GCC diagnostic ignored "-Wformat"
-#pragma GCC diagnostic ignored "-Wsign-compare"
+// Rstudios check's suggest not ignoring these
+// #pragma GCC diagnostic ignored "-Wunused-parameter"
+// #pragma GCC diagnostic ignored "-Wcomment"
+// #pragma GCC diagnostic ignored "-Wformat"
+// #pragma GCC diagnostic ignored "-Wsign-compare"
 
 // y = m(x) + b(x)z + e, e~N(0, sigma^2_y
 
@@ -93,19 +93,20 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   std::vector<double> y; //storage for y
   double miny = INFINITY, maxy = -INFINITY;
   sinfo allys;       //sufficient stats for all of y, use to initialize the bart trees.
+  double allys_y2 = 0;
 
   for(NumericVector::iterator it=y_.begin(); it!=y_.end(); ++it) {
     y.push_back(*it);
     if(*it<miny) miny=*it;
     if(*it>maxy) maxy=*it;
     allys.sy += *it; // sum of y
-    allys.sy2 += (*it)*(*it); // sum of y^2
+    allys_y2 += (*it)*(*it); // sum of y^2
   }
   size_t n = y.size();
   allys.n = n;
 
   double ybar = allys.sy/n; //sample mean
-  double shat = sqrt((allys.sy2-n*ybar*ybar)/(n-1)); //sample standard deviation
+  double shat = sqrt((allys_y2-n*ybar*ybar)/(n-1)); //sample standard deviation
   /*****************************************************************************
   /* Read, format  weights 
   *****************************************************************************/
@@ -231,7 +232,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_con.p = p_con; 
   di_con.x = &x_con[0]; 
   di_con.y = r_con; //the y for each draw will be the residual
-  di_con.w = w;
 
   //--------------------------------------------------
   //dinfo for trt effect function b(x)
@@ -243,7 +243,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_mod.p=p_mod; 
   di_mod.x = &x_mod[0]; 
   di_mod.y = r_mod; //the y for each draw will be the residual
-  di_mod.w = w;
 
   //--------------------------------------------------
   //dinfo and design for trt effect function out of sample
@@ -263,7 +262,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_mod_est.p=p_mod; 
   di_mod_est.x = &x_mod_est[0]; 
   di_mod_est.y=0; //there are no y's!
-  di_mod_est.w = w;
 
 
   //  }

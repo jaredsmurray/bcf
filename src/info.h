@@ -6,12 +6,11 @@
 //data
 class dinfo {
 public:
-   dinfo() {p=0;n=0;x=0;y=0;w=0;}
+   dinfo() {p=0;n=0;x=0;y=0;}
    size_t p;  //number of vars
    size_t n;  //number of observations
    double *x; // jth var of ith obs is *(x + p*i+j)
    double *y; // ith y is *(y+i) or y[i]
-   double *w;
 };
 
 //prior and mcmc
@@ -42,11 +41,10 @@ public:
 class sinfo
 {
 public:
-   sinfo() {n0=0.0;n=0;sy=0.0;sy2=0.0;}
+   sinfo() {n0=0.0;n=0;sy=0.0;}
    double n0; //unweighted sample counts
    double n;
    double sy;
-   double sy2;
 };
 
 #endif

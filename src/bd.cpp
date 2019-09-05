@@ -106,9 +106,9 @@ bool bd(tree& x, xinfo& xi, dinfo& di, double* phi, pinfo& pi, RNG& gen, Logger 
       double alpha=0.0,alpha1=0.0,alpha2=0.0;
       double lill=0.0,lilr=0.0,lilt=0.0;
       if((sl.n0>4) && (sr.n0>4)) { //do we actually want this? yep
-         lill = lil(sl.n,sl.sy,sl.sy2,pi.sigma,pi.tau);
-         lilr = lil(sr.n,sr.sy,sr.sy2,pi.sigma,pi.tau);
-         lilt = lil(sl.n+sr.n,sl.sy+sr.sy,sl.sy2+sr.sy2,pi.sigma,pi.tau);
+         lill = lil(sl.n,sl.sy,pi.sigma,pi.tau);
+         lilr = lil(sr.n,sr.sy,pi.sigma,pi.tau);
+         lilt = lil(sl.n+sr.n,sl.sy+sr.sy,pi.sigma,pi.tau);
    
          alpha1 = (PGnx*(1.0-PGly)*(1.0-PGry)*PDy*Pnogy)/((1.0-PGnx)*PBx*Pbotx); //alpha1 = prior*proposal prob
          alpha2 = alpha1*exp(lill+lilr-lilt); //alpha2 = (prior*proposal prob) * (likelihood)
@@ -117,18 +117,6 @@ bool bd(tree& x, xinfo& xi, dinfo& di, double* phi, pinfo& pi, RNG& gen, Logger 
          alpha=0.0;
       }
       
-      /*
-      cout << "sigma, tau: " << pi.sigma << ", " << pi.tau << endl;
-      cout << "birth prop: node, v, c: " << nx->nid() << ", " << v << ", " << c << "," << xi[v][c] << endl;
-      cout << "L,U: " << L << "," << U << endl;
-      cout << "PBx, PGnx, PGly, PGry, PDy, Pnogy,Pbotx:" <<
-         PBx << "," << PGnx << "," << PGly << "," << PGry << "," << PDy <<
-         ", " << Pnogy << "," << Pbotx << endl;
-      cout << "left ss: " << sl.n << ", " << sl.sy << ", " << sl.sy2 << endl;
-      cout << "right ss: " << sr.n << ", " << sr.sy << ", " << sr.sy2 << endl;
-      cout << "lill, lilr, lilt: " << lill << ", " << lilr << ", " << lilt << endl;
-      cout << "alphas: " << alpha1 << ", " << alpha2 << ", " << alpha << endl;
-      */
 
       //--------------------------------------------------
       //finally ready to try metrop
@@ -209,32 +197,14 @@ bool bd(tree& x, xinfo& xi, dinfo& di, double* phi, pinfo& pi, RNG& gen, Logger 
       //--------------------------------------------------
       //compute alpha
 
-      double lill = lil(sl.n,sl.sy,sl.sy2,pi.sigma,pi.tau);
-      double lilr = lil(sr.n,sr.sy,sr.sy2,pi.sigma,pi.tau);
-      double lilt = lil(sl.n+sr.n,sl.sy+sr.sy,sl.sy2+sr.sy2,pi.sigma,pi.tau);
+      double lill = lil(sl.n,sl.sy,pi.sigma,pi.tau);
+      double lilr = lil(sr.n,sr.sy,pi.sigma,pi.tau);
+      double lilt = lil(sl.n+sr.n,sl.sy+sr.sy,pi.sigma,pi.tau);
 
       double alpha1 = ((1.0-PGny)*PBy*Pboty)/(PGny*(1.0-PGlx)*(1.0-PGrx)*PDx*Pnogx);
       double alpha2 = alpha1*exp(lilt - lill - lilr);
       double alpha = std::min(1.0,alpha2);
 
-      /*
-      cout << "death prop: " << nx->nid() << endl;
-      cout << "nognds.size(), ni, nx: " << nognds.size() << ", " << ni << ", " << nx << endl;
-      cout << "depth of nog node: " << dny << endl;
-      cout << "PGny: " << PGny << endl;
-      cout << "PGlx: " << PGlx << endl;
-      cout << "PGrx: " << PGrx << endl;
-      cout << "PBy: " << PBy << endl;
-      cout << "Pboty: " << Pboty << endl;
-      cout << "PDx: " << PDx << endl;
-      cout << "Pnogx: " << Pnogx << endl;
-      cout << "left ss: " << sl.n << ", " << sl.sy << ", " << sl.sy2 << endl;
-      cout << "right ss: " << sr.n << ", " << sr.sy << ", " << sr.sy2 << endl;
-      cout << "lill, lilr, lilt: " << lill << ", " << lilr << ", " << lilt << endl;
-      cout << "sigma: " << pi.sigma << endl;
-      cout << "tau: " << pi.tau << endl;
-      cout << "alphas: " << alpha1 << ", " << alpha2 << ", " << alpha << endl;
-      */
 
       //--------------------------------------------------
       //finally ready to try metrop

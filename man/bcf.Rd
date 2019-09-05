@@ -5,7 +5,7 @@
 \title{Fit Bayesian Causal Forests}
 \usage{
 bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL,
-  n_threads = RcppParallel::defaultNumThreads()/2, nburn, nsim,
+  n_threads = max(RcppParallel::defaultNumThreads()/2, 1), nburn, nsim,
   nthin = 1, update_interval = 100, ntree_control = 200,
   sd_control = 2 * sd(y), base_control = 0.95, power_control = 2,
   ntree_moderate = 50, sd_moderate = sd(y), base_moderate = 0.25,
