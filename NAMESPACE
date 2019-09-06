@@ -2,6 +2,7 @@
 
 export(TreeSamples)
 export(bcf)
+export(predict)
 export(verify_install)
 import(Rcpp)
 import(RcppArmadillo)
