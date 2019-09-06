@@ -52,11 +52,11 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP _rcpp_module_boot_treesample_module();
+RcppExport SEXP _rcpp_module_boot_TreeSamples();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_bcf2_bcfoverparRcppClean", (DL_FUNC) &_bcf2_bcfoverparRcppClean, 35},
-    {"_rcpp_module_boot_treesample_module", (DL_FUNC) &_rcpp_module_boot_treesample_module, 0},
+    {"_rcpp_module_boot_TreeSamples", (DL_FUNC) &_rcpp_module_boot_TreeSamples, 0},
     {NULL, NULL, 0}
 };
 

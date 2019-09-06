@@ -14,13 +14,15 @@
 
 using namespace Rcpp;
 
+
 class TreeSamples {
   public:
   bool init;
   size_t m,p,ndraws;
 	xinfo xi;
 	std::vector<std::vector<tree> > t;
-  
+
+
   void load(CharacterVector treef_name_) {
     Rcout << "Loading...\n";
     std::string treef_name = as<std::string>(treef_name_); 
@@ -137,7 +139,7 @@ class TreeSamples {
   
 };
 
-RCPP_MODULE(treesample_module) {
+RCPP_MODULE(TreeSamples) {
   class_<TreeSamples>( "TreeSamples" )
   .constructor()
   .method( "load", &TreeSamples::load )

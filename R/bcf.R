@@ -29,6 +29,7 @@
   return(ret)
 }
 
+
 #' Fit Bayesian Causal Forests
 #'
 #' @references Hahn, Murray, and Carvalho(2017). Bayesian regression tree models for causal inference: regularization, confounding, and heterogeneous effects.
@@ -171,10 +172,13 @@
 #' plot(tau, tauhat); abline(0,1)
 #'}
 #'
-#' @useDynLib bcf2
+#' @useDynLib bcf2, .registration = TRUE
 #' @import Rcpp RcppArmadillo RcppParallel
 #' @importFrom stats approxfun lm qchisq quantile sd
-#' @export
+#' @export bcf TreeSamples
+
+Rcpp::loadModule(module = "TreeSamples", TRUE)
+
 bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
                 z_pred = NULL, x_pred_moderate = NULL, x_pred_control = NULL, pi_pred, 
                 w = NULL, n_threads = RcppParallel::defaultNumThreads()/2,
@@ -348,7 +352,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
  
   if(!is.null(x_predict_control) & !is.null(x_pred_moderate)){
 
-    sourceCpp("src/TreeSamples.cpp")
+    # sourceCpp("src/TreeSamples.cpp")
     mods = TreeSamples$new()
     mods$load("mod_trees.txt")
     mod_preds = mods$predict(t(x_pm))
