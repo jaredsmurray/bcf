@@ -52,6 +52,9 @@ out2 <- bcf2::bcf(y               = y,
                   use_muscale     = TRUE,
                   use_tauscale    = TRUE)
 
+
+bcf2::predict(out2)
+
 mean_square_error <- function (x,y){
   mean((x-y)^2)
 }

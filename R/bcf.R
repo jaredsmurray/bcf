@@ -355,7 +355,6 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
  
   if(!is.null(x_predict_control) & !is.null(x_pred_moderate)){
 
-    # sourceCpp("src/TreeSamples.cpp")
     mods = TreeSamples$new()
     mods$load("mod_trees.txt")
     mod_preds = mods$predict(t(x_pm))
@@ -381,8 +380,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
   cat("Got predictions")
 
   # Removing tree files
-  unlink("mod_trees.txt")
-  unlink("con_trees.txt")
+#   unlink("mod_trees.txt")
+#   unlink("con_trees.txt")
   unlink("tmp")
 
   list(sigma = sdy*fitbcf$sigma,
@@ -396,7 +395,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
        perm = perm,
        y_preds = yhat_preds,
        tau_preds = tau_preds,
-       mu_preds = mu_preds
+       mu_preds = mu_preds,
+       include_pi = include_pi
   )
 }
 
@@ -407,9 +407,47 @@ verify_install <- function() {
 
 
 #' Predict from Previously Fit Forests 
-#' @param y Response variable
-#' @param z Treatment variable
+#' @param bcf_out output from a BCF predict run
+#' @param x_predict_control New x's you'd like to predict on for control
+#' @param x_pred_moderate New x's you'd like to predict on for control
+#' @param pi_pred New x's you'd like to predict on for control
+#' @param mod_tree_file_name name of text output tree file for the mod trees
+#' @param con_tree_file_name name of text output tree file for the con trees
 #' @export
-predict <- function() {
-    cat("starting BCF Prediction\n")
+predict <- function(bcf_out, 
+                    x_predict_control,
+                    x_pred_moderate,
+                    pi_pred, 
+                    mod_tree_file_name="mod_trees.txt", 
+                    con_tree_file_name="con_trees.txt") {
+
+    cat("Initializing BCF Prediction\n")
+    x_pm = matrix(x_predict_moderate, ncol=ncol(x_predict_moderate))
+    x_pc = matrix(x_predict_control, ncol=ncol(x_predict_control))
+
+    if(bcf_out$include_pi=="both" | bcf_out$include_pi=="control") {
+        x_pc = cbind(x_predict_control, pi_pred)
+    }
+    if(bcf_out$include_pi=="both" | bcf_out$include_pi=="moderate") {
+        x_pm = cbind(x_predict_moderate, pi_pred)
+    }
+
+
+    cat("Starting Prediction \n")
+    mods = TreeSamples$new()
+    mods$load(mod_tree_file_name)
+    mod_preds = mods$predict(t(x_pm))
+    tau_preds_noscale = mod_preds*bcf_out$sdy
+    tau_preds = tau_preds_noscale*fitbcf$bsd/mod_sd
+
+    cons = TreeSamples$new()
+    cons$load(con_tree_file_name)
+    con_preds = cons$predict(t(x_pc))
+    con_preds_noscale = con_preds*sdy
+    mu_preds = muy + con_preds_noscale*fitbcf$msd/con_sd
+    
+    z_matrix = matrix(1,nsim,1)%*%z
+
+
+
 }
