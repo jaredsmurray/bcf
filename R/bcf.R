@@ -61,7 +61,7 @@
 #' @param pihat Length n estimates of
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
 #' @param n_threads An optional integer of the number of threads to parallelize bcf operations on
-#' @param random_seed An optional integer of the number of threads to parallelize bcf operations on
+#' @param random_seed A random seed passed to r's set.seed
 #' @param nburn Number of burn-in MCMC iterations
 #' @param nsim Number of MCMC iterations to save after burn-in
 #' @param nthin Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.

@@ -28,7 +28,7 @@ bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL,
 
 \item{n_threads}{An optional integer of the number of threads to parallelize bcf operations on}
 
-\item{random_seed}{An optional integer of the number of threads to parallelize bcf operations on}
+\item{random_seed}{A random seed passed to r's set.seed}
 
 \item{nburn}{Number of burn-in MCMC iterations}
 
