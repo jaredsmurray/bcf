@@ -52,8 +52,17 @@ out2 <- bcf2::bcf(y               = y,
                   use_muscale     = TRUE,
                   use_tauscale    = TRUE)
 
+cat("BCF run complete\n")
 
-bcf2::predict(out2)
+pred_out = bcf2::predict(bcf_out=out2,
+                         x_predict_control=x,
+                         x_predict_moderate=x,
+                         pi_pred=pi,
+                         z_pred=z)
+
+
+cat("Predictions Compelete\n")
+
 
 mean_square_error <- function (x,y){
   mean((x-y)^2)
@@ -69,37 +78,27 @@ assess_closeness <- function(x,y, title){
   abline(a=0, b=1)
 }
 
-assess_closeness(colMeans(out2$y_preds), colMeans(out2$yhat),'yhat')
+assess_closeness(colMeans(pred_out$yhat_preds), colMeans(out2$yhat),'yhat')
 
-assess_closeness(colMeans(out2$tau_preds), colMeans(out2$tau),'tau')
+assess_closeness(colMeans(pred_out$tau_preds), colMeans(out2$tau),'tau')
 
-assess_closeness(colMeans(out2$mu_preds), colMeans(out2$mu),'mu')
+assess_closeness(colMeans(pred_out$mu_preds), colMeans(out2$mu),'mu')
 
-normal_mu = colMeans(out2$mu)
-
-df <- data.frame(mu_preds = colMeans(out2$mu_preds))
-
-mod = lm(normal_mu ~ mu_preds, data = df)
-print(mod)
-
-assess_closeness(colMeans(out2$mu_preds)+0.1348, colMeans(out2$mu),'mu_mod')
-
-yhat_preds_2 = colMeans(out2$mu_preds) + colMeans(out2$tau_preds)*z
-
-assess_closeness(yhat_preds_2, colMeans(out2$yhat),'yhat_2')
-
-z_matrix = matrix(1,length(out2$tau_scale),1)%*%z
-
-yhat_preds_3 = out2$mu_preds + out2$tau_preds*z_matrix
-
-assess_closeness(colMeans(yhat_preds_3), colMeans(out2$yhat),'yhat_3')
-
-A = matrix( 
-    c(2, 4, 3, 1, 5, 7), # the data elements 
-     nrow=2,              # number of rows 
-     ncol=3,              # number of columns 
-     byrow = TRUE) 
-
-x = c(1,2,0)
-
-b = c(1,2,3,4)
+# normal_mu = colMeans(out2$mu)
+# 
+# df <- data.frame(mu_preds = colMeans(out2$mu_preds))
+# 
+# mod = lm(normal_mu ~ mu_preds, data = df)
+# print(mod)
+# 
+# assess_closeness(colMeans(out2$mu_preds)+0.1348, colMeans(out2$mu),'mu_mod')
+# 
+# yhat_preds_2 = colMeans(out2$mu_preds) + colMeans(out2$tau_preds)*z
+# 
+# assess_closeness(yhat_preds_2, colMeans(out2$yhat),'yhat_2')
+# 
+# z_matrix = matrix(1,length(out2$tau_scale),1)%*%z
+# 
+# yhat_preds_3 = out2$mu_preds + out2$tau_preds*z_matrix
+# 
+# assess_closeness(colMeans(yhat_preds_3), colMeans(out2$yhat),'yhat_3')

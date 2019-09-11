@@ -1,3 +1,9 @@
+#' @useDynLib bcf2
+#' @import Rcpp RcppArmadillo RcppParallel
+#' @importFrom stats approxfun lm qchisq quantile sd
+"_PACKAGE"
+Rcpp::loadModule(module = "TreeSamples", TRUE)
+
 .ident <- function(...){
 # courtesy https://stackoverflow.com/questions/19966515/how-do-i-test-if-three-variables-are-equal-r
   args <- c(...)
@@ -30,12 +36,6 @@
 }
 
 
-#' @export TreeSamples
-
-#' @useDynLib bcf2, .registration = TRUE
-#' @import Rcpp RcppArmadillo RcppParallel
-#' @importFrom stats approxfun lm qchisq quantile sd
-Rcpp::loadModule(module = "TreeSamples", TRUE)
 
 
 
@@ -214,6 +214,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
     stop("If you want to predict, you need to add values to both x_pred_control and x_pred_moderate")
   }
 
+
   pihat = as.matrix(pihat)
   if(!.ident(length(y),
              length(z),
@@ -387,6 +388,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
   list(sigma = sdy*fitbcf$sigma,
        yhat = muy + sdy*fitbcf$yhat_post[,order(perm)],
        sdy = sdy,
+       con_sd = con_sd,
+       mod_sd = mod_sd,
        muy = muy,
        mu  = m_post,
        tau = tau_post,
@@ -408,18 +411,48 @@ verify_install <- function() {
 
 #' Predict from Previously Fit Forests 
 #' @param bcf_out output from a BCF predict run
-#' @param x_predict_control New x's you'd like to predict on for control
-#' @param x_pred_moderate New x's you'd like to predict on for control
-#' @param pi_pred New x's you'd like to predict on for control
+#' @param x_predict_control matrix of covariates for the "prognostic" function mu(x) for predictions (optional)
+#' @param x_predict_moderate matrix of covariates for the covariate-dependent treatment effects tau(x) for predictions (optional)
+#' @param z_pred Treatment variable for predictions (optional except if x_pre is not empty)
+#' @param pi_pred propensity score for prediction
 #' @param mod_tree_file_name name of text output tree file for the mod trees
 #' @param con_tree_file_name name of text output tree file for the con trees
 #' @export
 predict <- function(bcf_out, 
                     x_predict_control,
-                    x_pred_moderate,
-                    pi_pred, 
+                    x_predict_moderate,
+                    pi_pred,
+                    z_pred, 
                     mod_tree_file_name="mod_trees.txt", 
                     con_tree_file_name="con_trees.txt") {
+
+
+    if(any(is.na(x_predict_moderate))) stop("Missing values in x_predict_moderate")
+    if(any(is.na(x_predict_control))) stop("Missing values in x_predict_control")
+    if(any(is.na(z_pred))) stop("Missing values in z_pred")
+    if(any(!is.finite(x_predict_moderate))) stop("Non-numeric values in x_pred_moderate")
+    if(any(!is.finite(x_predict_control))) stop("Non-numeric values in x_pred_control")
+    if(any(!is.finite(pi_pred))) stop("Non-numeric values in pi_pred")
+    if(!all(sort(unique(z_pred)) == c(0,1))) stop("z_pred must be a vector of 0's and 1's, with at least one of each")
+
+    if((is.null(x_predict_moderate) & !is.null(x_predict_control)) | (!is.null(x_predict_moderate) & is.null(x_predict_control))) {
+        stop("If you want to predict, you need to add values to both x_pred_control and x_pred_moderate")
+    }
+
+    pi_pred = as.matrix(pi_pred)
+    if(!.ident(length(z_pred),
+                nrow(x_predict_moderate),
+                nrow(x_predict_control),
+                nrow(pi_pred))
+        ) {
+        stop("Data size mismatch. The following should all be equal:
+            length(z_pred): ", length(z_pred), "\n",
+            "nrow(x_pred_moderate): ", nrow(x_predict_moderate), "\n",
+            "nrow(x_pred_control): ", nrow(x_predict_control), "\n",
+            "nrow(pi_pred): ", nrow(pi_pred), "\n"
+        )
+    }
+
 
     cat("Initializing BCF Prediction\n")
     x_pm = matrix(x_predict_moderate, ncol=ncol(x_predict_moderate))
@@ -434,20 +467,29 @@ predict <- function(bcf_out,
 
 
     cat("Starting Prediction \n")
+    cat(x_pc[1:5], "\n")
+    cat(x_pm[1:5], "\n")
+
     mods = TreeSamples$new()
     mods$load(mod_tree_file_name)
     mod_preds = mods$predict(t(x_pm))
-    tau_preds_noscale = mod_preds*bcf_out$sdy
-    tau_preds = tau_preds_noscale*fitbcf$bsd/mod_sd
+    tau_preds = mod_preds*bcf_out$tau_scale/bcf_out$mod_sd
+
+    cat(mod_preds[1:5], "\n")
+    cat(tau_preds[1:5], "\n")
 
     cons = TreeSamples$new()
     cons$load(con_tree_file_name)
     con_preds = cons$predict(t(x_pc))
-    con_preds_noscale = con_preds*sdy
-    mu_preds = muy + con_preds_noscale*fitbcf$msd/con_sd
+    mu_preds = bcf_out$muy + con_preds*bcf_out$mu_scale/bcf_out$con_sd
     
-    z_matrix = matrix(1,nsim,1)%*%z
+    cat(con_preds[1:5], "\n")
+    cat(mu_preds[1:5], "\n")
+
+    yhat_preds = mu_preds + t(t(tau_preds)*z_pred)
 
 
-
+    list(tau_preds = tau_preds,
+         mu_preds = mu_preds,
+         yhat_preds = yhat_preds)
 }

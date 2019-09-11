@@ -2,6 +2,6 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 bcfoverparRcppClean <- function(y_, z_, w_, x_con_, x_mod_, x_mod_est_, x_con_est_, x_con_info_list, x_mod_info_list, random_des, random_var, random_var_ix, random_var_df, burn, nd, thin, ntree_mod, ntree_con, lambda, nu, con_sd, mod_sd, con_alpha, con_beta, mod_alpha, mod_beta, treef_con_name_, treef_mod_name_, status_interval = 100L, RJ = FALSE, use_mscale = TRUE, use_bscale = TRUE, b_half_normal = TRUE, trt_init = 1.0, verbose_sigma = FALSE) {
-    .Call(`_bcf2_bcfoverparRcppClean`, y_, z_, w_, x_con_, x_mod_, x_mod_est_, x_con_est_, x_con_info_list, x_mod_info_list, random_des, random_var, random_var_ix, random_var_df, burn, nd, thin, ntree_mod, ntree_con, lambda, nu, con_sd, mod_sd, con_alpha, con_beta, mod_alpha, mod_beta, treef_con_name_, treef_mod_name_, status_interval, RJ, use_mscale, use_bscale, b_half_normal, trt_init, verbose_sigma)
+    .Call('_bcf2_bcfoverparRcppClean', PACKAGE = 'bcf2', y_, z_, w_, x_con_, x_mod_, x_mod_est_, x_con_est_, x_con_info_list, x_mod_info_list, random_des, random_var, random_var_ix, random_var_df, burn, nd, thin, ntree_mod, ntree_con, lambda, nu, con_sd, mod_sd, con_alpha, con_beta, mod_alpha, mod_beta, treef_con_name_, treef_mod_name_, status_interval, RJ, use_mscale, use_bscale, b_half_normal, trt_init, verbose_sigma)
 }
 
