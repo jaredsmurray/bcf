@@ -42,11 +42,8 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 tmp
-<<<<<<< HEAD
-scripts/
 *.vscode/
 *.pdf
-=======
 
 # Prerequisites
 *.d
@@ -81,10 +78,4 @@ scripts/
 *.out
 *.app
 
-Testing scripts
-scripts/
-<<<<<<< HEAD
->>>>>>> 9345fd607a91c7de91c353004aefc440cfb24d89
-=======
 inst/doc
->>>>>>> b4571c926a12ca9392e16dc57f63f5dd3c1af33b
