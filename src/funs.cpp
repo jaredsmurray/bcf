@@ -203,16 +203,15 @@ struct AllSuffWorker: public Worker
 	tree& x;
 	xinfo& xi;
 	dinfo& di;
+	size_t nb;
 	std::map<tree::tree_cp,size_t> bnmap;
 	double* weight;
-	size_t nb;
 
 	// -------------------
 	// Internal State
 	// -------------------
 	double n;
 	double sy;
-	double sy2;
 	double n0;
 
 	std::vector<sinfo> sv_tmp;
@@ -226,18 +225,16 @@ struct AllSuffWorker: public Worker
 								dinfo& di,
 								std::map<tree::tree_cp,size_t> bnmap,
 								size_t nb,
-								double* weight):x(x),xi(xi),di(di),bnmap(bnmap),nb(nb),weight(weight) {
+								double* weight):x(x),xi(xi),di(di),nb(nb),bnmap(bnmap),weight(weight) {
 		n=0.0;
 		sy=0.0;
-		sy2=0.0;
 		n0=0.0;
 		sv_tmp.resize(nb);
 	}
 
-	AllSuffWorker(const AllSuffWorker& asw, Split):x(asw.x),xi(asw.xi),di(asw.di),bnmap(asw.bnmap),nb(asw.nb),weight(asw.weight) {
+	AllSuffWorker(const AllSuffWorker& asw, Split):x(asw.x),xi(asw.xi),di(asw.di),nb(asw.nb),bnmap(asw.bnmap),weight(asw.weight) {
 		n=0.0;
 		sy=0.0;
-		sy2=0.0;
 		n0=0.0;
 		sv_tmp.resize(nb);
 	}
@@ -252,7 +249,6 @@ struct AllSuffWorker: public Worker
 			sv_tmp[ni].n0 += 1;
 			sv_tmp[ni].n += weight[i];
 			sv_tmp[ni].sy += weight[i]*y;
-			sv_tmp[ni].sy2 += weight[i]*y*y;
 
 		}
 	}
@@ -261,7 +257,6 @@ struct AllSuffWorker: public Worker
 			sv_tmp[i].n0  += asw.sv_tmp[i].n0;  
 			sv_tmp[i].n   += asw.sv_tmp[i].n;
 			sv_tmp[i].sy  += asw.sv_tmp[i].sy; 
-			sv_tmp[i].sy2 += asw.sv_tmp[i].sy2;
 		}
 	}
 
@@ -311,7 +306,6 @@ void allsuff(tree& x,
 			sv[i].n0  += asw.sv_tmp[i].n0;  
 			sv[i].n   += asw.sv_tmp[i].n;
 			sv[i].sy  += asw.sv_tmp[i].sy; 
-			sv[i].sy2 += asw.sv_tmp[i].sy2;
 	}
 }
 
@@ -546,12 +540,10 @@ double* phi;
 // -------------------
 double l_n;
 double l_sy;
-double l_sy2;
 double l_n0;
 
 double r_n;
 double r_sy;
-double r_sy2;
 double r_n0;
 
 double *xx;//current x
@@ -569,14 +561,12 @@ GetSuffWorker(tree& x,
 							dinfo& di,
 							double* phi):x(x),nx(nx),v(v),c(c),xi(xi),di(di),phi(phi) {
 
-  l_n=0.0;
+    l_n=0.0;
 	l_sy=0.0;
-	l_sy2=0.0;
 	l_n0=0.0;
 
 	r_n=0.0;
 	r_sy=0.0;
-	r_sy2=0.0;
 	r_n0=0.0;
 } 
 // Splitting Constructor
@@ -584,12 +574,10 @@ GetSuffWorker(const GetSuffWorker& gsw, Split):x(gsw.x),nx(gsw.nx),v(gsw.v),c(gs
 
 	l_n=0.0;
 	l_sy=0.0;
-	l_sy2=0.0;
 	l_n0=0.0;
 
 	r_n=0.0;
 	r_sy=0.0;
-	r_sy2=0.0;
 	r_n0=0.0;
 } 
 
@@ -599,15 +587,13 @@ void operator()(std::size_t begin, std::size_t end){
 		if(nx==x.bn(xx,xi)) { //does the bottom node = xx's bottom node
 			y = di.y[i];
 			if(xx[v] < xi[v][c]) {
-        l_n0 += 1;
+        		l_n0 += 1;
 				l_n += phi[i];
 				l_sy += phi[i]*y;
-				l_sy2 += phi[i]*y*y;
 			} else {
-       	r_n0 += 1;
+       			r_n0 += 1;
 				r_n += phi[i];
 				r_sy += phi[i]*y;
-				r_sy2 += phi[i]*y*y;
 			}
 		}
 	}
@@ -616,12 +602,10 @@ void operator()(std::size_t begin, std::size_t end){
 void join(const GetSuffWorker& gsw){
 	l_n   += gsw.l_n;
 	l_sy  += gsw.l_sy;
-	l_sy2 += gsw.l_sy2;
 	l_n0  += gsw.l_n0;
 
 	r_n   += gsw.r_n;
 	r_sy  += gsw.r_sy;
-	r_sy2 += gsw.r_sy2;
 	r_n0  += gsw.r_n0;
 }
 
@@ -637,12 +621,10 @@ void getsuff(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di
 
 	sl.n   = gsw.l_n;
 	sl.sy  = gsw.l_sy;
-	sl.sy2 = gsw.l_sy2;
 	sl.n0  = gsw.l_n0;
 
 	sr.n   = gsw.r_n;
 	sr.sy  = gsw.r_sy;
-	sr.sy2 = gsw.r_sy2;
 	sr.n0  = gsw.r_n0;
 
 	
@@ -659,8 +641,8 @@ void getsuff(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, 
 {
   double *xx;//current x
 	double y;  //current y
-	sl.n=0;sl.sy=0.0;sl.sy2=0.0;
-	sr.n=0;sr.sy=0.0;sr.sy2=0.0;
+	sl.n=0;sl.sy=0.0;
+	sr.n=0;sr.sy=0.0;
 	
 	for(size_t i=0;i<di.n;i++) {
 		xx = di.x + i*di.p;
@@ -669,13 +651,11 @@ void getsuff(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, 
 			y = di.y[i];
 			sl.n += phi[i];
 			sl.sy += phi[i]*y;
-			sl.sy2 += phi[i]*y*y;
 		}
 		if(bn==nr) {
 			y = di.y[i];
 			sr.n += phi[i];
 			sr.sy += phi[i]*y;
-			sr.sy2 += phi[i]*y*y;
 		}
 	}
 }
@@ -921,7 +901,7 @@ void MPIslavegetsuff(tree& x, xinfo& xi, dinfo& di)
 #endif
 //--------------------------------------------------
 //log of the integrated likelihood
-double lil(double n, double sy, double sy2, double sigma, double tau)
+double lil(double n, double sy, double sigma, double tau)
 {
   double d = 1/(tau*tau) + n;// n is \sum phi_i for het
   
@@ -933,14 +913,14 @@ double lil(double n, double sy, double sy2, double sigma, double tau)
 struct FitWorker : public Worker
 {
    // source arguments
-  std::vector<double>& fv; // node means
-	dinfo& di; // number of observations from dinfo
+  	tree& t; // tree
 	xinfo& xi; // split rules from xinfo
-	tree& t; // tree
-
+	dinfo& di; // number of observations from dinfo
 	// internal args
 	double *xx;
 	tree::tree_cp bn;
+	std::vector<double>& fv; // node means
+
    
    // constructing the constructor
    FitWorker(tree& t, 

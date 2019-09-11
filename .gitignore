@@ -5,7 +5,6 @@ mod_trees.txt
 # History files
 .Rhistory
 .Rapp.history
-.Rbuildignore
 *.Rproj
 # Session Data files
 .RData
@@ -84,4 +83,8 @@ scripts/
 
 Testing scripts
 scripts/
+<<<<<<< HEAD
 >>>>>>> 9345fd607a91c7de91c353004aefc440cfb24d89
+=======
+inst/doc
+>>>>>>> b4571c926a12ca9392e16dc57f63f5dd3c1af33b
