@@ -4,18 +4,20 @@
 \alias{predict}
 \title{Predict from Previously Fit Forests}
 \usage{
-predict(bcf_out, x_predict_control, x_pred_moderate, pi_pred,
+predict(bcf_out, x_predict_control, x_predict_moderate, pi_pred, z_pred,
   mod_tree_file_name = "mod_trees.txt",
   con_tree_file_name = "con_trees.txt")
 }
 \arguments{
 \item{bcf_out}{output from a BCF predict run}
 
-\item{x_predict_control}{New x's you'd like to predict on for control}
+\item{x_predict_control}{matrix of covariates for the "prognostic" function mu(x) for predictions (optional)}
 
-\item{x_pred_moderate}{New x's you'd like to predict on for control}
+\item{x_predict_moderate}{matrix of covariates for the covariate-dependent treatment effects tau(x) for predictions (optional)}
 
-\item{pi_pred}{New x's you'd like to predict on for control}
+\item{pi_pred}{propensity score for prediction}
+
+\item{z_pred}{Treatment variable for predictions (optional except if x_pre is not empty)}
 
 \item{mod_tree_file_name}{name of text output tree file for the mod trees}
 

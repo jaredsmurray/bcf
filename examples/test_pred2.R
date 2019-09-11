@@ -84,21 +84,3 @@ assess_closeness(colMeans(pred_out$tau_preds), colMeans(out2$tau),'tau')
 
 assess_closeness(colMeans(pred_out$mu_preds), colMeans(out2$mu),'mu')
 
-# normal_mu = colMeans(out2$mu)
-# 
-# df <- data.frame(mu_preds = colMeans(out2$mu_preds))
-# 
-# mod = lm(normal_mu ~ mu_preds, data = df)
-# print(mod)
-# 
-# assess_closeness(colMeans(out2$mu_preds)+0.1348, colMeans(out2$mu),'mu_mod')
-# 
-# yhat_preds_2 = colMeans(out2$mu_preds) + colMeans(out2$tau_preds)*z
-# 
-# assess_closeness(yhat_preds_2, colMeans(out2$yhat),'yhat_2')
-# 
-# z_matrix = matrix(1,length(out2$tau_scale),1)%*%z
-# 
-# yhat_preds_3 = out2$mu_preds + out2$tau_preds*z_matrix
-# 
-# assess_closeness(colMeans(yhat_preds_3), colMeans(out2$yhat),'yhat_3')

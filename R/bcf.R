@@ -322,7 +322,6 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
   cat("Calling bcfoverparRcppClean From R\n")
   fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], w[perm],
                         t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), 
-                        t(x_pm[1,,drop=FALSE]), t(x_pc[1,,drop=FALSE]),
                         cutpoint_list_c, cutpoint_list_m,
                         random_des = matrix(1),
                         random_var = matrix(1),
