@@ -69,10 +69,6 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param x_control Design matrix for the "prognostic" function mu(x)
 #' @param x_moderate Design matrix for the covariate-dependent treatment effects tau(x)
 #' @param pihat Length n estimates of propensity score
-#' @param z_pred Treatment variable for predictions (optional except if x_pre is not empty)
-#' @param x_pred_control matrix of covariates for the "prognostic" function mu(x) for predictions (optional)
-#' @param x_pred_moderate matrix of covariates for the covariate-dependent treatment effects tau(x) for predictions (optional)
-#' @param pi_pred propensity score for prediction
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
 #' @param n_threads An optional integer of the number of threads to parallelize bcf operations on
 #' @param nburn Number of burn-in MCMC iterations
@@ -183,7 +179,6 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #'
 #' @export
 bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
-                z_pred = NULL, x_pred_moderate = NULL, x_pred_control = NULL, pi_pred, 
                 w = NULL, n_threads = RcppParallel::defaultNumThreads()/2,
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
@@ -202,17 +197,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
     w <- matrix(1, ncol = 1, nrow = length(y))
     }
 
-  if(is.null(x_pred_moderate) & is.null(x_pred_control)){
-      x_predict_moderate <- x_moderate
-      x_predict_control  <- x_control
-    }else{
-      x_predict_moderate <- x_pred_moderate
-      x_predict_control     <- x_pred_control
-    }
 
-  if((is.null(x_pred_moderate) & !is.null(x_pred_control)) | (!is.null(x_pred_moderate) & is.null(x_pred_control))) {
-    stop("If you want to predict, you need to add values to both x_pred_control and x_pred_moderate")
-  }
 
 
   pihat = as.matrix(pihat)
@@ -233,41 +218,19 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
     )
   }
 
-  pi_pred = as.matrix(pi_pred)
-  if(!.ident(length(z_pred),
-             nrow(x_pred_moderate),
-             nrow(x_pred_control),
-             nrow(pi_pred))
-    ) {
-    stop("Data size mismatch. The following should all be equal:
-         length(z_pred): ", length(z_pred), "\n",
-         "nrow(x_pred_moderate): ", nrow(x_pred_moderate), "\n",
-         "nrow(x_pred_control): ", nrow(x_pred_control), "\n",
-         "nrow(pi_pred): ", nrow(pi_pred), "\n"
-    )
-  }
-
   if(any(is.na(y))) stop("Missing values in y")
   if(any(is.na(z))) stop("Missing values in z")
-  if(any(is.na(z_pred))) stop("Missing values in z_pred")
   if(any(is.na(w))) stop("Missing values in w")
   if(any(is.na(x_control))) stop("Missing values in x_control")
   if(any(is.na(x_moderate))) stop("Missing values in x_moderate")
   if(any(is.na(pihat))) stop("Missing values in pihat")
-  if(any(is.na(x_predict_moderate))) stop("Missing values in x_pred")
-  if(any(is.na(x_predict_control))) stop("Missing values in x_pred")
-
   if(any(!is.finite(y))) stop("Non-numeric values in y")
   if(any(!is.finite(z))) stop("Non-numeric values in z")
   if(any(!is.finite(w))) stop("Non-numeric values in w")
   if(any(!is.finite(x_control))) stop("Non-numeric values in x_control")
   if(any(!is.finite(x_moderate))) stop("Non-numeric values in x_moderate")
   if(any(!is.finite(pihat))) stop("Non-numeric values in pihat")
-  if(any(!is.finite(x_predict_moderate))) stop("Non-numeric values in x_pred_moderate")
-  if(any(!is.finite(x_predict_control))) stop("Non-numeric values in x_pred_control")
-  if(any(!is.finite(pi_pred))) stop("Non-numeric values in pi_pred")
   if(!all(sort(unique(z)) == c(0,1))) stop("z must be a vector of 0's and 1's, with at least one of each")
-  if(!all(sort(unique(z_pred)) == c(0,1))) stop("z_pred must be a vector of 0's and 1's, with at least one of each")
 
   if(length(unique(y))<5) warning("y appears to be discrete")
 
@@ -282,16 +245,12 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
   ###
   x_c = matrix(x_control, ncol=ncol(x_control))
   x_m = matrix(x_moderate, ncol=ncol(x_moderate))
-  x_pm = matrix(x_predict_moderate, ncol=ncol(x_predict_moderate))
-  x_pc = matrix(x_predict_control, ncol=ncol(x_predict_control))
 
   if(include_pi=="both" | include_pi=="control") {
     x_c = cbind(x_control, pihat)
-    x_pc = cbind(x_predict_control, pi_pred)
   }
   if(include_pi=="both" | include_pi=="moderate") {
     x_m = cbind(x_moderate, pihat)
-    x_pm = cbind(x_predict_moderate, pi_pred)
   }
   cutpoint_list_c = lapply(1:ncol(x_c), function(i) .cp_quantile(x_c[,i]))
   cutpoint_list_m = lapply(1:ncol(x_m), function(i) .cp_quantile(x_m[,i]))
@@ -337,52 +296,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
   cat(" bcfoverparRcppClean returned to R\n")
 
 
-  #B = drop(fit$post_B)
-  #B0 = fit$b0
-  #EYs = fit$post_yhat
-
-  #return(List::create(_["m_post"] = m_post, _["b_post"] = b_post, _["b_est_post"] = b_est_post,
-  #                     _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post,
-  #                     _["gamma"] = gamma_post, _["random_var_post"] = random_var_post
 
   m_post = muy + sdy*fitbcf$m_post[,order(perm)]
   tau_post = sdy*fitbcf$b_post[,order(perm)]
-  #yhat_post = muy + sdy*fitbcf$m_post
-  #yhat_post[,z==1] = yhat_post[,z==1] + fitbcf$b_post
-  #yhat_post = (muy + sdy*fitbcf$m_post)
-  #yhat_post[,z[perm]==1] = yhat_post[,z[perm]==1] + sdy*fitbcf$b_post
-  #yhat_post = yhat_post[,order(perm)]
- 
-  if(!is.null(x_predict_control) & !is.null(x_pred_moderate)){
-
-    mods = TreeSamples$new()
-    mods$load("mod_trees.txt")
-    mod_preds = mods$predict(t(x_pm))
-    tau_preds_noscale = mod_preds*sdy
-    tau_preds = tau_preds_noscale*fitbcf$bsd/mod_sd
-
-    cons = TreeSamples$new()
-    cons$load("con_trees.txt")
-    con_preds = cons$predict(t(x_pc))
-    con_preds_noscale = con_preds*sdy
-    mu_preds = muy + con_preds_noscale*fitbcf$msd/con_sd
-    
-    z_matrix = matrix(1,nsim,1)%*%z
-    
-
-    yhat_preds = mu_preds + tau_preds*z_matrix
-    
-  }else{
-    y_preds = NULL
-    tau_preds = NULL
-  }
-
-  cat("Got predictions")
-
-  # Removing tree files
-#   unlink("mod_trees.txt")
-#   unlink("con_trees.txt")
-  unlink("tmp")
 
   list(sigma = sdy*fitbcf$sigma,
        yhat = muy + sdy*fitbcf$yhat_post[,order(perm)],
@@ -395,9 +311,6 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
        mu_scale = fitbcf$msd*sdy,
        tau_scale = fitbcf$bsd*sdy,
        perm = perm,
-       y_preds = yhat_preds,
-       tau_preds = tau_preds,
-       mu_preds = mu_preds,
        include_pi = include_pi
   )
 }
