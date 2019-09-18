@@ -71,6 +71,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param pihat Length n estimates of propensity score
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
 #' @param n_threads An optional integer of the number of threads to parallelize bcf operations on
+#' @param random_seed A random seed passed to r's set.seed
 #' @param nburn Number of burn-in MCMC iterations
 #' @param nsim Number of MCMC iterations to save after burn-in
 #' @param nthin Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.
@@ -178,8 +179,9 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #'}
 #'
 #' @export
-bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
-                w = NULL, n_threads = RcppParallel::defaultNumThreads()/2,
+bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, 
+                n_threads = max(RcppParallel::defaultNumThreads()/2,1),
+                random_seed = 1,
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
@@ -192,7 +194,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
 ) {
-  
+
+  set.seed(random_seed)
+
   if(is.null(w)){
     w <- matrix(1, ncol = 1, nrow = length(y))
     }
@@ -311,7 +315,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
        mu_scale = fitbcf$msd*sdy,
        tau_scale = fitbcf$bsd*sdy,
        perm = perm,
-       include_pi = include_pi
+      #  include_pi = include_pi,
+       random_seed=random_seed
   )
 }
 
