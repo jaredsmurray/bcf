@@ -38,70 +38,44 @@ out2 <- bcf2::bcf(y               = y,
                   x_control       = x,
                   x_moderate      = x,
                   pihat           = pi,
-                  z_pred          = z,
-                  x_pred_moderate = x,
-                  x_pred_control  = x,
-                  pi_pred         = pi,
                   nburn           = n_burn,
                   nsim            = n_sim,
                   w               = weights, 
                   update_interval = 1,
-                  ntree_moderate  = 3,
                   ntree_control   = 3,
                   verbose         = TRUE,
                   use_muscale     = TRUE,
                   use_tauscale    = TRUE)
 
-# Load posterior samples of the trees & generate predictions
-cor(colMeans(out2$y_preds), colMeans(out2$yhat))
-plot(colMeans(out2$y_preds), colMeans(out2$yhat), col = z + 1)
-abline(a=0, b=1)
+cat("BCF run complete\n")
 
-cor(colMeans(out2$tau_preds), colMeans(out2$tau))
-plot(colMeans(out2$tau_preds), colMeans(out2$tau), col = z + 1)
-abline(a=0, b=1)
-
-cor(colMeans(out2$mu_preds), colMeans(out2$mu))
-plot(colMeans(out2$mu_preds), colMeans(out2$mu), col = z + 1)
-abline(a=0, b=1)
-
-yhat <- colMeans(out2$mu) + colMeans(out2$tau)*z
-cor(yhat, colMeans(out2$yhat))
-plot(yhat, colMeans(out2$yhat))
-
-### Let's try adding mu_scale and tau_scale
+pred_out = bcf2::predict(bcf_out=out2,
+                         x_predict_control=x,
+                         x_predict_moderate=x,
+                         pi_pred=pi,
+                         z_pred=z)
 
 
+cat("Predictions Compelete\n")
 
-# tau_preds_tmp <- out2$tau_preds %>% 
-#   as.data.frame() %>% 
-#   mutate_all(~./out2$mu_scale) %>% 
-#   as.matrix()
-#   
-# ggplot(NULL, aes(x = colMeans(out2$y_preds), y = colMeans(out2$yhat), color = as.factor(z))) +
-#   geom_point() +
-#   geom_abline(slope = 1, intercept = 0) +
-#   geom_abline(slope = -1.03, intercept = -2.26) +
-#   geom_abline(slope = -0.957, intercept = -1.57) +
-#   geom_abline(slope = 0.618, intercept = 0.143)
 
-# tbl <- data.frame(preds = colMeans(out2$y_preds), y = colMeans(out2$yhat), t = as.factor(z)) %>% 
-#   mutate(group2 = case_when(preds < -0.75 ~ 1,
-#                             preds > -0.75 & preds < 1 ~ 2,
-#                             preds > 1 ~ 3))
-# tbl %>% 
-#   filter(t == 0) %>% 
-#   group_by(group2) %>% 
-#   do({
-#     mod = lm(y ~ preds, data = .)
-#     data.frame(Intercept = coef(mod)[1],
-#                Slope = coef(mod)[2])
-#   })
+mean_square_error <- function (x,y){
+  mean((x-y)^2)
+}
 
-# tbl %>% 
-#   filter(t == 1) %>% 
-#   do({
-#     mod = lm(y ~ preds, data = .)
-#     data.frame(Intercept = coef(mod)[1],
-#                Slope = coef(mod)[2])
-#   })
+assess_closeness <- function(x,y, title){
+  cat("Assessing Cloesness of ", title, "\n")
+  print("Correlation")
+  print(cor(x,y))
+  print("MSE")
+  print(mean_square_error(x,y))
+  plot(x, y, col = z + 1, main=title)
+  abline(a=0, b=1)
+}
+
+assess_closeness(colMeans(pred_out$yhat_preds), colMeans(out2$yhat),'yhat')
+
+assess_closeness(colMeans(pred_out$tau_preds), colMeans(out2$tau),'tau')
+
+assess_closeness(colMeans(pred_out$mu_preds), colMeans(out2$mu),'mu')
+

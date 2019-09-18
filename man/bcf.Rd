@@ -24,14 +24,6 @@ bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL,
 
 \item{pihat}{Length n estimates of propensity score}
 
-\item{z_pred}{Treatment variable for predictions (optional except if x_pre is not empty)}
-
-\item{x_pred_moderate}{matrix of covariates for the covariate-dependent treatment effects tau(x) for predictions (optional)}
-
-\item{x_pred_control}{matrix of covariates for the "prognostic" function mu(x) for predictions (optional)}
-
-\item{pi_pred}{propensity score for prediction}
-
 \item{w}{An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.}
 
 \item{n_threads}{An optional integer of the number of threads to parallelize bcf operations on}

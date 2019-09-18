@@ -1,3 +1,5 @@
+con_trees.txt
+mod_trees.txt
 
 *.bak
 # History files
@@ -40,6 +42,11 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 tmp
+<<<<<<< HEAD
+=======
+*.vscode/
+*.pdf
+>>>>>>> wbcf
 
 # Prerequisites
 *.d
@@ -74,6 +81,7 @@ tmp
 *.out
 *.app
 
+<<<<<<< HEAD
 #Testing scripts
 scripts/
 inst/doc
@@ -81,3 +89,6 @@ inst/doc
 # Other objects
 *txt
 *pdf
+=======
+inst/doc
+>>>>>>> wbcf
