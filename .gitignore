@@ -1,3 +1,5 @@
+con_trees.txt
+mod_trees.txt
 
 *.bak
 # History files
@@ -40,6 +42,8 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 tmp
+*.vscode/
+*.pdf
 
 # Prerequisites
 *.d
@@ -74,6 +78,4 @@ tmp
 *.out
 *.app
 
-Testing scripts
-scripts/
 inst/doc

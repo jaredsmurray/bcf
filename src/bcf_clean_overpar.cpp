@@ -27,7 +27,7 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
-                  NumericVector x_con_, NumericVector x_mod_, NumericVector x_mod_est_,
+                  NumericVector x_con_, NumericVector x_mod_, 
                   List x_con_info_list, List x_mod_info_list, 
                   arma::mat random_des, //needs to come in with n rows no matter what(?)
                   arma::mat random_var, arma::mat random_var_ix, //random_var_ix*random_var = diag(Var(random effects))
@@ -39,7 +39,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
                   double mod_sd, // Var(b(x)) = mod_sd^2 marginally a priori (approx)
                   double con_alpha, double con_beta,
                   double mod_alpha, double mod_beta,
-                  CharacterVector treef_name_,
+                  CharacterVector treef_con_name_, CharacterVector treef_mod_name_,
                   int status_interval=100,
                   bool RJ= false, bool use_mscale=true, bool use_bscale=true, bool b_half_normal=true,
                   double trt_init = 1.0, bool verbose_sigma=false)
@@ -52,8 +52,11 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   if(randeff) Rcout << "Using random effects." << std::endl;
 
-  std::string treef_name = as<std::string>(treef_name_);
-  std::ofstream treef(treef_name.c_str());
+  std::string treef_con_name = as<std::string>(treef_con_name_);
+  std::ofstream treef_con(treef_con_name.c_str());
+
+  std::string treef_mod_name = as<std::string>(treef_mod_name_);
+  std::ofstream treef_mod(treef_mod_name.c_str());
 
   RNGScope scope;
   RNG gen; //this one random number generator is used in all draws
@@ -244,25 +247,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_mod.x = &x_mod[0]; 
   di_mod.y = r_mod; //the y for each draw will be the residual
 
-  //--------------------------------------------------
-  //dinfo and design for trt effect function out of sample
-  //x for predictions
-  dinfo di_mod_est; //data information for prediction
-  std::vector<double> x_mod_est;     //stored like x
-  size_t n_mod_est;
-  //  if(x_mod_est_.size()) {
-  for(NumericVector::iterator it=x_mod_est_.begin(); it!=x_mod_est_.end(); ++it) {
-    x_mod_est.push_back(*it);
-  }
-  n_mod_est = x_mod_est.size()/p_mod;
-//  Rcout << "n_mod_est " << n_mod_est << std::endl;
-  if(x_mod_est.size() != n_mod_est*p_mod) stop("error, wrong number of elements in effect estimate data set\n");
-  //if(n_mod_est)
-  di_mod_est.n=n_mod_est; 
-  di_mod_est.p=p_mod; 
-  di_mod_est.x = &x_mod_est[0]; 
-  di_mod_est.y=0; //there are no y's!
-
 
   //  }
   //--------------------------------------------------
@@ -321,19 +305,21 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   NumericMatrix m_post(nd,n);
   NumericMatrix yhat_post(nd,n);
   NumericMatrix b_post(nd,n);
-  NumericMatrix b_est_post(nd,n_mod_est);
   arma::mat gamma_post(nd,gamma.n_elem);
   arma::mat random_var_post(nd,random_var.n_elem);
 
   //  NumericMatrix spred2(nd,dip.n);
 
-  /*
   //save stuff to tree file
-  treef << xi << endl; //cutpoints
-  treef << m << endl;  //number of trees
-  treef << p << endl;  //dimension of x's
-  treef << (int)(nd/thin) << endl;
-  */
+  treef_con << xi_con << endl; //cutpoints
+  treef_con << ntree_con << endl;  //number of trees
+  treef_con << di_con.p << endl;  //dimension of x's
+  treef_con << (int)(nd/thin) << endl;
+
+  treef_mod << xi_mod << endl; //cutpoints
+  treef_mod << ntree_mod << endl;  //number of trees
+  treef_mod << di_mod.p << endl;  //dimension of x's
+  treef_mod << (int)(nd/thin) << endl;
 
   //*****************************************************************************
   /* MCMC
@@ -925,6 +911,9 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
     if( ((iIter>=burn) & (iIter % thin==0)) )  {
 
+      for(size_t j=0;j<ntree_con;j++) treef_con << t_con[j] << endl; // save trees
+      for(size_t j=0;j<ntree_mod;j++) treef_mod << t_mod[j] << endl; // save trees
+
       msd_post(save_ctr) = fabs(mscale)*con_sd;
       bsd_post(save_ctr) = fabs(bscale1-bscale0)*mod_sd;
 
@@ -939,10 +928,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       for(size_t k=0;k<n;k++) {
         double bscale = (k<ntrt) ? bscale1 : bscale0;
         b_post(save_ctr, k) = (bscale1-bscale0)*allfit_mod[k]/bscale;
-      }
-      //if(di_mod_est.n) {
-      for(size_t k=0;k<di_mod_est.n;k++) {
-        b_est_post(save_ctr, k) = (bscale1-bscale0)*fit_i(k, t_mod, xi_mod, di_mod_est);
       }
       //}
       save_ctr += 1;
@@ -962,9 +947,10 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   delete[] r_con;
   delete[] ftemp;
 
-  treef.close();
+  treef_con.close();
+  treef_mod.close();
 
-  return(List::create(_["yhat_post"] = yhat_post, _["b_post"] = b_post, _["b_est_post"] = b_est_post,
+  return(List::create(_["yhat_post"] = yhat_post, _["m_post"] = m_post, _["b_post"] = b_post,
                       _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post,
                       _["gamma"] = gamma_post, _["random_var_post"] = random_var_post
   ));
