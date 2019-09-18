@@ -87,6 +87,7 @@
 #' @param use_muscale Use a half-Cauchy hyperprior on the scale of mu.
 #' @param use_tauscale Use a half-Normal prior on the scale of tau.
 #' @param verbose logical, whether to print log of MCMC iterations, defaults to FALSE.
+#' @param nchains numeric, number of chains to launch in parallel (for convergence diagnostics). Should be less or equal to number of cores on the machine.
 #' @return A list with elements
 #' \item{tau}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
 #' \item{mu}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
@@ -173,7 +174,7 @@
 #'
 #' @useDynLib bcf2
 #' @import Rcpp RcppArmadillo RcppParallel
-#' @importFrom stats approxfun lm qchisq quantile sd
+#' @importFrom stats approxfun lm qchisq quantile sd DoParallel coda
 #' @export
 bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
                 z_pred = NULL, x_pred_moderate = NULL, x_pred_control = NULL, pi_pred, 
@@ -188,7 +189,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
                 base_moderate = 0.25,
                 power_moderate = 3,
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
-                include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
+                include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE,
+                nchains = 4
 ) {
   
   if(is.null(w)){
@@ -309,10 +311,15 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
   con_sd = ifelse(abs(2*sdy - sd_control)<1e-6, 2, sd_control/sdy)
   mod_sd = ifelse(abs(sdy - sd_moderate)<1e-6, 1, sd_moderate/sdy)/ifelse(use_tauscale,0.674,1) # if HN make sd_moderate the prior median
 
+  cl <- makeCluster(nchains)
+  registerDoParallel(cl)
+
   RcppParallel::setThreadOptions(numThreads=n_threads)
 
   cat("Calling bcfoverparRcppClean From R\n")
-  fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], w[perm],
+  fitbcf = foreach(i = 1:nchains) %dopar% {
+    
+    bcfoverparRcppClean(yscale[perm], z[perm], w[perm],
                         t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), 
                         t(x_pm[1,,drop=FALSE]), t(x_pc[1,,drop=FALSE]),
                         cutpoint_list_c, cutpoint_list_m,
@@ -325,21 +332,19 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
                         con_sd = con_sd,
                         mod_sd = mod_sd, # if HN make sd_moderate the prior median
                         base_moderate, power_moderate, base_control, power_control,
-                        "con_trees.txt", "mod_trees.txt", status_interval = update_interval,
-                        use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
+                        paste0("con_trees", i, ".txt"), paste0("mod_trees", i, ".txt"), status_interval = update_interval,
+                        use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)}
   cat(" bcfoverparRcppClean returned to R\n")
 
+  # Compute Rhat and Rhat_interval for:
+  ## * tau
+  ## * sigma
+  ## * tau for each obs
 
-  #B = drop(fit$post_B)
-  #B0 = fit$b0
-  #EYs = fit$post_yhat
+  # Compute multivariate Rhat
 
-  #return(List::create(_["m_post"] = m_post, _["b_post"] = b_post, _["b_est_post"] = b_est_post,
-  #                     _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post,
-  #                     _["gamma"] = gamma_post, _["random_var_post"] = random_var_post
-
-  m_post = muy + sdy*fitbcf$m_post[,order(perm)]
-  tau_post = sdy*fitbcf$b_post[,order(perm)]
+  m_post = map(fitbcf, ~muy + sdy*.x$m_post[,order(perm)])
+  tau_post = map(fitbcf, ~sdy*.x$b_post[,order(perm)])
   #yhat_post = muy + sdy*fitbcf$m_post
   #yhat_post[,z==1] = yhat_post[,z==1] + fitbcf$b_post
   #yhat_post = (muy + sdy*fitbcf$m_post)
@@ -349,9 +354,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
   if(!is.null(x_predict_control) & !is.null(x_pred_moderate)){
 
     sourceCpp("src/TreeSamples.cpp")
-    mods = TreeSamples$new()
-    mods$load("mod_trees.txt")
-    mod_preds = mods$predict(t(x_pm))
+    mods = map(1:ncores, ~TreeSamples$new())
+    map(1:ncores, ~mods[[.x]]$load(paste0("mod_trees", .x, ".txt")))
+    mod_preds = map(mods, ~.x$predict(t(x_pm)))
     tau_preds_noscale = mod_preds*sdy
     tau_preds = tau_preds_noscale*fitbcf$bsd/mod_sd
 
