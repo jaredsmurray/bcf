@@ -101,9 +101,8 @@ void getsuff(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, 
 
 //--------------------------------------------------
 //log of the integreted likelihood
-double lil(double n, double sy, double sy2, double sigma, double tau);
+double lil(double n, double sy, double sigma, double tau);
 //sy isn't needed, but convenient to maintain fcn sig
-//double lilprec(double n, double sy, double sy2, double sigma, double tau);
 //--------------------------------------------------
 //fit
 void fit(tree& t, xinfo& xi, dinfo& di, std::vector<double>& fv);

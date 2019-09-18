@@ -65,6 +65,7 @@
 #' @param pi_pred propensity score for prediction
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
 #' @param n_threads An optional integer of the number of threads to parallelize bcf operations on
+#' @param random_seed A random seed passed to r's set.seed
 #' @param nburn Number of burn-in MCMC iterations
 #' @param nsim Number of MCMC iterations to save after burn-in
 #' @param nthin Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.
@@ -176,9 +177,9 @@
 #' @import Rcpp RcppArmadillo RcppParallel
 #' @importFrom stats approxfun lm qchisq quantile sd DoParallel coda
 #' @export
-bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
-                z_pred = NULL, x_pred_moderate = NULL, x_pred_control = NULL, pi_pred, 
-                w = NULL, n_threads = RcppParallel::defaultNumThreads()/2,
+bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, 
+                n_threads = max(RcppParallel::defaultNumThreads()/2,1),
+                random_seed = 1,
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
@@ -192,7 +193,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE,
                 nchains = 4
 ) {
-  
+
+  set.seed(random_seed)
+
   if(is.null(w)){
     w <- matrix(1, ncol = 1, nrow = length(y))
     }
@@ -291,7 +294,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
   cutpoint_list_m = lapply(1:ncol(x_m), function(i) .cp_quantile(x_m[,i]))
 
   sdy = sqrt(Hmisc::wtd.var(y, w))
-  muy = weighted.mean(y, w)
+  muy = stats::weighted.mean(y, w)
   yscale = (y-muy)/sdy
 
 
@@ -389,13 +392,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat,
        mu_scale = fitbcf$msd*sdy,
        tau_scale = fitbcf$bsd*sdy,
        perm = perm,
-       y_preds = yhat_preds,
-       tau_preds = tau_preds,
-       mu_preds = mu_preds
+       random_seed=random_seed
   )
-}
 
-#' @export
-verify_install <- function() {
-    cat("BCF2 Installed Correctly\n")
 }

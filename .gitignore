@@ -3,7 +3,6 @@
 # History files
 .Rhistory
 .Rapp.history
-.Rbuildignore
 *.Rproj
 # Session Data files
 .RData
@@ -41,11 +40,6 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 tmp
-<<<<<<< HEAD
-scripts/
-*.vscode/
-*.pdf
-=======
 
 # Prerequisites
 *.d
@@ -80,6 +74,10 @@ scripts/
 *.out
 *.app
 
-Testing scripts
+#Testing scripts
 scripts/
->>>>>>> 9345fd607a91c7de91c353004aefc440cfb24d89
+inst/doc
+
+# Other objects
+*txt
+*pdf
