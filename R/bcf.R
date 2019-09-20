@@ -338,20 +338,25 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   sigma = c()
   mu_scale = c()
   tau_scale = c()
+  
   chain = c()
+  iteration = c()
   
   yhat = c()
   mu   = c()
   tau  = c()
   
   
+  n_iter = length(chain_out[[1]]$sigma)
   
   for (iChain in 1:n_chains){
     sigma       = c(sigma,     chain_out[[iChain]]$sigma)
     mu_scale    = c(mu_scale,  chain_out[[iChain]]$mu_scale)
     tau_scale   = c(tau_scale, chain_out[[iChain]]$tau_scale)
     
-    chain       = c(chain,     rep(iChain,length(chain_out[[iChain]]$sigma)))
+    
+    chain       = c(chain,     rep(iChain,n_iter))
+    iteration   = c(iteration, 1:n_iter)
     
     yhat = rbind(yhat, chain_out[[iChain]]$yhat)
     mu   = rbind(mu,   chain_out[[iChain]]$mu)
@@ -375,7 +380,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
        tau = tau,
        mu_scale = mu_scale,
        tau_scale = tau_scale,
-       chain = chain, 
+       chain = chain,
+       iteration = iteration, 
        perm = perm,
        include_pi = chain_out[[1]]$include_pi,
        random_seed = chain_out[[1]]$random_seed)

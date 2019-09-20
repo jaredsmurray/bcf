@@ -34,15 +34,15 @@ weights <- 1000.0*rep(1, n)
 
 set.seed(1)
 out <- bcf2::bcf(y          = y,
-                  z          = z,
-                  x_control  = x,
-                  x_moderate = x,
-                  pihat      = pi,
-                  nburn      = n_burn,
-                  nsim       = n_sim,
-                  w          = weights,
-                  random_seed = 1,
-                  update_interval = 100)
+                 z          = z,
+                 x_control  = x,
+                 x_moderate = x,
+                 pihat      = pi,
+                 nburn      = n_burn,
+                 nsim       = n_sim,
+                 w          = weights,
+                 random_seed = 1,
+                 update_interval = 100)
 
 
 
@@ -54,4 +54,9 @@ cat("chain, ",     length(out$chain), "\n")
 cat("yhat, ", dim(out$yhat), "\n")
 cat("mu, ",   dim(out$mu), "\n")
 cat("tau, ",  dim(out$tau), "\n")
+
+plot(out$iteration, out$sigma, col = out$chain, main="sigma")
+
+plot(out$iteration, out$sigma, col = out$chain, main="sigma")
+
 
