@@ -32,7 +32,6 @@ y <- mu + sigma*rnorm(n)
 
 weights <- 1000.0*rep(1, n)
 
-set.seed(1)
 out <- bcf2::bcf(y          = y,
                  z          = z,
                  x_control  = x,
@@ -57,6 +56,6 @@ cat("tau, ",  dim(out$tau), "\n")
 
 plot(out$iteration, out$sigma, col = out$chain, main="sigma")
 
-plot(out$iteration, out$sigma, col = out$chain, main="sigma")
+plot(out$iteration, rowMeans(out$yhat), col = out$chain, main="yhat")
 
 

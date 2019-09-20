@@ -70,8 +70,10 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param x_moderate Design matrix for the covariate-dependent treatment effects tau(x)
 #' @param pihat Length n estimates of propensity score
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
-#' @param n_threads An optional integer of the number of threads to parallelize bcf operations on
 #' @param random_seed A random seed passed to r's set.seed
+#' @param n_chains  An optional integer of the number of MCMC chains to run
+#' @param n_chain_clusters An optional integer of the number of clusters to run your MCMC chains on
+#' @param n_threads An optional integer of the number of threads to parallelize within chain bcf operations on
 #' @param nburn Number of burn-in MCMC iterations
 #' @param nsim Number of MCMC iterations to save after burn-in
 #' @param nthin Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.
@@ -183,8 +185,10 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @importFrom stats approxfun lm qchisq quantile sd 
 #' @export
 bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, 
-                n_threads = max(RcppParallel::defaultNumThreads()/2,1),
                 random_seed = 1,
+                n_chains         = 4,
+                n_chain_clusters = 2,
+                n_threads = max(RcppParallel::defaultNumThreads()/2,1),
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
@@ -281,10 +285,10 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
   RcppParallel::setThreadOptions(numThreads=n_threads)
   
-  cl <- parallel::makeCluster(4)
+  
+  cl <- parallel::makeCluster(n_chain_clusters)
   doParallel::registerDoParallel(cl)
   
-  n_chains = 3
   
   `%dopar%` <- foreach::`%dopar%`
   
