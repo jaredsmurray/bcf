@@ -33,7 +33,7 @@ y <- mu + sigma*rnorm(n)
 weights <- 1000.0*rep(1, n)
 
 set.seed(1)
-out1 <- bcf2::bcf(y          = y,
+out <- bcf2::bcf(y          = y,
                   z          = z,
                   x_control  = x,
                   x_moderate = x,
@@ -44,34 +44,14 @@ out1 <- bcf2::bcf(y          = y,
                   random_seed = 1,
                   update_interval = 100)
 
-set.seed(10)
-out2 <- bcf2::bcf(y          = y,
-                  z          = z,
-                  x_control  = x,
-                  x_moderate = x,
-                  pihat      = pi,
-                  nburn      = n_burn,
-                  nsim       = n_sim,
-                  w          = weights,
-                  random_seed = 1,
-                  update_interval = 100)
-
-set.seed(100)
-out3 <- bcf2::bcf(y          = y,
-                  z          = z,
-                  x_control  = x,
-                  x_moderate = x,
-                  pihat      = pi,
-                  nburn      = n_burn,
-                  nsim       = n_sim,
-                  w          = weights,
-                  random_seed = 2,
-                  update_interval = 100)
 
 
-cat("Saving results \n")
+cat("sigma, "    , length(out$sigma), "\n")
+cat("mu_scale, " , length(out$mu_scale), "\n")
+cat("tau_scale, ", length(out$tau_scale), "\n")
+cat("chain, ",     length(out$chain), "\n")
 
-saveRDS(out2, file = "examples/data_1000w.rds")
+cat("yhat, ", dim(out$yhat), "\n")
+cat("mu, ",   dim(out$mu), "\n")
+cat("tau, ",  dim(out$tau), "\n")
 
-
-cat("BCF run complete\n")

@@ -198,7 +198,6 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
 ) {
 
-  set.seed(random_seed)
 
   if(is.null(w)){
     w <- matrix(1, ncol = 1, nrow = length(y))
@@ -281,139 +280,105 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   mod_sd = ifelse(abs(sdy - sd_moderate)<1e-6, 1, sd_moderate/sdy)/ifelse(use_tauscale,0.674,1) # if HN make sd_moderate the prior median
 
   RcppParallel::setThreadOptions(numThreads=n_threads)
-
-  cat("Calling bcfoverparRcppClean From R\n")
-  fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], w[perm],
-                      t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), 
-                      cutpoint_list_c, cutpoint_list_m,
-                      random_des = matrix(1),
-                      random_var = matrix(1),
-                      random_var_ix = matrix(1),
-                      random_var_df = 3,
-                      nburn, nsim, nthin,
-                      ntree_moderate, ntree_control, lambda, nu,
-                      con_sd = con_sd,
-                      mod_sd = mod_sd, # if HN make sd_moderate the prior median
-                      base_moderate, power_moderate, base_control, power_control,
-                      paste0("con_trees", i, ".txt"), paste0("mod_trees", i, ".txt"), status_interval = update_interval,
-                      use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
-
-  cat("bcfoverparRcppClean returned to R\n")
-  # Compute Rhat and Rhat_interval for:
-  ## * tau
-  ## * sigma
-  ## * tau for each obs
-
-  m_post     = muy + sdy*fitbcf$m_post[,order(perm)]
-  tau_post   = sdy*fitbcf$b_post[,order(perm)]
-
-  list(sigma = sdy*fitbcf$sigma,
-       yhat = muy + sdy*fitbcf$yhat_post[,order(perm)],
-       sdy = sdy,
-       con_sd = con_sd,
-       mod_sd = mod_sd,
-       muy = muy,
-       mu  = m_post,
-       tau = tau_post,
-       mu_scale = fitbcf$msd*sdy,
-       tau_scale = fitbcf$bsd*sdy,
-       perm = perm,
-       include_pi = include_pi,
-       random_seed=random_seed
-  )
-}
-
-#' @export
-verify_install <- function() {
-    cat("BCF2 Installed Correctly\n")
-}
-
-
-#' Run BCF in parallel
-#' @param y Response variable
-#' @param z Treatment variable
-#' @param x_control Design matrix for the "prognostic" function mu(x)
-#' @param x_moderate Design matrix for the covariate-dependent treatment effects tau(x)
-#' @param pihat Length n estimates of propensity score
-#' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
-#' @param n_threads An optional integer of the number of threads to parallelize bcf operations on
-#' @param random_seed A random seed passed to r's set.seed (vector as long as nchains)
-#' @param nburn Number of burn-in MCMC iterations
-#' @param nsim Number of MCMC iterations to save after burn-in
-#' @param nthin Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.
-#' @param update_interval Print status every update_interval MCMC iterations
-#' @param ntree_control Number of trees in mu(x)
-#' @param sd_control SD(mu(x)) marginally at any covariate value (or its prior median if use_muscale=TRUE)
-#' @param base_control Base for tree prior on mu(x) trees (see details)
-#' @param power_control Power for the tree prior on mu(x) trees
-#' @param ntree_moderate Number of trees in tau(x)
-#' @param sd_moderate SD(tau(x)) marginally at any covariate value (or its prior median if use_tauscale=TRUE)
-#' @param base_moderate Base for tree prior on tau(x) trees (see details)
-#' @param power_moderate Power for the tree prior on tau(x) trees (see details)
-#' @param nu Degrees of freedom in the chisq prior on \eqn{sigma^2}
-#' @param lambda Scale parameter in the chisq prior on \eqn{sigma^2}
-#' @param sigq Calibration quantile for the chisq prior on \eqn{sigma^2}
-#' @param sighat Calibration estimate for the chisq prior on \eqn{sigma^2}
-#' @param include_pi Takes values "control", "moderate", "both" or "none". Whether to
-#' include pihat in mu(x) ("control"), tau(x) ("moderate"), both or none. Values of "control"
-#' or "both" are HIGHLY recommended with observational data.
-#' @param use_muscale Use a half-Cauchy hyperprior on the scale of mu.
-#' @param use_tauscale Use a half-Normal prior on the scale of tau.
-#' @param verbose logical, whether to print log of MCMC iterations, defaults to FALSE.
-#' @param nchains numeric, number of chains to launch in parallel (for convergence diagnostics). Should be less or equal to number of cores on the machine.
-#' @return A list with elements
-#' \item{tau}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
-#' \item{mu}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
-#' \item{sigma}{Length \code{nsim} vector of posterior samples of sigma}
-#' @import magrittr foreach
-#' @importFrom coda gelman.diag 
-#' @importFrom purrr map
-#' @importFrom parallel makeCluster
-#' @importFrom doParallel registerDoParallel
-#' @export
-parbcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, 
-                n_threads = max(RcppParallel::defaultNumThreads()/2,1),
-                random_seed = c(1, 235, 2134, 1236),
-                nburn, nsim, nthin = 1, update_interval = 100,
-                ntree_control = 200,
-                sd_control = 2*sd(y),
-                base_control = 0.95,
-                power_control = 2,
-                ntree_moderate = 50,
-                sd_moderate = sd(y),
-                base_moderate = 0.25,
-                power_moderate = 3,
-                nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
-                include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE,
-                nchains = 4
-) {
-
- if(length(random_seed) != nchains){
-    stop("you must provide a random seed for each chain (default 4)")
-    }
-
-  cl <- parallel::makeCluster(nchains)
+  
+  cl <- parallel::makeCluster(4)
   doParallel::registerDoParallel(cl)
-
-  fits <- foreach::foreach(i = 1:nchains) %dopar% {
-    library(bcf2)
-
-    bcffit <- bcf(y, z, x_control, x_moderate=x_control, pihat, w, 
-                n_threads,
-                random_seed,
-                nburn, nsim, nthin, update_interval,
-                ntree_control,
-                sd_control,
-                base_control,
-                power_control,
-                ntree_moderate,
-                sd_moderate,
-                base_moderate,
-                power_moderate,
-                nu, lambda, sigq, sighat,
-                include_pi, use_muscale, use_tauscale, verbose
-) 
+  
+  n_chains = 3
+  
+  `%dopar%` <- foreach::`%dopar%`
+  
+  chain_out <- foreach::foreach(iChain=1:n_chains) %dopar% {
+    
+    this_seed = random_seed + iChain - 1
+    
+    cat("Calling bcfoverparRcppClean From R\n")
+    set.seed(this_seed)
+    fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], w[perm],
+                                 t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), 
+                                 cutpoint_list_c, cutpoint_list_m,
+                                 random_des = matrix(1),
+                                 random_var = matrix(1),
+                                 random_var_ix = matrix(1),
+                                 random_var_df = 3,
+                                 nburn, nsim, nthin,
+                                 ntree_moderate, ntree_control, lambda, nu,
+                                 con_sd = con_sd,
+                                 mod_sd = mod_sd, # if HN make sd_moderate the prior median
+                                 base_moderate, power_moderate, base_control, power_control,
+                                 paste0("con_trees", iChain, ".txt"), paste0("mod_trees", iChain, ".txt"), status_interval = update_interval,
+                                 use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
+    
+    cat("bcfoverparRcppClean returned to R\n")
+    # Compute Rhat and Rhat_interval for:
+    ## * tau
+    ## * sigma
+    ## * tau for each obs
+    
+    m_post     = muy + sdy*fitbcf$m_post[,order(perm)]
+    tau_post   = sdy*fitbcf$b_post[,order(perm)]
+    
+    list(sigma = sdy*fitbcf$sigma,
+         yhat = muy + sdy*fitbcf$yhat_post[,order(perm)],
+         sdy = sdy,
+         con_sd = con_sd,
+         mod_sd = mod_sd,
+         muy = muy,
+         mu  = m_post,
+         tau = tau_post,
+         mu_scale = fitbcf$msd*sdy,
+         tau_scale = fitbcf$bsd*sdy,
+         perm = perm,
+         include_pi = include_pi,
+         random_seed=this_seed
+    )
+    
   }
+
+  sigma = c()
+  mu_scale = c()
+  tau_scale = c()
+  chain = c()
+  
+  yhat = c()
+  mu   = c()
+  tau  = c()
+  
+  
+  
+  for (iChain in 1:n_chains){
+    sigma       = c(sigma,     chain_out[[iChain]]$sigma)
+    mu_scale    = c(mu_scale,  chain_out[[iChain]]$mu_scale)
+    tau_scale   = c(tau_scale, chain_out[[iChain]]$tau_scale)
+    
+    chain       = c(chain,     rep(iChain,length(chain_out[[iChain]]$sigma)))
+    
+    yhat = rbind(yhat, chain_out[[iChain]]$yhat)
+    mu   = rbind(mu,   chain_out[[iChain]]$mu)
+    tau  = rbind(tau,  chain_out[[iChain]]$tau)
+    
+    if(chain_out[[iChain]]$sdy        != chain_out[[1]]$sdy)        stop("sdy not consistent between chains for no reason")
+    if(chain_out[[iChain]]$con_sd     != chain_out[[1]]$con_sd)     stop("con_sd not consistent between chains for no reason")
+    if(chain_out[[iChain]]$mod_sd     != chain_out[[1]]$mod_sd)     stop("mod_sd not consistent between chains for no reason")
+    if(chain_out[[iChain]]$muy        != chain_out[[1]]$muy)        stop("muy not consistent between chains for no reason")
+    if(chain_out[[iChain]]$include_pi != chain_out[[1]]$include_pi) stop("include_pi not consistent between chains for no reason")
+    if(any(chain_out[[iChain]]$perm   != chain_out[[1]]$perm))      stop("perm not consistent between chains for no reason")
+  }
+  
+  list(sigma = sigma,
+       yhat = yhat,
+       sdy = chain_out[[1]]$sdy,
+       con_sd = chain_out[[1]]$con_sd,
+       mod_sd = chain_out[[1]]$mod_sd,
+       muy = chain_out[[1]]$muy,
+       mu  = mu,
+       tau = tau,
+       mu_scale = mu_scale,
+       tau_scale = tau_scale,
+       chain = chain, 
+       perm = perm,
+       include_pi = chain_out[[1]]$include_pi,
+       random_seed = chain_out[[1]]$random_seed)
 }
 
 
