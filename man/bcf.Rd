@@ -27,7 +27,7 @@ bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL,
 
 \item{w}{An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.}
 
-\item{random_seed}{A random seed passed to r's set.seed}
+\item{random_seed}{A random seed passed to R's set.seed}
 
 \item{n_chains}{An optional integer of the number of MCMC chains to run}
 

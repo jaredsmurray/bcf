@@ -32,7 +32,7 @@ y <- mu + sigma*rnorm(n)
 
 weights <- 1000.0*rep(1, n)
 
-out <- bcf2::bcf(y          = y,
+bcf_out <- bcf2::bcf(y          = y,
                  z          = z,
                  x_control  = x,
                  x_moderate = x,
@@ -43,19 +43,6 @@ out <- bcf2::bcf(y          = y,
                  random_seed = 1,
                  update_interval = 100)
 
+cat("BCF Run Complete \n")
 
-
-cat("sigma, "    , length(out$sigma), "\n")
-cat("mu_scale, " , length(out$mu_scale), "\n")
-cat("tau_scale, ", length(out$tau_scale), "\n")
-cat("chain, ",     length(out$chain), "\n")
-
-cat("yhat, ", dim(out$yhat), "\n")
-cat("mu, ",   dim(out$mu), "\n")
-cat("tau, ",  dim(out$tau), "\n")
-
-plot(out$iteration, out$sigma, col = out$chain, main="sigma")
-
-plot(out$iteration, rowMeans(out$yhat), col = out$chain, main="yhat")
-
-
+bcf2::summarise_bcf(bcf_out)

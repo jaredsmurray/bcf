@@ -70,7 +70,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param x_moderate Design matrix for the covariate-dependent treatment effects tau(x)
 #' @param pihat Length n estimates of propensity score
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
-#' @param random_seed A random seed passed to r's set.seed
+#' @param random_seed A random seed passed to R's set.seed
 #' @param n_chains  An optional integer of the number of MCMC chains to run
 #' @param n_chain_clusters An optional integer of the number of clusters to run your MCMC chains on
 #' @param n_threads An optional integer of the number of threads to parallelize within chain bcf operations on
@@ -201,8 +201,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
 ) {
-
-
+  library(coda)
+  
+  
   if(is.null(w)){
     w <- matrix(1, ncol = 1, nrow = length(y))
     }
@@ -339,33 +340,76 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     
   }
 
-  sigma = c()
-  mu_scale = c()
-  tau_scale = c()
+
+  all_sigma = c()
+  all_mu_scale = c()
+  all_tau_scale = c()
   
-  chain = c()
-  iteration = c()
+  all_yhat = c()
+  all_mu   = c()
+  all_tau  = c()
   
-  yhat = c()
-  mu   = c()
-  tau  = c()
-  
-  
+  chain_list=list()
+
   n_iter = length(chain_out[[1]]$sigma)
   
+  
   for (iChain in 1:n_chains){
-    sigma       = c(sigma,     chain_out[[iChain]]$sigma)
-    mu_scale    = c(mu_scale,  chain_out[[iChain]]$mu_scale)
-    tau_scale   = c(tau_scale, chain_out[[iChain]]$tau_scale)
+    sigma        <- chain_out[[iChain]]$sigma
+    mu_scale     <- chain_out[[iChain]]$mu_scale
+    tau_scale    <- chain_out[[iChain]]$tau_scale
+    yhat         <- chain_out[[iChain]]$yhat
+    tau          <- chain_out[[iChain]]$tau
+    mu           <- chain_out[[iChain]]$mu
+
+    # -----------------------------    
+    # Support Old Output
+    # -----------------------------
+    all_sigma       = c(all_sigma,     sigma)
+    all_mu_scale    = c(all_mu_scale,  mu_scale)
+    all_tau_scale   = c(all_tau_scale, tau_scale)
+
+    all_yhat = rbind(all_yhat, yhat)
+    all_mu   = rbind(all_mu,   mu)
+    all_tau  = rbind(all_tau,  tau)
+
+    # -----------------------------    
+    # Make the MCMC Object
+    # -----------------------------
+
+    scalar_df <- data.frame("sigma"     = sigma,
+                            "tau_bar"   =  matrixStats::rowWeightedMeans(tau, weights),
+                            "mu_bar"    =  matrixStats::rowWeightedMeans(mu, weights),
+                            "yhat_bar"  =  matrixStats::rowWeightedMeans(yhat, weights),
+                            "mu_scale"  = mu_scale, 
+                            "tau_scale" = tau_scale)
+    
+    # y_df <- as.data.frame(yhat)
+    # these_names <- names(y_df)
+    # these_names <- str_remove(these_names,'V')
+    # names(y_df)<- paste("y_",these_names,sep="")
     
     
-    chain       = c(chain,     rep(iChain,n_iter))
-    iteration   = c(iteration, 1:n_iter)
+    # tau_df <- as.data.frame(tau)
+    # these_names <- names(tau_df)
+    # these_names <- str_remove(these_names,'V')
+    # names(tau_df)<- paste("tau_",these_names,sep="")
     
-    yhat = rbind(yhat, chain_out[[iChain]]$yhat)
-    mu   = rbind(mu,   chain_out[[iChain]]$mu)
-    tau  = rbind(tau,  chain_out[[iChain]]$tau)
+    # mu_df <- as.data.frame(mu)
+    # these_names <- names(mu_df)
+    # these_names <- str_remove(these_names,'V')
+    # names(mu_df)<- paste("mu_",these_names,sep="")
     
+    
+    # bcf_df = cbind(scalar_df, y_df, tau_df, mu_df)
+    
+    bcf_df = cbind(scalar_df)
+    
+    
+    chain_list[[iChain]] <- coda::as.mcmc(bcf_df)
+    # -----------------------------    
+    # Sanity Check Constants Accross Chains
+    # -----------------------------
     if(chain_out[[iChain]]$sdy        != chain_out[[1]]$sdy)        stop("sdy not consistent between chains for no reason")
     if(chain_out[[iChain]]$con_sd     != chain_out[[1]]$con_sd)     stop("con_sd not consistent between chains for no reason")
     if(chain_out[[iChain]]$mod_sd     != chain_out[[1]]$mod_sd)     stop("mod_sd not consistent between chains for no reason")
@@ -374,24 +418,47 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     if(any(chain_out[[iChain]]$perm   != chain_out[[1]]$perm))      stop("perm not consistent between chains for no reason")
   }
   
-  list(sigma = sigma,
-       yhat = yhat,
+  mcmc_chains = coda::as.mcmc.list(chain_list)
+
+
+  list(sigma = all_sigma,
+       yhat = all_yhat,
        sdy = chain_out[[1]]$sdy,
        con_sd = chain_out[[1]]$con_sd,
        mod_sd = chain_out[[1]]$mod_sd,
        muy = chain_out[[1]]$muy,
-       mu  = mu,
-       tau = tau,
-       mu_scale = mu_scale,
-       tau_scale = tau_scale,
-       chain = chain,
-       iteration = iteration, 
+       mu  = all_mu,
+       tau = all_tau,
+       mu_scale = all_mu_scale,
+       tau_scale = all_tau_scale,
        perm = perm,
        include_pi = chain_out[[1]]$include_pi,
-       random_seed = chain_out[[1]]$random_seed)
+       random_seed = chain_out[[1]]$random_seed,
+       chains = mcmc_chains)
 }
 
+#' Print Summary Stats for a previous BCF run
+#' @param bcf_out output from a BCF predict run
+#' @export
+summarise_bcf <- function(bcf_out){
+  library(coda)
 
+  message("Summary statistics for Markov Chain Monte Carlo chains")
+  print(summary(bcf_out$chains))
+
+  cat("\n----\n\n")
+
+
+  message("Effective sample size for estimating the mean")
+  print(effectiveSize(bcf_out$chains))
+  
+  cat("\n----\n\n")
+  
+  message("Gelman and Rubin's convergence diagnostic")
+  print(gelman.diag(bcf_out$chains))
+  
+  
+}
 
 
 #' Predict from Previously Fit Forests 

@@ -2,6 +2,7 @@
 
 export(bcf)
 export(predict)
+export(summarise_bcf)
 import(Rcpp)
 import(RcppArmadillo)
 import(RcppParallel)
