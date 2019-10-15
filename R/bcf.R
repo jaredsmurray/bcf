@@ -333,6 +333,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
          tau = tau_post,
          mu_scale = fitbcf$msd*sdy,
          tau_scale = fitbcf$bsd*sdy,
+         b0 = fitbcf$b0,
+         b1 = fitbcf$b1,
          perm = perm,
          include_pi = include_pi,
          random_seed=this_seed
@@ -344,6 +346,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   all_sigma = c()
   all_mu_scale = c()
   all_tau_scale = c()
+
+  all_b0 = c()
+  all_b1 = c()
   
   all_yhat = c()
   all_mu   = c()
@@ -358,6 +363,10 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     sigma        <- chain_out[[iChain]]$sigma
     mu_scale     <- chain_out[[iChain]]$mu_scale
     tau_scale    <- chain_out[[iChain]]$tau_scale
+    
+    b0          <- chain_out[[iChain]]$b0
+    b1          <- chain_out[[iChain]]$b1
+
     yhat         <- chain_out[[iChain]]$yhat
     tau          <- chain_out[[iChain]]$tau
     mu           <- chain_out[[iChain]]$mu
@@ -368,6 +377,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     all_sigma       = c(all_sigma,     sigma)
     all_mu_scale    = c(all_mu_scale,  mu_scale)
     all_tau_scale   = c(all_tau_scale, tau_scale)
+    all_b0 = c(all_b0, b0)
+    all_b1 = c(all_b1, b1)
 
     all_yhat = rbind(all_yhat, yhat)
     all_mu   = rbind(all_mu,   mu)
@@ -382,7 +393,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                             "mu_bar"    = matrixStats::rowWeightedMeans(mu, weights),
                             "yhat_bar"  = matrixStats::rowWeightedMeans(yhat, weights),
                             "mu_scale"  = mu_scale, 
-                            "tau_scale" = tau_scale)
+                            "tau_scale" = tau_scale,
+                            "b0"  = b0, 
+                            "b1"  = b1)
     
     # y_df <- as.data.frame(yhat)
     # these_names <- names(y_df)
@@ -431,6 +444,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
        tau = all_tau,
        mu_scale = all_mu_scale,
        tau_scale = all_tau_scale,
+       b0 = all_b0,
+       b1 = all_b1,
        perm = perm,
        include_pi = chain_out[[1]]$include_pi,
        random_seed = chain_out[[1]]$random_seed,

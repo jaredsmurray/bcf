@@ -32,7 +32,7 @@ y <- mu + sigma*rnorm(n)
 
 weights <- 1000.0*rep(1, n)
 
-bcf_out <- bcf::bcf(y          = y,
+bcf_out <- bcf2::bcf(y          = y,
                  z          = z,
                  x_control  = x,
                  x_moderate = x,
@@ -50,3 +50,5 @@ bcf2::summarise_bcf(bcf_out)
 coda::traceplot(bcf_out$chains)
 
 bcf_out$mu + t(t(bcf_out$tau)*z) - bcf_out$yhat
+
+Tm =t(t(bcf_out$tau)/bcf_out$sdy*(bcf_out$b1 - bcf_out$b0))
