@@ -378,9 +378,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     # -----------------------------
 
     scalar_df <- data.frame("sigma"     = sigma,
-                            "tau_bar"   =  matrixStats::rowWeightedMeans(tau, weights),
-                            "mu_bar"    =  matrixStats::rowWeightedMeans(mu, weights),
-                            "yhat_bar"  =  matrixStats::rowWeightedMeans(yhat, weights),
+                            "tau_bar"   = matrixStats::rowWeightedMeans(tau, weights),
+                            "mu_bar"    = matrixStats::rowWeightedMeans(mu, weights),
+                            "yhat_bar"  = matrixStats::rowWeightedMeans(yhat, weights),
                             "mu_scale"  = mu_scale, 
                             "tau_scale" = tau_scale)
     
@@ -519,24 +519,17 @@ predict <- function(bcf_out,
 
 
     cat("Starting Prediction \n")
-    cat(x_pc[1:5], "\n")
-    cat(x_pm[1:5], "\n")
 
     mods = TreeSamples$new()
     mods$load(mod_tree_file_name)
     mod_preds = mods$predict(t(x_pm))
     tau_preds = mod_preds*bcf_out$tau_scale/bcf_out$mod_sd
 
-    cat(mod_preds[1:5], "\n")
-    cat(tau_preds[1:5], "\n")
-
     cons = TreeSamples$new()
     cons$load(con_tree_file_name)
     con_preds = cons$predict(t(x_pc))
     mu_preds = bcf_out$muy + con_preds*bcf_out$mu_scale/bcf_out$con_sd
     
-    cat(con_preds[1:5], "\n")
-    cat(mu_preds[1:5], "\n")
 
     yhat_preds = mu_preds + t(t(tau_preds)*z_pred)
 

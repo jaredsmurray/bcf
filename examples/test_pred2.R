@@ -40,12 +40,9 @@ out2 <- bcf2::bcf(y               = y,
                   pihat           = pi,
                   nburn           = n_burn,
                   nsim            = n_sim,
-                  w               = weights, 
-                  update_interval = 1,
-                  ntree_control   = 3,
-                  verbose         = TRUE,
-                  use_muscale     = TRUE,
-                  use_tauscale    = TRUE)
+                  w               = weights,
+                  n_chains        = 1,
+                  update_interval = 1)
 
 cat("BCF run complete\n")
 
@@ -53,7 +50,9 @@ pred_out = bcf2::predict(bcf_out=out2,
                          x_predict_control=x,
                          x_predict_moderate=x,
                          pi_pred=pi,
-                         z_pred=z)
+                         z_pred=z,
+                         mod_tree_file_name="mod_trees1.txt", 
+                         con_tree_file_name="con_trees1.txt")
 
 
 cat("Predictions Compelete\n")
@@ -67,15 +66,27 @@ assess_closeness <- function(x,y, title){
   cat("Assessing Cloesness of ", title, "\n")
   print("Correlation")
   print(cor(x,y))
+  
+  mse = mean_square_error(x,y)
+  
   print("MSE")
-  print(mean_square_error(x,y))
+  print(mse)
+  
+  print("Error")
+  print(sqrt(mse)/mean(x))
   plot(x, y, col = z + 1, main=title)
   abline(a=0, b=1)
 }
 
 assess_closeness(colMeans(pred_out$yhat_preds), colMeans(out2$yhat),'yhat')
 
+# assess_closeness(colMeans(out2$yhat), y, 'yhat to truth')
+
 assess_closeness(colMeans(pred_out$tau_preds), colMeans(out2$tau),'tau')
 
+# assess_closeness(colMeans(out2$tau), tau,'tau to truth')
+
 assess_closeness(colMeans(pred_out$mu_preds), colMeans(out2$mu),'mu')
+
+# assess_closeness(colMeans(out2$mu), q,'mu to truth')
 

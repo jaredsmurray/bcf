@@ -3,7 +3,7 @@ set.seed(1)
 p <- 3 # two control variables and one effect moderator
 n <- 1000
 n_burn <- 100
-n_sim <- 150
+n_sim <- 100
 
 
 x <- matrix(rnorm(n*p), nrow=n)
@@ -32,7 +32,7 @@ y <- mu + sigma*rnorm(n)
 
 weights <- 1000.0*rep(1, n)
 
-bcf_out <- bcf2::bcf(y          = y,
+bcf_out <- bcf::bcf(y          = y,
                  z          = z,
                  x_control  = x,
                  x_moderate = x,
@@ -46,3 +46,7 @@ bcf_out <- bcf2::bcf(y          = y,
 cat("BCF Run Complete \n")
 
 bcf2::summarise_bcf(bcf_out)
+
+coda::traceplot(bcf_out$chains)
+
+bcf_out$mu + t(t(bcf_out$tau)*z) - bcf_out$yhat
