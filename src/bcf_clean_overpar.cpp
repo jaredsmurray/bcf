@@ -916,8 +916,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       for(size_t j=0;j<ntree_con;j++) treef_con << t_con[j] << endl; // save trees
       for(size_t j=0;j<ntree_mod;j++) treef_mod << t_mod[j] << endl; // save trees
 
-      msd_post(save_ctr) = fabs(mscale)*con_sd;
-      bsd_post(save_ctr) = fabs(bscale1-bscale0)*mod_sd;
+      msd_post(save_ctr) = mscale;
+      bsd_post(save_ctr) = bscale1-bscale0;
       b0_post(save_ctr)  = bscale0;
       b1_post(save_ctr)  = bscale1;
 
