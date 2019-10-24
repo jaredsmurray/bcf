@@ -343,20 +343,22 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   logger.setLevel(0);
 
+  bool printTrees = false;
+
   for(size_t iIter=0;iIter<(nd*thin+burn);iIter++) {
     // verbose_itr = iIter>=burn;
     verbose_itr = false;
 
-  if(verbose_sigma){
-      if(iIter%status_interval==0) {
-        Rcout << "iteration: " << iIter << " sigma: "<< sigma << endl;
+    if(verbose_sigma){
+        if(iIter%status_interval==0) {
+            Rcout << "iteration: " << iIter << " sigma: "<< sigma << endl;
+        }
     }
-  }
 
     logger.setLevel(verbose_itr);
 
     logger.log("==============================================");
-    sprintf(logBuff, "MCMC iteration: %d of %d", iIter + 1, nd*thin+burn);
+    sprintf(logBuff, "MCMC iteration: %d of %d Start", iIter + 1, nd*thin+burn);
     logger.log(logBuff);
     sprintf(logBuff, "sigma %f, mscale %f, bscale0 %f, bscale1 %f",sigma, mscale, bscale0, bscale1);
     logger.log(logBuff);
@@ -367,6 +369,12 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
       logger.getVectorHead(allfit, logBuff);
       Rcout << "Current Fit : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_con, logBuff);
+      Rcout << "allfit_con  : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_mod, logBuff);
+      Rcout << "allfit_mod  : " <<  logBuff << "\n";
     }
 
     for (int k=0; k<n; ++k){
@@ -379,7 +387,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
     for(size_t k=ntrt; k<n; ++k) {
       weight_het[k] = w[k]*bscale0*bscale0/(sigma*sigma);
     }
-
 
     logger.log("=====================================");
     logger.log("- Tree Processing");
@@ -395,7 +402,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.startContext();
 
       logger.log("Attempting to Print Tree Pre Update \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n\n";
       }
@@ -411,7 +418,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
 
       logger.log("Attempting to Print Tree Post first call to fit \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n\n";
       }
@@ -446,7 +453,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
       
 
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         logger.getVectorHead(weight, logBuff);
         Rcout << "\n weight: " <<  logBuff << "\n\n";
       } 
@@ -465,12 +472,12 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.stopContext();
 
       logger.log("Attempting to Print Tree Post db \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n";
       }
 
-      if (verbose_itr){
+      if (verbose_itr && printTrees){
         logger.log("Printing Current Status of Fit");
 
         logger.getVectorHead(z_, logBuff);
@@ -506,7 +513,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.stopContext();
 
       logger.log("Attempting to Print Tree Post drmu \n");
-      if(verbose_itr){
+      if(verbose_itr  && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n";
       }
@@ -523,16 +530,13 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
       logger.log("Attempting to Print tree Post second call to fit \n");
 
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n";
 
       }
       logger.stopContext();
     }
-
-
- 
 
 
     for(size_t iTreeMod=0;iTreeMod<ntree_mod;iTreeMod++) {
@@ -544,7 +548,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
 
       logger.log("Attempting to Print Tree Pre Update \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
@@ -558,7 +562,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
           ftemp);
 
       logger.log("Attempting to Print Tree Post first call to fit");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
@@ -586,12 +590,12 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.stopContext();
 
       logger.log("Attempting to Print Tree  Post bd \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
 
-      if (verbose_itr){
+      if (verbose_itr && printTrees){
         logger.log("Printing Status of Fit");
 
         logger.getVectorHead(z_, logBuff);
@@ -626,7 +630,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
 
       logger.log("Attempting to Print Tree Post drmuhet \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
@@ -647,13 +651,16 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
       logger.log("Attempting to Print Tree Post second call to fit");
 
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
       logger.stopContext();
 
     } // end tree lop
+
+    logger.setLevel(verbose_itr);
+
     logger.log("=====================================");
     logger.log("- MCMC iteration Cleanup");
     logger.log("=====================================");
@@ -937,6 +944,26 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       //}
       save_ctr += 1;
     }
+    logger.log("==============================================");
+    sprintf(logBuff, "MCMC iteration: %d of %d End", iIter + 1, nd*thin+burn);
+    logger.log(logBuff);
+    sprintf(logBuff, "sigma %f, mscale %f, bscale0 %f, bscale1 %f",sigma, mscale, bscale0, bscale1);
+    logger.log(logBuff);
+    logger.log("==============================================");
+    if (verbose_itr){
+      logger.getVectorHead(y, logBuff);
+      Rcout << "           y: " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit, logBuff);
+      Rcout << "Current Fit : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_con, logBuff);
+      Rcout << "allfit_con  : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_mod, logBuff);
+      Rcout << "allfit_mod  : " <<  logBuff << "\n";
+    }
+
   } // end MCMC Loop
 
   int time2 = time(&tp);
