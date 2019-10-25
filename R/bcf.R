@@ -35,7 +35,12 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
   return(ret)
 }
 
-
+.get_chain_tree_files = function(tree_path, chain_id){
+  out <- list("con_trees" = paste0(tree_path,'/',"con_trees.", chain_id, ".txt"), 
+              "mod_trees" = paste0(tree_path,'/',"mod_trees.", chain_id, ".txt"))
+  
+  return(out) 
+}
 
 
 
@@ -198,6 +203,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 sd_moderate = sd(y),
                 base_moderate = 0.25,
                 power_moderate = 3,
+                save_tree_directory = '',
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
 ) {
@@ -301,6 +307,11 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     
     cat("Calling bcfoverparRcppClean From R\n")
     set.seed(this_seed)
+    
+    tree_files = .get_chain_tree_files(save_tree_directory, iChain)
+    
+    print(tree_files)
+    
     fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], w[perm],
                                  t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), 
                                  cutpoint_list_c, cutpoint_list_m,
@@ -313,7 +324,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                                  con_sd = con_sd,
                                  mod_sd = mod_sd, # if HN make sd_moderate the prior median
                                  base_moderate, power_moderate, base_control, power_control,
-                                 paste0("con_trees", iChain, ".txt"), paste0("mod_trees", iChain, ".txt"), status_interval = update_interval,
+                                 tree_files$con_trees, tree_files$mod_trees, status_interval = update_interval,
                                  use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
     
     cat("bcfoverparRcppClean returned to R\n")
@@ -486,16 +497,14 @@ summarise_bcf <- function(bcf_out){
 #' @param x_predict_moderate matrix of covariates for the covariate-dependent treatment effects tau(x) for predictions (optional)
 #' @param z_pred Treatment variable for predictions (optional except if x_pre is not empty)
 #' @param pi_pred propensity score for prediction
-#' @param mod_tree_file_name name of text output tree file for the mod trees
-#' @param con_tree_file_name name of text output tree file for the con trees
+#' @param save_tree_directory directory where the trees have been saved
 #' @export
 predict <- function(bcf_out, 
                     x_predict_control,
                     x_predict_moderate,
                     pi_pred,
                     z_pred, 
-                    mod_tree_file_name="mod_trees.txt", 
-                    con_tree_file_name="con_trees.txt") {
+                    save_tree_directory) {
     # Currently only single chain predict is supported
 
     if(any(is.na(x_predict_moderate))) stop("Missing values in x_predict_moderate")
@@ -539,15 +548,31 @@ predict <- function(bcf_out,
 
     cat("Starting Prediction \n")
 
-    mods = TreeSamples$new()
-    mods$load(mod_tree_file_name)
-    Tm = mods$predict(t(x_pm))
+    n_chains = length(out2$chains)
+    
+    `%do%`  <- foreach::`%do%`
+    
+    chain_out <- foreach::foreach(iChain=1:n_chains) %do% {
+      
+      tree_files = .get_chain_tree_files(save_tree_directory, iChain)
+      
+      mods = TreeSamples$new()
+      mods$load(tree_files$mod_trees)
+      Tm = mods$predict(t(x_pm))
+      
+      cons = TreeSamples$new()
+      cons$load(tree_files$con_trees)
+      Tc = cons$predict(t(x_pc))
+      
+      
+      list(Tm = Tm,
+           Tc = Tc)
+    }
 
-    cons = TreeSamples$new()
-    cons$load(con_tree_file_name)
-    Tc = cons$predict(t(x_pc))
-
-
+    Tm = chain_out[[1]]$Tm
+    Tc = chain_out[[1]]$Tc
+    
+    
     mu_preds  = bcf_out$muy + bcf_out$sdy*(Tc*bcf_out$mu_scale + Tm*bcf_out$b0)
 
     tau_preds = bcf_out$sdy*(bcf_out$b1 - bcf_out$b0)*Tm

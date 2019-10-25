@@ -42,7 +42,8 @@ out2 <- bcf2::bcf(y               = y,
                   nsim            = n_sim,
                   w               = weights,
                   n_chains        = 1,
-                  update_interval = 1)
+                  update_interval = 1,
+                  save_tree_directory = './trees')
 
 cat("BCF run complete\n")
 
@@ -51,8 +52,7 @@ pred_out = bcf2::predict(bcf_out=out2,
                          x_predict_moderate=x,
                          pi_pred=pi,
                          z_pred=z,
-                         mod_tree_file_name="mod_trees1.txt", 
-                         con_tree_file_name="con_trees1.txt")
+                         save_tree_directory = './trees')
 
 
 cat("Predictions Compelete\n")
