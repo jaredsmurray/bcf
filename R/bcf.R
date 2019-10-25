@@ -543,14 +543,16 @@ predict <- function(bcf_out,
 
     mods = TreeSamples$new()
     mods$load(mod_tree_file_name)
-    mod_preds = mods$predict(t(x_pm))
-    tau_preds = mod_preds*bcf_out$tau_scale/bcf_out$mod_sd
+    Tm = mods$predict(t(x_pm))
 
     cons = TreeSamples$new()
     cons$load(con_tree_file_name)
-    con_preds = cons$predict(t(x_pc))
-    mu_preds = bcf_out$muy + con_preds*bcf_out$mu_scale/bcf_out$con_sd
-    
+    Tc = cons$predict(t(x_pc))
+
+
+    mu_preds  = bcf_out$muy + bcf_out$sdy*(Tc*bcf_out$mu_scale + Tm*bcf_out$b0)
+
+    tau_preds = bcf_out$sdy*(bcf_out$b1 - bcf_out$b0)*Tm
 
     yhat_preds = mu_preds + t(t(tau_preds)*z_pred)
 

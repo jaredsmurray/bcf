@@ -73,7 +73,7 @@ assess_closeness <- function(x,y, title){
   print(mse)
   
   print("Error")
-  print(sqrt(mse)/mean(x))
+  print(sqrt(mse)/abs(mean(x)))
   plot(x, y, col = z + 1, main=title)
   abline(a=0, b=1)
 }
