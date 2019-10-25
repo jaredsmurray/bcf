@@ -287,13 +287,15 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   RcppParallel::setThreadOptions(numThreads=n_threads)
   
   
-  cl <- parallel::makeCluster(n_chain_clusters)
-  doParallel::registerDoParallel(cl)
+  # cl <- parallel::makeCluster(n_chain_clusters)
+  # doParallel::registerDoParallel(cl)
+  # `%dopar%` <- foreach::`%dopar%`
   
   
-  `%dopar%` <- foreach::`%dopar%`
+   
+  `%do%`  <- foreach::`%do%`
   
-  chain_out <- foreach::foreach(iChain=1:n_chains) %dopar% {
+  chain_out <- foreach::foreach(iChain=1:n_chains) %do% {
     
     this_seed = random_seed + iChain - 1
     
@@ -315,13 +317,17 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                                  use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
     
     cat("bcfoverparRcppClean returned to R\n")
-    # Compute Rhat and Rhat_interval for:
-    ## * tau
-    ## * sigma
-    ## * tau for each obs
     
-    m_post     = muy + sdy*fitbcf$m_post[,order(perm)]
-    tau_post   = sdy*fitbcf$b_post[,order(perm)]
+
+    ac = fitbcf$m_post[,order(perm)]
+
+    Tm = fitbcf$b_post[,order(perm)] * (1.0/ (fitbcf$b1 - fitbcf$b0))
+
+    Tc = ac * (1.0/fitbcf$msd) 
+
+    tau_post = sdy*fitbcf$b_post[,order(perm)]
+
+    mu_post  = muy + sdy*(Tc*fitbcf$msd + Tm*fitbcf$b0)
     
     list(sigma = sdy*fitbcf$sigma,
          yhat = muy + sdy*fitbcf$yhat_post[,order(perm)],
@@ -329,7 +335,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
          con_sd = con_sd,
          mod_sd = mod_sd,
          muy = muy,
-         mu  = m_post,
+         mu  = mu_post,
          tau = tau_post,
          mu_scale = fitbcf$msd,
          tau_scale = fitbcf$bsd,

@@ -17,10 +17,10 @@ z <- rbinom(n,1,pi)
 
 # tau is the true treatment effect. It varies across practices as a function of
 # X3, the effect moderator
-tau <- 1 + 100*1/(1 + exp(-x[,3]))
+tau <- 1/(1 + exp(-x[,3]))
 
 # generate the response using q, tau and z
-mu <- (100 + 10*q + tau*z)
+mu <- 100 + (q + tau*z)
 
 # set the noise level relative to the expected mean function of Y
 sigma <- diff(range(q + tau*pi))/8
@@ -38,7 +38,7 @@ bcf_out <- bcf2::bcf(y           = y,
                  nburn           = n_burn,
                  nsim            = n_sim,
                  w               = weights,
-                 n_chains        = 1,
+                 n_chains        = 4,
                  random_seed     = 1,
                  update_interval = 1)
 
@@ -46,7 +46,7 @@ bcf_out <- bcf2::bcf(y           = y,
 
 cat("BCF Run Complete \n")
 
-# bcf2::summarise_bcf(bcf_out)
+bcf2::summarise_bcf(bcf_out)
 
 # coda::traceplot(bcf_out$chains)
 
@@ -72,52 +72,13 @@ assess_closeness <- function(x,y, title){
   # abline(a=0, b=1)
 }
 
-
-Tm = bcf_out$tau * (1.0/ (bcf_out$sdy*(bcf_out$b1 - bcf_out$b0)))
-
-Tc = (bcf_out$mu - bcf_out$muy) * (1.0/(bcf_out$sdy*bcf_out$mu_scale)) 
-
-
-mu_theory = bcf_out$muy + bcf_out$sdy*(Tc*bcf_out$mu_scale + Tm*bcf_out$b0)
-
 mu_correct = bcf_out$yhat - t(t(bcf_out$tau)*z)
 
+print("Y Mean")
+print(mean(y))
 
-assess_closeness(mu_theory,mu_correct,'mu_compare')
+print("Tau Mean")
+print(mean(tau))
 
+assess_closeness(bcf_out$mu,mu_correct,'mu_compare')
 
-df <-        data.frame("z"           = z,
-                        "y"           = y,
-                        "y_hat"       = colMeans(bcf_out$yhat),
-                        "tau"         = tau,
-                        "tau_bar"     = colMeans(bcf_out$tau),
-                        "mu_correct"  = colMeans(mu_correct),
-                        "mu_theory"   = colMeans(mu_theory),
-                        "mu_diff"     = colMeans(mu_correct) - colMeans(mu_theory),
-                        "Tm"          = colMeans(Tm),
-                        "Tc"          = colMeans(Tc))
-
-# print(round(t(df)))
-
-# print(t(df))
- 
-# diff = mu_theory - mu_correct
-# print("Diff")
-# print(diff)
-# 
-# print("BScale")
-# print(bcf_out$b1 - bcf_out$b0)
-# 
-# print("mu_correct")
-# print(mu_correct)
-# 
-# print("mu_theory")
-# print(mu_theory)
-# 
-# # Take only upper triangle (without diagonal)
-# take.tri <- function(cors) {  # make this little helper function
-#   cors <- cors[upper.tri(x = cors, diag = FALSE)]
-#   return(cors)
-# }
-# print("Any Perfectly Correlated?")
-# print(any(abs(take.tri(cor(bcf_out$tau))-1)<0.01))
