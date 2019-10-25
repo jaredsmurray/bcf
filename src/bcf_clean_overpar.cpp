@@ -312,13 +312,18 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   //  NumericMatrix spred2(nd,dip.n);
 
+
+  // The default output precision is of C++ is 5 or 6 dp, depending on compiler.
+  // I don't have much justification for 32, but it seems like a sensible number   
+  int save_tree_precision = 32; 
+
   //save stuff to tree file
-  treef_con << xi_con << endl; //cutpoints
+  treef_con << std::setprecision(save_tree_precision) << xi_con << endl; //cutpoints
   treef_con << ntree_con << endl;  //number of trees
   treef_con << di_con.p << endl;  //dimension of x's
   treef_con << (int)(nd/thin) << endl;
 
-  treef_mod << xi_mod << endl; //cutpoints
+  treef_mod << std::setprecision(save_tree_precision) << xi_mod << endl; //cutpoints
   treef_mod << ntree_mod << endl;  //number of trees
   treef_mod << di_mod.p << endl;  //dimension of x's
   treef_mod << (int)(nd/thin) << endl;
@@ -920,8 +925,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
     if( ((iIter>=burn) & (iIter % thin==0)) )  {
 
-      for(size_t j=0;j<ntree_con;j++) treef_con << t_con[j] << endl; // save trees
-      for(size_t j=0;j<ntree_mod;j++) treef_mod << t_mod[j] << endl; // save trees
+      for(size_t j=0;j<ntree_con;j++) treef_con << std::setprecision(save_tree_precision) << t_con[j] << endl; // save trees
+      for(size_t j=0;j<ntree_mod;j++) treef_mod << std::setprecision(save_tree_precision) << t_mod[j] << endl; // save trees
 
       msd_post(save_ctr) = mscale;
       bsd_post(save_ctr) = bscale1-bscale0;

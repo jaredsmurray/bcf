@@ -7,4 +7,7 @@ R CMD INSTALL --no-multiarch --with-keep.source ../bcf-1
 
 Rscript.exe examples/simple_example.R
 
+Rscript.exe examples/test_pred2.R
+
+
 # Rscript.exe examples/simple_example.R 2>&1 | tee examples/bcf_run_log.txt 

@@ -443,8 +443,6 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   list(sigma = all_sigma,
        yhat = all_yhat,
        sdy = chain_out[[1]]$sdy,
-       con_sd = chain_out[[1]]$con_sd,
-       mod_sd = chain_out[[1]]$mod_sd,
        muy = chain_out[[1]]$muy,
        mu  = all_mu,
        tau = all_tau,
@@ -498,7 +496,7 @@ predict <- function(bcf_out,
                     z_pred, 
                     mod_tree_file_name="mod_trees.txt", 
                     con_tree_file_name="con_trees.txt") {
-
+    # Currently only single chain predict is supported
 
     if(any(is.na(x_predict_moderate))) stop("Missing values in x_predict_moderate")
     if(any(is.na(x_predict_control))) stop("Missing values in x_predict_control")
