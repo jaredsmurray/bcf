@@ -2,8 +2,8 @@ set.seed(2)
 
 p <- 3 # two control variables and one effect moderator
 n <- 10
-n_burn <- 15
-n_sim <- 15
+n_burn <- 150
+n_sim <- 150
 
 x <- matrix(rnorm(n*p), nrow=n)
 
@@ -30,17 +30,18 @@ y <- mu + sigma*rnorm(n)
 
 weights <- 1000.0*rep(1, n)
 
-bcf_out <- bcf2::bcf(y           = y,
-                 z               = z,
-                 x_control       = x,
-                 x_moderate      = x,
-                 pihat           = pi,
-                 nburn           = n_burn,
-                 nsim            = n_sim,
-                 w               = weights,
-                 n_chains        = 4,
-                 random_seed     = 1,
-                 update_interval = 1)
+bcf_out <- bcf2::bcf(y            = y,
+                 z                = z,
+                 x_control        = x,
+                 x_moderate       = x,
+                 pihat            = pi,
+                 nburn            = n_burn,
+                 nsim             = n_sim,
+                 w                = weights,
+                 n_chains         = 2,
+                 n_chain_clusters = 2,
+                 random_seed      = 1,
+                 update_interval  = 1)
 
 # saveRDS(bcf_out, file = "examples/my_data.rds")
 

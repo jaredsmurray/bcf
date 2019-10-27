@@ -42,7 +42,17 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
   return(out) 
 }
 
-
+.get_do_type = function(n_chain_clusters){
+  if(n_chain_clusters>1){
+    cl <- parallel::makeCluster(n_chain_clusters)
+    doParallel::registerDoParallel(cl)
+    `%doType%`  <- foreach::`%dopar%`
+  } else {
+    `%doType%`  <- foreach::`%do%`
+  }
+  
+  return(`%doType%`)
+}
 
 #' Fit Bayesian Causal Forests
 #'
@@ -292,16 +302,15 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
   RcppParallel::setThreadOptions(numThreads=n_threads)
   
+
   
-  # cl <- parallel::makeCluster(n_chain_clusters)
-  # doParallel::registerDoParallel(cl)
-  # `%dopar%` <- foreach::`%dopar%`
+
   
   
    
-  `%do%`  <- foreach::`%do%`
+  `%doType%` = .get_do_type(n_chain_clusters)
   
-  chain_out <- foreach::foreach(iChain=1:n_chains) %do% {
+  chain_out <- foreach::foreach(iChain=1:n_chains) %doType% {
     
     this_seed = random_seed + iChain - 1
     
@@ -474,13 +483,15 @@ summarise_bcf <- function(bcf_out){
 #' @param z_pred Treatment variable for predictions (optional except if x_pre is not empty)
 #' @param pi_pred propensity score for prediction
 #' @param save_tree_directory directory where the trees have been saved
+#' @param n_chain_clusters An optional integer of the number of clusters to run your MCMC chains on
 #' @export
 predict <- function(bcf_out, 
                     x_predict_control,
                     x_predict_moderate,
                     pi_pred,
                     z_pred, 
-                    save_tree_directory) {
+                    save_tree_directory,
+                    n_chain_clusters=2) {
     # Currently only single chain predict is supported
 
     if(any(is.na(x_predict_moderate))) stop("Missing values in x_predict_moderate")
@@ -526,9 +537,9 @@ predict <- function(bcf_out,
 
     n_chains = length(out2$coda_chains)
     
-    `%do%`  <- foreach::`%do%`
+    `%doType%` = .get_do_type(n_chain_clusters)
     
-    chain_out <- foreach::foreach(iChain=1:n_chains) %do% {
+    chain_out <- foreach::foreach(iChain=1:n_chains) %doType% {
       
       tree_files = .get_chain_tree_files(save_tree_directory, iChain)
 
