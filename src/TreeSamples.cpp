@@ -44,6 +44,8 @@ class TreeSamples {
     }
     Rcout << "done" <<endl;
     init = true;
+
+    treef.close();
   }
   
   NumericMatrix predict(NumericMatrix x_) {

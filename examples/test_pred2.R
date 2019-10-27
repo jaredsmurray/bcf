@@ -41,11 +41,15 @@ out2 <- bcf2::bcf(y               = y,
                   nburn           = n_burn,
                   nsim            = n_sim,
                   w               = weights,
-                  n_chains        = 1,
+                  n_chains        = 2,
                   update_interval = 1,
                   save_tree_directory = './trees')
 
 cat("BCF run complete\n")
+
+
+
+cat("Starting Prediction \n")
 
 pred_out = bcf2::predict(bcf_out=out2,
                          x_predict_control=x,
@@ -53,6 +57,7 @@ pred_out = bcf2::predict(bcf_out=out2,
                          pi_pred=pi,
                          z_pred=z,
                          save_tree_directory = './trees')
+
 
 
 cat("Predictions Compelete\n")
@@ -78,15 +83,11 @@ assess_closeness <- function(x,y, title){
   abline(a=0, b=1)
 }
 
-assess_closeness(colMeans(pred_out$yhat_preds), colMeans(out2$yhat),'yhat')
+assess_closeness(colMeans(pred_out$yhat), colMeans(out2$yhat),'yhat')
+assess_closeness(colMeans(pred_out$tau), colMeans(out2$tau),'tau')
+assess_closeness(colMeans(pred_out$mu), colMeans(out2$mu),'mu')
 
-# assess_closeness(colMeans(out2$yhat), y, 'yhat to truth')
+# summarise_bcf(out2)
+# summarise_bcf(pred_out)
 
-assess_closeness(colMeans(pred_out$tau_preds), colMeans(out2$tau),'tau')
-
-# assess_closeness(colMeans(out2$tau), tau,'tau to truth')
-
-assess_closeness(colMeans(pred_out$mu_preds), colMeans(out2$mu),'mu')
-
-# assess_closeness(colMeans(out2$mu), q,'mu to truth')
 

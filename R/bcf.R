@@ -414,29 +414,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                             "b0"  = b0, 
                             "b1"  = b1)
     
-    # y_df <- as.data.frame(yhat)
-    # these_names <- names(y_df)
-    # these_names <- str_remove(these_names,'V')
-    # names(y_df)<- paste("y_",these_names,sep="")
-    
-    
-    # tau_df <- as.data.frame(tau)
-    # these_names <- names(tau_df)
-    # these_names <- str_remove(these_names,'V')
-    # names(tau_df)<- paste("tau_",these_names,sep="")
-    
-    # mu_df <- as.data.frame(mu)
-    # these_names <- names(mu_df)
-    # these_names <- str_remove(these_names,'V')
-    # names(mu_df)<- paste("mu_",these_names,sep="")
-    
-    
-    # bcf_df = cbind(scalar_df, y_df, tau_df, mu_df)
-    
-    bcf_df = cbind(scalar_df)
-    
-    
-    chain_list[[iChain]] <- coda::as.mcmc(bcf_df)
+    chain_list[[iChain]] <- coda::as.mcmc(scalar_df)
     # -----------------------------    
     # Sanity Check Constants Accross Chains
     # -----------------------------
@@ -447,9 +425,6 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     if(chain_out[[iChain]]$include_pi != chain_out[[1]]$include_pi) stop("include_pi not consistent between chains for no reason")
     if(any(chain_out[[iChain]]$perm   != chain_out[[1]]$perm))      stop("perm not consistent between chains for no reason")
   }
-  
-  mcmc_chains = coda::as.mcmc.list(chain_list)
-
 
   list(sigma = all_sigma,
        yhat = all_yhat,
@@ -464,7 +439,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
        perm = perm,
        include_pi = chain_out[[1]]$include_pi,
        random_seed = chain_out[[1]]$random_seed,
-       chains = mcmc_chains)
+       coda_chains = coda::as.mcmc.list(chain_list),
+       raw_chains = chain_out)
 }
 
 #' Print Summary Stats for a previous BCF run
@@ -474,18 +450,18 @@ summarise_bcf <- function(bcf_out){
   library(coda)
 
   message("Summary statistics for Markov Chain Monte Carlo chains")
-  print(summary(bcf_out$chains))
+  print(summary(bcf_out$coda_chains))
 
   cat("\n----\n\n")
 
 
   message("Effective sample size for estimating the mean")
-  print(effectiveSize(bcf_out$chains))
+  print(effectiveSize(bcf_out$coda_chains))
   
   cat("\n----\n\n")
   
   message("Gelman and Rubin's convergence diagnostic")
-  print(gelman.diag(bcf_out$chains))
+  print(gelman.diag(bcf_out$coda_chains))
   
   
 }
@@ -548,13 +524,15 @@ predict <- function(bcf_out,
 
     cat("Starting Prediction \n")
 
-    n_chains = length(out2$chains)
+    n_chains = length(out2$coda_chains)
     
     `%do%`  <- foreach::`%do%`
     
     chain_out <- foreach::foreach(iChain=1:n_chains) %do% {
       
       tree_files = .get_chain_tree_files(save_tree_directory, iChain)
+
+      cat("Starting to Predict Chain ", iChain, "\n")
       
       mods = TreeSamples$new()
       mods$load(tree_files$mod_trees)
@@ -568,19 +546,58 @@ predict <- function(bcf_out,
       list(Tm = Tm,
            Tc = Tc)
     }
-
-    Tm = chain_out[[1]]$Tm
-    Tc = chain_out[[1]]$Tc
     
+    all_yhat = c()
+    all_mu   = c()
+    all_tau  = c()
     
-    mu_preds  = bcf_out$muy + bcf_out$sdy*(Tc*bcf_out$mu_scale + Tm*bcf_out$b0)
+    chain_list=list()
 
-    tau_preds = bcf_out$sdy*(bcf_out$b1 - bcf_out$b0)*Tm
+    muy = bcf_out$muy
+      
+    sdy = bcf_out$sdy
+    
+    for (iChain in 1:n_chains){
+      
+      
+        # Extract Chain Specific Information
+    
+        Tm = chain_out[[iChain]]$Tm
+        Tc = chain_out[[iChain]]$Tc
+        
+        this_chain_bcf_out = bcf_out$raw_chains[[iChain]]
+        
+        b1 = this_chain_bcf_out$b1
+        b0 = this_chain_bcf_out$b0
+        mu_scale = this_chain_bcf_out$mu_scale
+        
 
-    yhat_preds = mu_preds + t(t(tau_preds)*z_pred)
+
+        # Calculate, tau, y, and mu
+
+        
+        mu  = muy + sdy*(Tc*mu_scale + Tm*b0)
+        tau = sdy*(b1 - b0)*Tm
+        yhat = mu + t(t(tau)*z_pred)
+        
+        
+        # Package Output up
+        all_yhat = rbind(all_yhat, yhat)
+        all_mu   = rbind(all_mu,   mu)
+        all_tau  = rbind(all_tau,  tau)
+        
+        
+        
+        scalar_df <- data.frame("tau_bar"   = matrixStats::rowWeightedMeans(tau, w=NULL),
+                                "mu_bar"    = matrixStats::rowWeightedMeans(mu, w=NULL),
+                                "yhat_bar"  = matrixStats::rowWeightedMeans(yhat, w=NULL))
+
+        chain_list[[iChain]] <- coda::as.mcmc(scalar_df)
+    }
 
 
-    list(tau_preds = tau_preds,
-         mu_preds = mu_preds,
-         yhat_preds = yhat_preds)
+    list(tau = all_tau,
+         mu = all_mu,
+         yhat = all_yhat,
+         coda_chains = coda::as.mcmc.list(chain_list))
 }
