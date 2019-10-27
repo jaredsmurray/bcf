@@ -419,7 +419,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                             "mu_bar"    = matrixStats::rowWeightedMeans(mu, weights),
                             "yhat_bar"  = matrixStats::rowWeightedMeans(yhat, weights),
                             "mu_scale"  = mu_scale, 
-                            "tau_scale" = tau_scale,
+                            # "tau_scale" = tau_scale,
                             "b0"  = b0, 
                             "b1"  = b1)
     

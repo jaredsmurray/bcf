@@ -22,16 +22,18 @@ z <- rbinom(n,1,pi)
 
 # tau is the true treatment effect. It varies across practices as a function of
 # X3, the effect moderator
-tau <- 1/(1 + exp(-x[,3]))
+tau <- (1/(1 + exp(-x[,3])))
+
+mu <- q
 
 # generate the response using q, tau and z
-mu <- (q + tau*z)
+y_noiseless <- mu + tau*z
 
 # set the noise level relative to the expected mean function of Y
-sigma <- diff(range(q + tau*pi))/8
+sigma <- diff(range(mu + tau*pi))/8
 
 # draw the response variable with additive error
-y <- mu + sigma*rnorm(n)
+y <- y_noiseless + sigma*rnorm(n)
 
 out2 <- bcf2::bcf(y               = y,
                   z               = z,
@@ -82,6 +84,15 @@ assess_closeness <- function(x,y, title){
   plot(x, y, col = z + 1, main=title)
   abline(a=0, b=1)
 }
+
+print("Y Mean")
+print(mean(y))
+
+print("Tau Mean")
+print(mean(tau))
+
+print("mu Mean")
+print(mean(mu))
 
 assess_closeness(colMeans(pred_out$yhat), colMeans(out2$yhat),'yhat')
 assess_closeness(colMeans(pred_out$tau), colMeans(out2$tau),'tau')

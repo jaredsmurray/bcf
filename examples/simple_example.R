@@ -1,9 +1,9 @@
-set.seed(2)
+set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
-n <- 10
-n_burn <- 150
-n_sim <- 150
+n <- 1000
+n_burn <- 1000
+n_sim <- 1000
 
 x <- matrix(rnorm(n*p), nrow=n)
 
@@ -17,16 +17,18 @@ z <- rbinom(n,1,pi)
 
 # tau is the true treatment effect. It varies across practices as a function of
 # X3, the effect moderator
-tau <- 1/(1 + exp(-x[,3]))
+tau <-  1/(1 + exp(-x[,3]))
+
+mu <- q
 
 # generate the response using q, tau and z
-mu <- 100 + (q + tau*z)
+y_noiseless <- mu + tau*z
 
 # set the noise level relative to the expected mean function of Y
-sigma <- diff(range(q + tau*pi))/8
+sigma <- diff(range(mu + tau*pi))/8
 
 # draw the response variable with additive error
-y <- mu + sigma*rnorm(n)
+y <- y_noiseless + sigma*rnorm(n)
 
 weights <- 1000.0*rep(1, n)
 
@@ -38,7 +40,7 @@ bcf_out <- bcf2::bcf(y            = y,
                  nburn            = n_burn,
                  nsim             = n_sim,
                  w                = weights,
-                 n_chains         = 2,
+                 n_chains         = 4,
                  n_chain_clusters = 2,
                  random_seed      = 1,
                  update_interval  = 1)
@@ -80,6 +82,9 @@ print(mean(y))
 
 print("Tau Mean")
 print(mean(tau))
+
+print("mu Mean")
+print(mean(mu))
 
 assess_closeness(bcf_out$mu,mu_correct,'mu_compare')
 
