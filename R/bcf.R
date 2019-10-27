@@ -492,8 +492,7 @@ predict <- function(bcf_out,
                     z_pred, 
                     save_tree_directory,
                     n_chain_clusters=2) {
-    # Currently only single chain predict is supported
-
+                        
     if(any(is.na(x_predict_moderate))) stop("Missing values in x_predict_moderate")
     if(any(is.na(x_predict_control))) stop("Missing values in x_predict_control")
     if(any(is.na(z_pred))) stop("Missing values in z_pred")
