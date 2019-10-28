@@ -2,8 +2,8 @@ set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
 n <- 1000
-n_burn <- 100
-n_sim <- 150
+n_burn <- 1000
+n_sim <- 1500
 
 
 x <- matrix(rnorm(n*p), nrow=n)
@@ -33,45 +33,51 @@ y <- mu + sigma*rnorm(n)
 weights <- 1000.0*rep(1, n)
 
 set.seed(1)
-out1 <- bcf2::bcf(y          = y,
-                  z          = z,
-                  x_control  = x,
-                  x_moderate = x,
-                  pihat      = pi,
-                  nburn      = n_burn,
-                  nsim       = n_sim,
-                  w          = weights,
-                  random_seed = 1,
+ptm <- proc.time()
+out <- bcf2::bcf(y               = y,
+                  z               = z,
+                  x_control       = x,
+                  x_moderate      = x,
+                  pihat           = pi,
+                  nburn           = n_burn,
+                  nsim            = n_sim,
+                  w               = weights,
+                  random_seed     = 1,
                   update_interval = 100)
 
-set.seed(10)
-out2 <- bcf2::bcf(y          = y,
-                  z          = z,
-                  x_control  = x,
-                  x_moderate = x,
-                  pihat      = pi,
-                  nburn      = n_burn,
-                  nsim       = n_sim,
-                  w          = weights,
-                  random_seed = 1,
-                  update_interval = 100)
+cat("BCF Fit Complete \n")
+print(proc.time() - ptm)
 
-set.seed(100)
-out3 <- bcf2::bcf(y          = y,
-                  z          = z,
-                  x_control  = x,
-                  x_moderate = x,
-                  pihat      = pi,
-                  nburn      = n_burn,
-                  nsim       = n_sim,
-                  w          = weights,
-                  random_seed = 2,
-                  update_interval = 100)
+originatOut = readRDS("examples/output_original.rds")
+
+# saveRDS(out, "examples/output_original.rds")
 
 
-cat("Saving results \n")
+mean_square_error <- function (x,y){
+  mean((x-y)^2)
+}
 
-saveRDS(out2, file = "examples/data_1000w.rds")
+error <- function(x,y){
+  mean(abs(x-y))/abs(mean(x))
+}
 
+assess_closeness <- function(x,y, title){
+  cat("Assessing Cloesness of ", title, "\n")
+  print("Correlation")
+  print(cor(x,y))
+  
+  print("MSE")
+  print(mean_square_error(x,y))
+  
+  print("Error")
+  print(error(x,y))
+  
+  plot(x, y, col = z + 1, main=title)
+  abline(a=0, b=1)
+}
 
-cat("BCF run complete\n")
+assess_closeness(colMeans(originatOut$yhat), colMeans(out$yhat),'yhat')
+
+assess_closeness(colMeans(originatOut$tau), colMeans(out$tau),'tau')
+
+assess_closeness(colMeans(originatOut$mu), colMeans(out$mu),'mu')

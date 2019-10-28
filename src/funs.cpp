@@ -522,7 +522,7 @@ void MPIslaveallsuff(tree& x, xinfo& xi, dinfo& di, tree::npv& bnv)
 
 //  Is is probably this get suff that matters
 // getsuff(x,nx->getl(),nx->getr(),xi,di,phi,sl,sr)
-struct GetSuffWorker: public Worker
+struct GetSuffBirthWorker: public Worker
 {
 // -------------------
 // Inputs
@@ -553,7 +553,7 @@ double y;  //current y
 // Constructors
 // -------------------
 // Standard Constructor
-GetSuffWorker(tree& x,
+GetSuffBirthWorker(tree& x,
 							tree::tree_cp nx,
 							size_t v,
 							size_t c,
@@ -570,7 +570,7 @@ GetSuffWorker(tree& x,
 	r_n0=0.0;
 } 
 // Splitting Constructor
-GetSuffWorker(const GetSuffWorker& gsw, Split):x(gsw.x),nx(gsw.nx),v(gsw.v),c(gsw.c),xi(gsw.xi),di(gsw.di),phi(gsw.phi) {
+GetSuffBirthWorker(const GetSuffBirthWorker& gsw, Split):x(gsw.x),nx(gsw.nx),v(gsw.v),c(gsw.c),xi(gsw.xi),di(gsw.di),phi(gsw.phi) {
 
 	l_n=0.0;
 	l_sy=0.0;
@@ -599,7 +599,7 @@ void operator()(std::size_t begin, std::size_t end){
 	}
 }
 
-void join(const GetSuffWorker& gsw){
+void join(const GetSuffBirthWorker& gsw){
 	l_n   += gsw.l_n;
 	l_sy  += gsw.l_sy;
 	l_n0  += gsw.l_n0;
@@ -609,13 +609,13 @@ void join(const GetSuffWorker& gsw){
 	r_n0  += gsw.r_n0;
 }
 
-}; // End Get Suff Worker
+}; // End Get Suff Birth Worker
 
 
 // birth get suff 
-void getsuff(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
+void getsuffBirth(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
 {
-	GetSuffWorker gsw(x,nx,v,c,xi,di,phi);
+	GetSuffBirthWorker gsw(x,nx,v,c,xi,di,phi);
 
 	parallelReduce(0, di.n, gsw);
 
@@ -632,32 +632,109 @@ void getsuff(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di
 
 // ----------------------------------------------------
 // Rcpp Parrell get suff worker
+struct GetSuffDeathWorker: public Worker
+{
+// -------------------
+// Inputs
+// -------------------
+tree& x;
+tree::tree_cp nl; 
+tree::tree_cp nr; 
+xinfo& xi; 
+dinfo& di; 
+double* phi; 
 
+// -------------------
+// Internal State
+// -------------------
+double l_n;
+double l_sy;
+double l_n0;
 
+double r_n;
+double r_sy;
+double r_n0;
+
+double *xx;//current x
+double y;  //current y
+
+// -------------------
+// Constructors
+// -------------------
+// Standard Constructor
+GetSuffDeathWorker(tree& x,
+				   tree::tree_cp nl,
+                   tree::tree_cp nr,
+				   xinfo& xi,
+				   dinfo& di,
+				   double* phi):x(x),nl(nl),nr(nr),xi(xi),di(di),phi(phi) {
+
+    l_n=0.0;
+	l_sy=0.0;
+	l_n0=0.0;
+
+	r_n=0.0;
+	r_sy=0.0;
+	r_n0=0.0;
+} 
+// Splitting Constructor
+GetSuffDeathWorker(const GetSuffDeathWorker& gsw, Split):x(gsw.x),nl(gsw.nl),nr(gsw.nr),xi(gsw.xi),di(gsw.di),phi(gsw.phi){
+
+	l_n=0.0;
+	l_sy=0.0;
+	l_n0=0.0;
+
+	r_n=0.0;
+	r_sy=0.0;
+	r_n0=0.0;
+} 
+
+void operator()(std::size_t begin, std::size_t end){
+	for(size_t i=begin;i<end;i++) {
+		xx = di.x + i*di.p;
+		tree::tree_cp bn = x.bn(xx,xi);
+        y = di.y[i];
+        
+		if(bn==nl) {
+			l_n0 += 1;
+			l_n  += phi[i];
+			l_sy += phi[i]*y;
+		}
+		if(bn==nr) {
+			r_n0 += 1;
+			r_n  += phi[i];
+			r_sy += phi[i]*y;
+		}
+	}
+}
+
+void join(const GetSuffDeathWorker& gsw){
+	l_n   += gsw.l_n;
+	l_sy  += gsw.l_sy;
+	l_n0  += gsw.l_n0;
+
+	r_n   += gsw.r_n;
+	r_sy  += gsw.r_sy;
+	r_n0  += gsw.r_n0;
+}
+
+}; // End Get Suff Death Worker
 //--------------------------------------------------
 //get sufficient stats for pair of bottom children nl(left) and nr(right) in tree x
 // Death get suff
-void getsuff(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
+void getsuffDeath(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
 {
-  double *xx;//current x
-	double y;  //current y
-	sl.n=0;sl.sy=0.0;
-	sr.n=0;sr.sy=0.0;
-	
-	for(size_t i=0;i<di.n;i++) {
-		xx = di.x + i*di.p;
-		tree::tree_cp bn = x.bn(xx,xi);
-		if(bn==nl) {
-			y = di.y[i];
-			sl.n += phi[i];
-			sl.sy += phi[i]*y;
-		}
-		if(bn==nr) {
-			y = di.y[i];
-			sr.n += phi[i];
-			sr.sy += phi[i]*y;
-		}
-	}
+	GetSuffDeathWorker gsw(x,nl,nr,xi,di,phi);
+	parallelReduce(0, di.n, gsw);
+
+	sl.n   = gsw.l_n;
+	sl.sy  = gsw.l_sy;
+	sl.n0  = gsw.l_n0;
+
+	sr.n   = gsw.r_n;
+	sr.sy  = gsw.r_sy;
+	sr.n0  = gsw.r_n0;
+
 }
 #ifdef MPIBART
 //MPI version of get sufficient stats - this is the master code
