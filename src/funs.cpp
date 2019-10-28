@@ -522,7 +522,7 @@ void MPIslaveallsuff(tree& x, xinfo& xi, dinfo& di, tree::npv& bnv)
 
 //  Is is probably this get suff that matters
 // getsuff(x,nx->getl(),nx->getr(),xi,di,phi,sl,sr)
-struct GetSuffWorker: public Worker
+struct GetSuffBirthWorker: public Worker
 {
 // -------------------
 // Inputs
@@ -553,7 +553,7 @@ double y;  //current y
 // Constructors
 // -------------------
 // Standard Constructor
-GetSuffWorker(tree& x,
+GetSuffBirthWorker(tree& x,
 							tree::tree_cp nx,
 							size_t v,
 							size_t c,
@@ -570,7 +570,7 @@ GetSuffWorker(tree& x,
 	r_n0=0.0;
 } 
 // Splitting Constructor
-GetSuffWorker(const GetSuffWorker& gsw, Split):x(gsw.x),nx(gsw.nx),v(gsw.v),c(gsw.c),xi(gsw.xi),di(gsw.di),phi(gsw.phi) {
+GetSuffBirthWorker(const GetSuffBirthWorker& gsw, Split):x(gsw.x),nx(gsw.nx),v(gsw.v),c(gsw.c),xi(gsw.xi),di(gsw.di),phi(gsw.phi) {
 
 	l_n=0.0;
 	l_sy=0.0;
@@ -599,7 +599,7 @@ void operator()(std::size_t begin, std::size_t end){
 	}
 }
 
-void join(const GetSuffWorker& gsw){
+void join(const GetSuffBirthWorker& gsw){
 	l_n   += gsw.l_n;
 	l_sy  += gsw.l_sy;
 	l_n0  += gsw.l_n0;
@@ -613,9 +613,9 @@ void join(const GetSuffWorker& gsw){
 
 
 // birth get suff 
-void getsuff(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
+void getsuffBirth(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
 {
-	GetSuffWorker gsw(x,nx,v,c,xi,di,phi);
+	GetSuffBirthWorker gsw(x,nx,v,c,xi,di,phi);
 
 	parallelReduce(0, di.n, gsw);
 
@@ -637,7 +637,7 @@ void getsuff(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di
 //--------------------------------------------------
 //get sufficient stats for pair of bottom children nl(left) and nr(right) in tree x
 // Death get suff
-void getsuff(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
+void getsuffDeath(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
 {
   double *xx;//current x
 	double y;  //current y

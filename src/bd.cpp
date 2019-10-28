@@ -98,7 +98,7 @@ bool bd(tree& x, xinfo& xi, dinfo& di, double* phi, pinfo& pi, RNG& gen, Logger 
       //--------------------------------------------------
       //compute sufficient statistics
       sinfo sl,sr; //sl for left from nx and sr for right from nx (using rule (v,c))
-      getsuff(x,nx,v,c,xi,di,phi,sl,sr);
+      getsuffBirth(x,nx,v,c,xi,di,phi,sl,sr);
       
       //--------------------------------------------------
       //compute alpha
@@ -192,7 +192,7 @@ bool bd(tree& x, xinfo& xi, dinfo& di, double* phi, pinfo& pi, RNG& gen, Logger 
 #ifdef MPIBART
 		MPImastergetsuff(nx->getl(),nx->getr(),sl,sr,numslaves);
 #else
-      getsuff(x,nx->getl(),nx->getr(),xi,di,phi,sl,sr);
+      getsuffDeath(x,nx->getl(),nx->getr(),xi,di,phi,sl,sr);
 #endif
       //--------------------------------------------------
       //compute alpha

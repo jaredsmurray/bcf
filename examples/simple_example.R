@@ -33,6 +33,7 @@ y <- mu + sigma*rnorm(n)
 weights <- 1000.0*rep(1, n)
 
 set.seed(1)
+ptm <- proc.time()
 out <- bcf2::bcf(y               = y,
                   z               = z,
                   x_control       = x,
@@ -44,6 +45,9 @@ out <- bcf2::bcf(y               = y,
                   random_seed     = 1,
                   update_interval = 100)
 
+cat("BCF Fit Complete \n")
+print(proc.time() - ptm)
+
 originatOut = readRDS("examples/output_original.rds")
 
 
@@ -51,12 +55,21 @@ mean_square_error <- function (x,y){
   mean((x-y)^2)
 }
 
+error <- function(x,y){
+  mean(abs(x-y))/abs(mean(x))
+}
+
 assess_closeness <- function(x,y, title){
   cat("Assessing Cloesness of ", title, "\n")
   print("Correlation")
   print(cor(x,y))
+  
   print("MSE")
   print(mean_square_error(x,y))
+  
+  print("Error")
+  print(error(x,y))
+  
   plot(x, y, col = z + 1, main=title)
   abline(a=0, b=1)
 }
@@ -66,6 +79,3 @@ assess_closeness(colMeans(originatOut$yhat), colMeans(out$yhat),'yhat')
 assess_closeness(colMeans(originatOut$tau), colMeans(out$tau),'tau')
 
 assess_closeness(colMeans(originatOut$mu), colMeans(out$mu),'mu')
-
-
-
