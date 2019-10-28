@@ -643,8 +643,7 @@ tree::tree_cp nr;
 xinfo& xi; 
 dinfo& di; 
 double* phi; 
-sinfo& sl; 
-sinfo& sr;
+
 // -------------------
 // Internal State
 // -------------------
@@ -668,9 +667,7 @@ GetSuffDeathWorker(tree& x,
                    tree::tree_cp nr,
 				   xinfo& xi,
 				   dinfo& di,
-				   double* phi,
-				   sinfo& sl,
-				   sinfo& sr):x(x),nl(nl),nr(nr),xi(xi),di(di),phi(phi),sl(sl),sr(sr) {
+				   double* phi):x(x),nl(nl),nr(nr),xi(xi),di(di),phi(phi) {
 
     l_n=0.0;
 	l_sy=0.0;
@@ -681,7 +678,7 @@ GetSuffDeathWorker(tree& x,
 	r_n0=0.0;
 } 
 // Splitting Constructor
-GetSuffDeathWorker(const GetSuffDeathWorker& gsw, Split):x(gsw.x),nl(gsw.nl),nr(gsw.nr),xi(gsw.xi),di(gsw.di),phi(gsw.phi),sl(gsw.sl),sr(gsw.sr) {
+GetSuffDeathWorker(const GetSuffDeathWorker& gsw, Split):x(gsw.x),nl(gsw.nl),nr(gsw.nr),xi(gsw.xi),di(gsw.di),phi(gsw.phi){
 
 	l_n=0.0;
 	l_sy=0.0;
@@ -696,15 +693,17 @@ void operator()(std::size_t begin, std::size_t end){
 	for(size_t i=begin;i<end;i++) {
 		xx = di.x + i*di.p;
 		tree::tree_cp bn = x.bn(xx,xi);
+        y = di.y[i];
+        
 		if(bn==nl) {
-			y = di.y[i];
-			sl.n += phi[i];
-			sl.sy += phi[i]*y;
+			l_n0 += 1;
+			l_n  += phi[i];
+			l_sy += phi[i]*y;
 		}
 		if(bn==nr) {
-			y = di.y[i];
-			sr.n += phi[i];
-			sr.sy += phi[i]*y;
+			r_n0 += 1;
+			r_n  += phi[i];
+			r_sy += phi[i]*y;
 		}
 	}
 }
@@ -725,25 +724,18 @@ void join(const GetSuffDeathWorker& gsw){
 // Death get suff
 void getsuffDeath(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
 {
-  double *xx;//current x
-	double y;  //current y
-	sl.n=0;sl.sy=0.0;
-	sr.n=0;sr.sy=0.0;
-	
-	for(size_t i=0;i<di.n;i++) {
-		xx = di.x + i*di.p;
-		tree::tree_cp bn = x.bn(xx,xi);
-		if(bn==nl) {
-			y = di.y[i];
-			sl.n += phi[i];
-			sl.sy += phi[i]*y;
-		}
-		if(bn==nr) {
-			y = di.y[i];
-			sr.n += phi[i];
-			sr.sy += phi[i]*y;
-		}
-	}
+	GetSuffDeathWorker gsw(x,nl,nr,xi,di,phi);
+
+	parallelReduce(0, di.n, gsw);
+
+	sl.n   = gsw.l_n;
+	sl.sy  = gsw.l_sy;
+	sl.n0  = gsw.l_n0;
+
+	sr.n   = gsw.r_n;
+	sr.sy  = gsw.r_sy;
+	sr.n0  = gsw.r_n0;
+
 }
 #ifdef MPIBART
 //MPI version of get sufficient stats - this is the master code
