@@ -609,7 +609,7 @@ void join(const GetSuffBirthWorker& gsw){
 	r_n0  += gsw.r_n0;
 }
 
-}; // End Get Suff Worker
+}; // End Get Suff Birth Worker
 
 
 // birth get suff 
@@ -632,8 +632,94 @@ void getsuffBirth(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinf
 
 // ----------------------------------------------------
 // Rcpp Parrell get suff worker
+struct GetSuffDeathWorker: public Worker
+{
+// -------------------
+// Inputs
+// -------------------
+tree& x;
+tree::tree_cp nx;
+size_t v;
+size_t c;
+xinfo& xi;
+dinfo& di;
+double* phi;
 
+// -------------------
+// Internal State
+// -------------------
+double l_n;
+double l_sy;
+double l_n0;
 
+double r_n;
+double r_sy;
+double r_n0;
+
+double *xx;//current x
+double y;  //current y
+
+// -------------------
+// Constructors
+// -------------------
+// Standard Constructor
+GetSuffDeathWorker(tree& x,
+				   tree::tree_cp nx,
+				   size_t v,
+				   size_t c,
+				   xinfo& xi,
+				   dinfo& di,
+				   double* phi):x(x),nx(nx),v(v),c(c),xi(xi),di(di),phi(phi) {
+
+    l_n=0.0;
+	l_sy=0.0;
+	l_n0=0.0;
+
+	r_n=0.0;
+	r_sy=0.0;
+	r_n0=0.0;
+} 
+// Splitting Constructor
+GetSuffDeathWorker(const GetSuffDeathWorker& gsw, Split):x(gsw.x),nx(gsw.nx),v(gsw.v),c(gsw.c),xi(gsw.xi),di(gsw.di),phi(gsw.phi) {
+
+	l_n=0.0;
+	l_sy=0.0;
+	l_n0=0.0;
+
+	r_n=0.0;
+	r_sy=0.0;
+	r_n0=0.0;
+} 
+
+void operator()(std::size_t begin, std::size_t end){
+	for(size_t i=begin;i<end;i++) {
+		xx = di.x + i*di.p;
+		if(nx==x.bn(xx,xi)) { //does the bottom node = xx's bottom node
+			y = di.y[i];
+			if(xx[v] < xi[v][c]) {
+        		l_n0 += 1;
+				l_n += phi[i];
+				l_sy += phi[i]*y;
+			} else {
+       			r_n0 += 1;
+				r_n += phi[i];
+				r_sy += phi[i]*y;
+			}
+		}
+	}
+}
+
+void join(const GetSuffDeathWorker& gsw){
+	l_n   += gsw.l_n;
+	l_sy  += gsw.l_sy;
+	l_n0  += gsw.l_n0;
+
+	r_n   += gsw.r_n;
+	r_sy  += gsw.r_sy;
+	r_n0  += gsw.r_n0;
+}
+
+}; // End Get Suff Death Worker
 //--------------------------------------------------
 //get sufficient stats for pair of bottom children nl(left) and nr(right) in tree x
 // Death get suff
