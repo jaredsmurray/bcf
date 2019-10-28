@@ -638,13 +638,13 @@ struct GetSuffDeathWorker: public Worker
 // Inputs
 // -------------------
 tree& x;
-tree::tree_cp nx;
-size_t v;
-size_t c;
-xinfo& xi;
-dinfo& di;
-double* phi;
-
+tree::tree_cp nl; 
+tree::tree_cp nr; 
+xinfo& xi; 
+dinfo& di; 
+double* phi; 
+sinfo& sl; 
+sinfo& sr;
 // -------------------
 // Internal State
 // -------------------
@@ -664,12 +664,13 @@ double y;  //current y
 // -------------------
 // Standard Constructor
 GetSuffDeathWorker(tree& x,
-				   tree::tree_cp nx,
-				   size_t v,
-				   size_t c,
+				   tree::tree_cp nl,
+                   tree::tree_cp nr,
 				   xinfo& xi,
 				   dinfo& di,
-				   double* phi):x(x),nx(nx),v(v),c(c),xi(xi),di(di),phi(phi) {
+				   double* phi,
+				   sinfo& sl,
+				   sinfo& sr):x(x),nl(nl),nr(nr),xi(xi),di(di),phi(phi),sl(sl),sr(sr) {
 
     l_n=0.0;
 	l_sy=0.0;
@@ -680,7 +681,7 @@ GetSuffDeathWorker(tree& x,
 	r_n0=0.0;
 } 
 // Splitting Constructor
-GetSuffDeathWorker(const GetSuffDeathWorker& gsw, Split):x(gsw.x),nx(gsw.nx),v(gsw.v),c(gsw.c),xi(gsw.xi),di(gsw.di),phi(gsw.phi) {
+GetSuffDeathWorker(const GetSuffDeathWorker& gsw, Split):x(gsw.x),nl(gsw.nl),nr(gsw.nr),xi(gsw.xi),di(gsw.di),phi(gsw.phi),sl(gsw.sl),sr(gsw.sr) {
 
 	l_n=0.0;
 	l_sy=0.0;
@@ -694,17 +695,16 @@ GetSuffDeathWorker(const GetSuffDeathWorker& gsw, Split):x(gsw.x),nx(gsw.nx),v(g
 void operator()(std::size_t begin, std::size_t end){
 	for(size_t i=begin;i<end;i++) {
 		xx = di.x + i*di.p;
-		if(nx==x.bn(xx,xi)) { //does the bottom node = xx's bottom node
+		tree::tree_cp bn = x.bn(xx,xi);
+		if(bn==nl) {
 			y = di.y[i];
-			if(xx[v] < xi[v][c]) {
-        		l_n0 += 1;
-				l_n += phi[i];
-				l_sy += phi[i]*y;
-			} else {
-       			r_n0 += 1;
-				r_n += phi[i];
-				r_sy += phi[i]*y;
-			}
+			sl.n += phi[i];
+			sl.sy += phi[i]*y;
+		}
+		if(bn==nr) {
+			y = di.y[i];
+			sr.n += phi[i];
+			sr.sy += phi[i]*y;
 		}
 	}
 }
