@@ -725,7 +725,6 @@ void join(const GetSuffDeathWorker& gsw){
 void getsuffDeath(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
 {
 	GetSuffDeathWorker gsw(x,nl,nr,xi,di,phi);
-
 	parallelReduce(0, di.n, gsw);
 
 	sl.n   = gsw.l_n;

@@ -2,8 +2,8 @@ set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
 n <- 1000
-n_burn <- 100
-n_sim <- 150
+n_burn <- 1000
+n_sim <- 1500
 
 
 x <- matrix(rnorm(n*p), nrow=n)
@@ -49,6 +49,8 @@ cat("BCF Fit Complete \n")
 print(proc.time() - ptm)
 
 originatOut = readRDS("examples/output_original.rds")
+
+# saveRDS(out, "examples/output_original.rds")
 
 
 mean_square_error <- function (x,y){
