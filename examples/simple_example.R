@@ -33,45 +33,39 @@ y <- mu + sigma*rnorm(n)
 weights <- 1000.0*rep(1, n)
 
 set.seed(1)
-out1 <- bcf2::bcf(y          = y,
-                  z          = z,
-                  x_control  = x,
-                  x_moderate = x,
-                  pihat      = pi,
-                  nburn      = n_burn,
-                  nsim       = n_sim,
-                  w          = weights,
-                  random_seed = 1,
+out <- bcf2::bcf(y               = y,
+                  z               = z,
+                  x_control       = x,
+                  x_moderate      = x,
+                  pihat           = pi,
+                  nburn           = n_burn,
+                  nsim            = n_sim,
+                  w               = weights,
+                  random_seed     = 1,
                   update_interval = 100)
 
-set.seed(10)
-out2 <- bcf2::bcf(y          = y,
-                  z          = z,
-                  x_control  = x,
-                  x_moderate = x,
-                  pihat      = pi,
-                  nburn      = n_burn,
-                  nsim       = n_sim,
-                  w          = weights,
-                  random_seed = 1,
-                  update_interval = 100)
-
-set.seed(100)
-out3 <- bcf2::bcf(y          = y,
-                  z          = z,
-                  x_control  = x,
-                  x_moderate = x,
-                  pihat      = pi,
-                  nburn      = n_burn,
-                  nsim       = n_sim,
-                  w          = weights,
-                  random_seed = 2,
-                  update_interval = 100)
+originatOut = readRDS("examples/output_original.rds")
 
 
-cat("Saving results \n")
+mean_square_error <- function (x,y){
+  mean((x-y)^2)
+}
 
-saveRDS(out2, file = "examples/data_1000w.rds")
+assess_closeness <- function(x,y, title){
+  cat("Assessing Cloesness of ", title, "\n")
+  print("Correlation")
+  print(cor(x,y))
+  print("MSE")
+  print(mean_square_error(x,y))
+  plot(x, y, col = z + 1, main=title)
+  abline(a=0, b=1)
+}
+
+assess_closeness(colMeans(originatOut$yhat), colMeans(out$yhat),'yhat')
+
+assess_closeness(colMeans(originatOut$tau), colMeans(out$tau),'tau')
+
+assess_closeness(colMeans(originatOut$mu), colMeans(out$mu),'mu')
 
 
-cat("BCF run complete\n")
+
