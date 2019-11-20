@@ -22,16 +22,18 @@ z <- rbinom(n,1,pi)
 
 # tau is the true treatment effect. It varies across practices as a function of
 # X3, the effect moderator
-tau <- 1/(1 + exp(-x[,3]))
+tau <- (1/(1 + exp(-x[,3])))
+
+mu <- q
 
 # generate the response using q, tau and z
-mu <- (q + tau*z)
+y_noiseless <- mu + tau*z
 
 # set the noise level relative to the expected mean function of Y
-sigma <- diff(range(q + tau*pi))/8
+sigma <- diff(range(mu + tau*pi))/8
 
 # draw the response variable with additive error
-y <- mu + sigma*rnorm(n)
+y <- y_noiseless + sigma*rnorm(n)
 
 out2 <- bcf2::bcf(y               = y,
                   z               = z,
@@ -40,20 +42,24 @@ out2 <- bcf2::bcf(y               = y,
                   pihat           = pi,
                   nburn           = n_burn,
                   nsim            = n_sim,
-                  w               = weights, 
+                  w               = weights,
+                  n_chains        = 2,
                   update_interval = 1,
-                  ntree_control   = 3,
-                  verbose         = TRUE,
-                  use_muscale     = TRUE,
-                  use_tauscale    = TRUE)
+                  save_tree_directory = './trees')
 
 cat("BCF run complete\n")
+
+
+
+cat("Starting Prediction \n")
 
 pred_out = bcf2::predict(bcf_out=out2,
                          x_predict_control=x,
                          x_predict_moderate=x,
                          pi_pred=pi,
-                         z_pred=z)
+                         z_pred=z,
+                         save_tree_directory = './trees')
+
 
 
 cat("Predictions Compelete\n")
@@ -67,15 +73,32 @@ assess_closeness <- function(x,y, title){
   cat("Assessing Cloesness of ", title, "\n")
   print("Correlation")
   print(cor(x,y))
+  
+  mse = mean_square_error(x,y)
+  
   print("MSE")
-  print(mean_square_error(x,y))
+  print(mse)
+  
+  print("Error")
+  print(sqrt(mse)/abs(mean(x)))
   plot(x, y, col = z + 1, main=title)
   abline(a=0, b=1)
 }
 
-assess_closeness(colMeans(pred_out$yhat_preds), colMeans(out2$yhat),'yhat')
+print("Y Mean")
+print(mean(y))
 
-assess_closeness(colMeans(pred_out$tau_preds), colMeans(out2$tau),'tau')
+print("Tau Mean")
+print(mean(tau))
 
-assess_closeness(colMeans(pred_out$mu_preds), colMeans(out2$mu),'mu')
+print("mu Mean")
+print(mean(mu))
+
+assess_closeness(colMeans(pred_out$yhat), colMeans(out2$yhat),'yhat')
+assess_closeness(colMeans(pred_out$tau), colMeans(out2$tau),'tau')
+assess_closeness(colMeans(pred_out$mu), colMeans(out2$mu),'mu')
+
+# summarise_bcf(out2)
+# summarise_bcf(pred_out)
+
 

@@ -81,7 +81,6 @@ tmp
 *.out
 *.app
 
-<<<<<<< HEAD
 #Testing scripts
 scripts/
 inst/doc
@@ -89,6 +88,6 @@ inst/doc
 # Other objects
 *txt
 *pdf
-=======
 inst/doc
->>>>>>> wbcf
+
+trees/*
