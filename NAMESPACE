@@ -2,7 +2,7 @@
 
 export(bcf)
 export(predict)
-export(verify_install)
+export(summarise_bcf)
 import(Rcpp)
 import(RcppArmadillo)
 import(RcppParallel)

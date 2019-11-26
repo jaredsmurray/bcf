@@ -42,8 +42,11 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 tmp
+<<<<<<< HEAD
+=======
 *.vscode/
 *.pdf
+>>>>>>> wbcf
 
 # Prerequisites
 *.d
@@ -79,4 +82,13 @@ tmp
 *.app
 *.rds
 
+#Testing scripts
+scripts/
 inst/doc
+
+# Other objects
+*txt
+*pdf
+inst/doc
+
+trees/*

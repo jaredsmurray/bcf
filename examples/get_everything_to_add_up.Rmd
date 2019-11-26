@@ -1,0 +1,240 @@
+---
+title: "Get Everything to Add Up"
+author: Peter Mariani
+date: October 11, 2019
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+---
+
+## Generate Data
+
+```{r}
+set.seed(1)
+
+p <- 3 # two control variables and one effect moderator
+n <- 10
+n_burn <- 1000
+n_sim <- 1000
+
+
+x <- matrix(rnorm(n*p), nrow=n)
+
+
+
+# create targeted selection, whereby a practice's likelihood of joining the intervention (pi) is related to their expected outcome (mu)
+q <- -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2])) -0.1
+
+# generate treatment variable
+pi <- pnorm(q)
+z <- rbinom(n,1,pi)
+
+# tau is the true treatment effect. It varies across practices as a function of
+# X3, the effect moderator
+tau <- 1/(1 + exp(-x[,3]))
+tau <- 100 + tau
+
+
+# generate the response using q, tau and z
+mu <- (q + tau*z)
+
+# set the noise level relative to the expected mean function of Y
+sigma <- diff(range(q + tau*pi))/8
+
+# draw the response variable with additive error
+y <- mu + sigma*rnorm(n)
+
+weights <- 1000.0*rep(1, n)
+
+bcf_out <- bcf2::bcf(y          = y,
+                     z          = z,
+                     x_moderate = x,
+                     x_control  = x,
+                     pihat      = pi,
+                     nburn      = n_burn,
+                     nsim       = n_sim,
+                     w          = weights,
+                     n_chains = 1,
+                     random_seed = 1,
+                     update_interval = 100)
+```
+
+## What the Truth Looks Like
+
+```{r collapse=TRUE}
+cat(sprintf("mu           mean %f \n", mean(q)))
+cat(sprintf("tau          mean %f \n", mean(tau)))
+cat(sprintf("noiseless y  mean %f \n", mean(mu)))
+cat(sprintf("y            mean %f \n", mean(y)))
+cat(sprintf("z            mean %f \n", mean(z)))
+cat(sprintf("z:                %s \n",    paste(z, collapse=" ")))
+```
+By making the mean of tau very large relative to mu, I'm hoping what's happening will become more obvious
+
+## Exploratory Analysis of the estimates
+
+```{r}
+df <-        data.frame("z"           = z,
+                        "y"           = y,
+                        "y_hat"       = colMeans(bcf_out$yhat),
+                        "mu_p_ztau"   = colMeans(bcf_out$mu) + z*colMeans(bcf_out$tau), 
+                        "mu"          = q, 
+                        "mu_bar"      = colMeans(bcf_out$mu),
+                        "tau"           = tau,
+                        "tau_bar"     = colMeans(bcf_out$tau))
+
+print(round(t(df)))
+cat(sprintf("mu  scale mean %f \n", mean(bcf_out$mu_scale)))
+cat(sprintf("tau scale mean %f \n", mean(bcf_out$tau_scale)))
+```
+
+### Basic Observations:
+ * the tau estimates track tau well enough
+
+ * the y estimates track y well enough
+ 
+ * the mu estimates track mu very poorly
+ 
+ * the y estimates look nothing like mu + tau*z
+ 
+
+
+### Guess 1, mu needs to be scaled.
+
+While the mean of tau_scale is close to tau bar, the mean of mu_scale is nothing like mu_bar. 
+
+We know the scales are multiplicative, so looking at the values, maybe mu needs to be divided by mu_scale.
+
+```{r}
+df <-        data.frame("z"           = z,
+                        "y"           = y,
+                        "y_hat"       = colMeans(bcf_out$yhat),
+                        "mu"          = q, 
+                        "mu_bar"      = colMeans(bcf_out$mu),
+                        "expected_mu" = colMeans(bcf_out$yhat) - z*colMeans(bcf_out$tau),
+                        "scaled_mu"   = colMeans(bcf_out$mu/bcf_out$mu_scale))
+
+print(round(t(df)))
+```
+  
+* Scaled mu is much closer to expected mu, but it doesn't change sign like expected mu does.
+
+* There are a number of other multiplicative factors that I was worried could be accounted for incorectly, like con_sd, mod_sd, and sdy, but they're all scalars and wouldn't cause the siqn change. The sign change does not perfectly line up with z either. 
+ 
+* I'm less optomistic that a scaling issue is what's going on, though it is possible.
+
+### Guess 2, I am misinterpreting mu
+The mu estimates look closer in magnitude to the "average y" value, or "noiseless y" estimates:
+
+  * interestingly, in the CRAN BCF example (as in our data generating code in the first block), this "noiseless y" number was called "mu", while what I understood conceptually to be mu is called "q" see the code chuck ```mu <- (q + tau*z)```
+  
+  * Not exactly sure what the interpretation of this is, or why someone would care outside the context of an average. I suppose a potential interpretation of this would be "what would I expect the outcome to be, given no knowledge of if the practice was treated or not"
+  
+  * Still, given the variable name in the documentation and the fact that the magnitudes are vaguely close, I think this is worth looking into
+  
+  
+## How is this consistent with Predict
+
+One thing that makes this so confusing is that our prediction preformance looked so good, and our prediction code has such a simple interpretation, so why isn't our interpretation of the output consistent with out interpretation of the code in predict. 
+
+Let's run prediction against this data and see what we see.
+
+```{r}
+pred_out = bcf2::predict(bcf_out=bcf_out,
+                         x_predict_control=x,
+                         x_predict_moderate=x,
+                         pi_pred=pi,
+                         z_pred=z,
+                         mod_tree_file_name="mod_trees1.txt", 
+                         con_tree_file_name="con_trees1.txt")
+```
+```{r}
+
+df2 <-        data.frame("z"              = z,
+                         "y"              = y,
+                         "y_hat"          = colMeans(pred_out$yhat_preds),
+                         "mu"             = q, 
+                         "mu_bar"         = colMeans(pred_out$mu_preds),
+                         "mu_bar_orig"    = colMeans(bcf_out$mu),
+                         "tau"            = tau,
+                         "tau_bar"        = colMeans(pred_out$tau_preds),
+                         "tau_bar_orig"   = colMeans(bcf_out$tau))
+
+print(round(t(df2)))
+```
+These prediction results look so bad! Our y_hat reconstructions are terrible! Our mu reconstructions are actually better, (though still meaningfully off)
+
+How is this consistent with our earlier good prediction results? Let me run it against this exact codebase. See if I can replicate it. Maybe a bug got introduced with this new multi-chain in parrell logic
+
+Here are the numbers I get when I run the original predict testing script against this codebase. 
+It's very similar to what I presented before. 
+
+Tau and Mu look like they're off by amounts explainable by computational percision, and y looks more meaningfully off but still close. 
+
+```
+Assessing Cloesness of  yhat 
+[1] "Correlation"
+[1] 0.9999952
+[1] "MSE"
+[1] 0.0001015972
+Assessing Cloesness of  tau 
+[1] "Correlation"
+[1] 1
+[1] "MSE"
+[1] 1.884755e-15
+Assessing Cloesness of  mu 
+[1] "Correlation"
+[1] 1
+[1] "MSE"
+[1] 1.729161e-15
+
+```
+
+I noticed that  a input few paramaters were changed off the detault, so I set them back. 
+Preformance get's worse but still okay
+
+```
+Assessing Cloesness of  yhat 
+[1] "Correlation"
+[1] 0.9997684
+[1] "MSE"
+[1] 0.005019782
+Assessing Cloesness of  tau 
+[1] "Correlation"
+[1] 0.9999999
+[1] "MSE"
+[1] 1.188124e-08
+Assessing Cloesness of  mu 
+[1] "Correlation"
+[1] 1
+[1] "MSE"
+[1] 8.456176e-08
+
+```
+Now let's run the old script with the magnitude 100 tau
+
+```
+Assessing Cloesness of  yhat 
+[1] "Correlation"
+[1] 0.9995034
+[1] "MSE"
+[1] 2563.991
+Assessing Cloesness of  tau 
+[1] "Correlation"
+[1] 1
+[1] "MSE"
+[1] 2.702323e-11
+Assessing Cloesness of  mu 
+[1] "Correlation"
+[1] 0.5423388
+[1] "MSE"
+[1] 1.830461
+```
+Now the stories become more consistent at least! Our prediction code obviously isn't working!
+
+We're still matching in tau in my opinion. but we're obviously not matching in mu or yhat. We were tricked by a low mean squared error! 
+
+Looking at the data from that first prediction run that appears to match, I think mu was small and close to zero, as was mu_pred, so they had low MSE with each other, and didn't contribute much to y.
+
+Now I think we have very strong evidence we're misinterpreting mu! 

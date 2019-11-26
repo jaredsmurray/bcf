@@ -3,11 +3,9 @@ set.seed(1)
 p <- 3 # two control variables and one effect moderator
 n <- 1000
 n_burn <- 1000
-n_sim <- 1500
-
+n_sim <- 1000
 
 x <- matrix(rnorm(n*p), nrow=n)
-
 
 
 # create targeted selection, whereby a practice's likelihood of joining the intervention (pi) is related to their expected outcome (mu)
@@ -19,65 +17,74 @@ z <- rbinom(n,1,pi)
 
 # tau is the true treatment effect. It varies across practices as a function of
 # X3, the effect moderator
-tau <- 1/(1 + exp(-x[,3]))
+tau <-  1/(1 + exp(-x[,3]))
+
+mu <- q
 
 # generate the response using q, tau and z
-mu <- (q + tau*z)
+y_noiseless <- mu + tau*z
 
 # set the noise level relative to the expected mean function of Y
-sigma <- diff(range(q + tau*pi))/8
+sigma <- diff(range(mu + tau*pi))/8
 
 # draw the response variable with additive error
-y <- mu + sigma*rnorm(n)
+y <- y_noiseless + sigma*rnorm(n)
 
 weights <- 1000.0*rep(1, n)
 
-set.seed(1)
-ptm <- proc.time()
-out <- bcf2::bcf(y               = y,
-                  z               = z,
-                  x_control       = x,
-                  x_moderate      = x,
-                  pihat           = pi,
-                  nburn           = n_burn,
-                  nsim            = n_sim,
-                  w               = weights,
-                  random_seed     = 1,
-                  update_interval = 100)
+bcf_out <- bcf2::bcf(y            = y,
+                 z                = z,
+                 x_control        = x,
+                 x_moderate       = x,
+                 pihat            = pi,
+                 nburn            = n_burn,
+                 nsim             = n_sim,
+                 w                = weights,
+                 n_chains         = 4,
+                 n_chain_clusters = 2,
+                 random_seed      = 1,
+                 update_interval  = 1)
 
-cat("BCF Fit Complete \n")
-print(proc.time() - ptm)
+# saveRDS(bcf_out, file = "examples/my_data.rds")
 
-originatOut = readRDS("examples/output_original.rds")
+cat("BCF Run Complete \n")
 
-# saveRDS(out, "examples/output_original.rds")
+bcf2::summarise_bcf(bcf_out)
+
+# coda::traceplot(bcf_out$chains)
 
 
 mean_square_error <- function (x,y){
   mean((x-y)^2)
 }
 
-error <- function(x,y){
-  mean(abs(x-y))/abs(mean(x))
-}
-
 assess_closeness <- function(x,y, title){
   cat("Assessing Cloesness of ", title, "\n")
-  print("Correlation")
-  print(cor(x,y))
+  # print("Correlation")
+  # print(cor(x,y))
+  
+  mse = mean_square_error(x,y)
   
   print("MSE")
-  print(mean_square_error(x,y))
+  print(mse)
   
   print("Error")
-  print(error(x,y))
+  print(sqrt(mse)/abs(mean(x)))
   
-  plot(x, y, col = z + 1, main=title)
-  abline(a=0, b=1)
+  # plot(x, y, col = z + 1, main=title)
+  # abline(a=0, b=1)
 }
 
-assess_closeness(colMeans(originatOut$yhat), colMeans(out$yhat),'yhat')
+mu_correct = bcf_out$yhat - t(t(bcf_out$tau)*z)
 
-assess_closeness(colMeans(originatOut$tau), colMeans(out$tau),'tau')
+print("Y Mean")
+print(mean(y))
 
-assess_closeness(colMeans(originatOut$mu), colMeans(out$mu),'mu')
+print("Tau Mean")
+print(mean(tau))
+
+print("mu Mean")
+print(mean(mu))
+
+assess_closeness(bcf_out$mu,mu_correct,'mu_compare')
+

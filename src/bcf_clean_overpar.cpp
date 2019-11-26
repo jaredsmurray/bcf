@@ -302,6 +302,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   NumericVector sigma_post(nd);
   NumericVector msd_post(nd);
   NumericVector bsd_post(nd);
+  NumericVector b0_post(nd);
+  NumericVector b1_post(nd);
   NumericMatrix m_post(nd,n);
   NumericMatrix yhat_post(nd,n);
   NumericMatrix b_post(nd,n);
@@ -310,13 +312,18 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   //  NumericMatrix spred2(nd,dip.n);
 
+
+  // The default output precision is of C++ is 5 or 6 dp, depending on compiler.
+  // I don't have much justification for 32, but it seems like a sensible number   
+  int save_tree_precision = 32; 
+
   //save stuff to tree file
-  treef_con << xi_con << endl; //cutpoints
+  treef_con << std::setprecision(save_tree_precision) << xi_con << endl; //cutpoints
   treef_con << ntree_con << endl;  //number of trees
   treef_con << di_con.p << endl;  //dimension of x's
   treef_con << (int)(nd/thin) << endl;
 
-  treef_mod << xi_mod << endl; //cutpoints
+  treef_mod << std::setprecision(save_tree_precision) << xi_mod << endl; //cutpoints
   treef_mod << ntree_mod << endl;  //number of trees
   treef_mod << di_mod.p << endl;  //dimension of x's
   treef_mod << (int)(nd/thin) << endl;
@@ -341,20 +348,22 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   logger.setLevel(0);
 
+  bool printTrees = false;
+
   for(size_t iIter=0;iIter<(nd*thin+burn);iIter++) {
     // verbose_itr = iIter>=burn;
     verbose_itr = false;
 
-  if(verbose_sigma){
-      if(iIter%status_interval==0) {
-        Rcout << "iteration: " << iIter << " sigma: "<< sigma << endl;
+    if(verbose_sigma){
+        if(iIter%status_interval==0) {
+            Rcout << "iteration: " << iIter << " sigma: "<< sigma << endl;
+        }
     }
-  }
 
     logger.setLevel(verbose_itr);
 
     logger.log("==============================================");
-    sprintf(logBuff, "MCMC iteration: %d of %d", iIter + 1, nd*thin+burn);
+    sprintf(logBuff, "MCMC iteration: %d of %d Start", iIter + 1, nd*thin+burn);
     logger.log(logBuff);
     sprintf(logBuff, "sigma %f, mscale %f, bscale0 %f, bscale1 %f",sigma, mscale, bscale0, bscale1);
     logger.log(logBuff);
@@ -365,6 +374,12 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
       logger.getVectorHead(allfit, logBuff);
       Rcout << "Current Fit : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_con, logBuff);
+      Rcout << "allfit_con  : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_mod, logBuff);
+      Rcout << "allfit_mod  : " <<  logBuff << "\n";
     }
 
     for (int k=0; k<n; ++k){
@@ -377,7 +392,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
     for(size_t k=ntrt; k<n; ++k) {
       weight_het[k] = w[k]*bscale0*bscale0/(sigma*sigma);
     }
-
 
     logger.log("=====================================");
     logger.log("- Tree Processing");
@@ -393,7 +407,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.startContext();
 
       logger.log("Attempting to Print Tree Pre Update \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n\n";
       }
@@ -409,7 +423,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
 
       logger.log("Attempting to Print Tree Post first call to fit \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n\n";
       }
@@ -444,7 +458,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
       
 
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         logger.getVectorHead(weight, logBuff);
         Rcout << "\n weight: " <<  logBuff << "\n\n";
       } 
@@ -463,12 +477,12 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.stopContext();
 
       logger.log("Attempting to Print Tree Post db \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n";
       }
 
-      if (verbose_itr){
+      if (verbose_itr && printTrees){
         logger.log("Printing Current Status of Fit");
 
         logger.getVectorHead(z_, logBuff);
@@ -504,7 +518,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.stopContext();
 
       logger.log("Attempting to Print Tree Post drmu \n");
-      if(verbose_itr){
+      if(verbose_itr  && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n";
       }
@@ -521,16 +535,13 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
       logger.log("Attempting to Print tree Post second call to fit \n");
 
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n";
 
       }
       logger.stopContext();
     }
-
-
- 
 
 
     for(size_t iTreeMod=0;iTreeMod<ntree_mod;iTreeMod++) {
@@ -542,7 +553,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
 
       logger.log("Attempting to Print Tree Pre Update \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
@@ -556,7 +567,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
           ftemp);
 
       logger.log("Attempting to Print Tree Post first call to fit");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
@@ -584,12 +595,12 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.stopContext();
 
       logger.log("Attempting to Print Tree  Post bd \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
 
-      if (verbose_itr){
+      if (verbose_itr && printTrees){
         logger.log("Printing Status of Fit");
 
         logger.getVectorHead(z_, logBuff);
@@ -624,7 +635,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
 
       logger.log("Attempting to Print Tree Post drmuhet \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
@@ -645,13 +656,16 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
       logger.log("Attempting to Print Tree Post second call to fit");
 
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
       logger.stopContext();
 
     } // end tree lop
+
+    logger.setLevel(verbose_itr);
+
     logger.log("=====================================");
     logger.log("- MCMC iteration Cleanup");
     logger.log("=====================================");
@@ -911,11 +925,14 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
     if( ((iIter>=burn) & (iIter % thin==0)) )  {
 
-      for(size_t j=0;j<ntree_con;j++) treef_con << t_con[j] << endl; // save trees
-      for(size_t j=0;j<ntree_mod;j++) treef_mod << t_mod[j] << endl; // save trees
+      for(size_t j=0;j<ntree_con;j++) treef_con << std::setprecision(save_tree_precision) << t_con[j] << endl; // save trees
+      for(size_t j=0;j<ntree_mod;j++) treef_mod << std::setprecision(save_tree_precision) << t_mod[j] << endl; // save trees
 
-      msd_post(save_ctr) = fabs(mscale)*con_sd;
-      bsd_post(save_ctr) = fabs(bscale1-bscale0)*mod_sd;
+      msd_post(save_ctr) = mscale;
+      bsd_post(save_ctr) = bscale1-bscale0;
+      b0_post(save_ctr)  = bscale0;
+      b1_post(save_ctr)  = bscale1;
+
 
       gamma_post.row(save_ctr) = (diagmat(random_var_ix*eta)*gamma).t();
       random_var_post.row(save_ctr) = (sqrt( eta % eta % random_var)).t();
@@ -932,6 +949,26 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       //}
       save_ctr += 1;
     }
+    logger.log("==============================================");
+    sprintf(logBuff, "MCMC iteration: %d of %d End", iIter + 1, nd*thin+burn);
+    logger.log(logBuff);
+    sprintf(logBuff, "sigma %f, mscale %f, bscale0 %f, bscale1 %f",sigma, mscale, bscale0, bscale1);
+    logger.log(logBuff);
+    logger.log("==============================================");
+    if (verbose_itr){
+      logger.getVectorHead(y, logBuff);
+      Rcout << "           y: " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit, logBuff);
+      Rcout << "Current Fit : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_con, logBuff);
+      Rcout << "allfit_con  : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_mod, logBuff);
+      Rcout << "allfit_mod  : " <<  logBuff << "\n";
+    }
+
   } // end MCMC Loop
 
   int time2 = time(&tp);
@@ -951,7 +988,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   treef_mod.close();
 
   return(List::create(_["yhat_post"] = yhat_post, _["m_post"] = m_post, _["b_post"] = b_post,
-                      _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post,
+                      _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post, _["b0"] = b0_post, _["b1"] = b1_post, 
                       _["gamma"] = gamma_post, _["random_var_post"] = random_var_post
   ));
 }
