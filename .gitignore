@@ -80,6 +80,7 @@ tmp
 *.exe
 *.out
 *.app
+*.rds
 
 #Testing scripts
 scripts/
