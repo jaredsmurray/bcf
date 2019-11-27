@@ -5,8 +5,7 @@
 \title{Predict from Previously Fit Forests}
 \usage{
 predict(bcf_out, x_predict_control, x_predict_moderate, pi_pred, z_pred,
-  mod_tree_file_name = "mod_trees.txt",
-  con_tree_file_name = "con_trees.txt")
+  save_tree_directory, n_chain_clusters = 2)
 }
 \arguments{
 \item{bcf_out}{output from a BCF predict run}
@@ -19,9 +18,9 @@ predict(bcf_out, x_predict_control, x_predict_moderate, pi_pred, z_pred,
 
 \item{z_pred}{Treatment variable for predictions (optional except if x_pre is not empty)}
 
-\item{mod_tree_file_name}{name of text output tree file for the mod trees}
+\item{save_tree_directory}{directory where the trees have been saved}
 
-\item{con_tree_file_name}{name of text output tree file for the con trees}
+\item{n_chain_clusters}{An optional integer of the number of clusters to run your MCMC chains on}
 }
 \description{
 Predict from Previously Fit Forests

@@ -302,12 +302,6 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
   RcppParallel::setThreadOptions(numThreads=n_threads)
   
-
-  
-
-  
-  
-   
   `%doType%` = .get_do_type(n_chain_clusters)
   
   chain_out <- foreach::foreach(iChain=1:n_chains) %doType% {
@@ -415,9 +409,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     # -----------------------------
 
     scalar_df <- data.frame("sigma"     = sigma,
-                            "tau_bar"   = matrixStats::rowWeightedMeans(tau, weights),
-                            "mu_bar"    = matrixStats::rowWeightedMeans(mu, weights),
-                            "yhat_bar"  = matrixStats::rowWeightedMeans(yhat, weights),
+                            "tau_bar"   = matrixStats::rowWeightedMeans(tau, w),
+                            "mu_bar"    = matrixStats::rowWeightedMeans(mu, w),
+                            "yhat_bar"  = matrixStats::rowWeightedMeans(yhat, w),
                             "mu_scale"  = mu_scale, 
                             # "tau_scale" = tau_scale,
                             "b0"  = b0, 
