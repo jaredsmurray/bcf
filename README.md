@@ -1,12 +1,21 @@
 # Bayesian Causal Forests
 
-Welcome to the BCF site! This page provides more details on this implementation of Bayesian causal forests (BCF).
+Welcome to the BCF site! This page provides more details on this implementation of Bayesian causal forests (BCF).  
+
+## Why BCF?
+
+BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, Chipman, George, and McCulloch 1998).  BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, is not overfit to the training data.  BCF further extends BART's flexibility by specifying different models for relationships between covariates and the outcome and relationships between covariates and the treatment effect.  For more information, you can find the original BCF paper here: [https://arxiv.org/pdf/1706.09523.pdf](https://arxiv.org/pdf/1706.09523.pdf).
+
+BCF performs remarkably well in simulation and has led the pack at recent rigorous causal inference competitions, such as those held at the Atlantic Causal Inference Conference. This implementation further extends existing BCF functionality by:
+
+- allowing for heteroskedastic error
+- automating multi-chain, multi-core implementations
+- providing a suite of convergence diagnostic functions via the `{coda}` package
+- accelerating some underlying computations, resulting in shorter runtimes
 
 ## Getting Started
 
 If you are just getting started with BCF, we recommend starting with the tutorial vignette and the examples throughout the package documentation.
-
-Something else that may be useful is the original BCF paper here: [https://arxiv.org/pdf/1706.09523.pdf](https://arxiv.org/pdf/1706.09523.pdf).
 
 ## Installation
 
@@ -40,14 +49,14 @@ n_sim <- 1000
 x <- matrix(rnorm(n*p), nrow=n)
 
 
-# create targeted selection, whereby a practice's likelihood of joining the intervention (pi) is related to their expected outcome (mu)
+# create targeted selection, whereby a unit's likelihood of joining the intervention (pi) is related to its expected outcome (mu)
 q <- -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2])) -0.1
 
 # generate treatment variable
 pi <- pnorm(q)
 z <- rbinom(n,1,pi)
 
-# tau is the true treatment effect. It varies across practices as a function of
+# tau is the true treatment effect. It varies across units as a function of
 # X3, the effect moderator
 tau <-  1/(1 + exp(-x[,3]))
 

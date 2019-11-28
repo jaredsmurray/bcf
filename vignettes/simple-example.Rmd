@@ -18,6 +18,11 @@ knitr::opts_chunk$set(
 library(bcf2)
 ```
 
+First, we simulate some data for testing.  This data set has three covariates $X$, which we divide into two control variables -- that is, variables related to $y$ -- and one effect moderator -- that is, a variable that changes the relationship between $y$ and the treatment effect $\tau$.
+
+We draw the $X$s from a standard normal distribution and generate each unit's outcome, $\mu_i$, as a function of these covariates.  Each unit's probability of joining the intervention, $\pi_i$, is also a function of $\mu_i$, so that units with larger outcomes are more likely to participate in the intervention.  We then assign units to treatment ($z_i = 1$) or comparison ($z_i = 0$) as a function of $\pi_i$.
+
+Then we generate the true treatment effect for each unit, $\tau_i$.  As noted above, $\tau_i$ is a function of $X_3$.  the observed outcome, $y_i$, is a function of $\mu_i$, $\tau_i$, and a random error term $\sigma$.
 ```{r data creation}
 set.seed(1)
 
@@ -32,7 +37,7 @@ x <- matrix(rnorm(n*p), nrow=n)
 weights <- 1.0*rep(1, n)
 
 
-# create targeted selection, whereby a practice's likelihood of joining the intervention (pi) is related to their expected outcome (mu)
+# create targeted selection, whereby a unit's likelihood of joining the intervention (pi) is related to its expected outcome (mu)
 q <- -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2])) -0.1
 
 # generate treatment variable
@@ -53,6 +58,7 @@ sigma <- diff(range(q + tau*pi))/8
 y <- mu + sigma*rnorm(n)
 ```
 
+In this data set we have observed $y_i$, $x_i$, and $\pi_i$ values to which we can fit our BCF model.  We can then compare the $\hat{\tau}_i$ estimates from BCF to the true $\tau_i$ from the data-generating process.
 ```{r model}
 out2 <- bcf2::bcf(y          = y,
                   z          = z,
@@ -66,7 +72,7 @@ out2 <- bcf2::bcf(y          = y,
                   ntree_moderate = 3,
                   ntree_control = 3,
                   verbose=TRUE,
-                  random_seed = list(1, 2),
+                  random_seed = list(1, 2),  #LVF: this line causes an error for me
                   n_chains = 2)
 cat("BCF run complete\n")
 ```
@@ -75,3 +81,8 @@ cat("BCF run complete\n")
 bcf2::summarise_bcf(bcf_out)
 ```
 
+** Add figures here**
+
+1. Figure showing that $\hat{\tau}_i$ matches up with $\tau_i$
+2. Figure showing unit-specific treatment effects?
+3. Figure showing distribution of treatment effects in subgroups defined based on an arbitrary cut-point in X3?
