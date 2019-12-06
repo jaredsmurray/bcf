@@ -6,7 +6,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Print Summary Stats for a previous BCF run — summarise_bcf • bcf2</title>
+<title>Print Summary Stats for a previous BCF run
+This function is built using the coda package and meant to mimick output from Stan.
+It includes: — summarise_bcf • bcf2</title>
 
 
 <!-- jquery -->
@@ -35,8 +37,12 @@
 
 
 
-<meta property="og:title" content="Print Summary Stats for a previous BCF run — summarise_bcf" />
-<meta property="og:description" content="Print Summary Stats for a previous BCF run" />
+<meta property="og:title" content="Print Summary Stats for a previous BCF run
+This function is built using the coda package and meant to mimick output from Stan.
+It includes: — summarise_bcf" />
+<meta property="og:description" content="* summary statistics for MCMC
+ * effective sample sizes for each parameter
+ * Gelman and Rubin's convergence diagnostics for each parameter" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -112,13 +118,17 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Print Summary Stats for a previous BCF run</h1>
+    <h1>Print Summary Stats for a previous BCF run
+This function is built using the coda package and meant to mimick output from Stan.
+It includes:</h1>
     
     <div class="hidden name"><code>summarise_bcf.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Print Summary Stats for a previous BCF run</p>
+    <p>* summary statistics for MCMC
+ * effective sample sizes for each parameter
+ * Gelman and Rubin's convergence diagnostics for each parameter</p>
     </div>
 
     <pre class="usage"><span class='fu'>summarise_bcf</span>(<span class='no'>bcf_out</span>)</pre>
@@ -133,11 +143,99 @@
     </table>
 
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='co'># \donttest{</span>
+
+<span class='co'># data generating process</span>
+<span class='no'>p</span> <span class='kw'>=</span> <span class='fl'>3</span> <span class='co'>#two control variables and one moderator</span>
+<span class='no'>n</span> <span class='kw'>=</span> <span class='fl'>250</span>
+
+<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span>(<span class='fl'>1</span>)
+
+<span class='no'>x</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='no'>n</span>*<span class='no'>p</span>), <span class='kw'>nrow</span><span class='kw'>=</span><span class='no'>n</span>)
+
+<span class='co'># create targeted selection</span>
+<span class='no'>q</span> <span class='kw'>=</span> -<span class='fl'>1</span>*(<span class='no'>x</span>[,<span class='fl'>1</span>]<span class='kw'>&gt;</span>(<span class='no'>x</span>[,<span class='fl'>2</span>])) + <span class='fl'>1</span>*(<span class='no'>x</span>[,<span class='fl'>1</span>]<span class='kw'>&lt;</span>(<span class='no'>x</span>[,<span class='fl'>2</span>]))
+
+<span class='co'># generate treatment variable</span>
+<span class='no'>pi</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>pnorm</a></span>(<span class='no'>q</span>)
+<span class='no'>z</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Binomial.html'>rbinom</a></span>(<span class='no'>n</span>,<span class='fl'>1</span>,<span class='no'>pi</span>)
+
+<span class='co'># tau is the true (homogeneous) treatment effect</span>
+<span class='no'>tau</span> <span class='kw'>=</span> (<span class='fl'>0.5</span>*(<span class='no'>x</span>[,<span class='fl'>3</span>] <span class='kw'>&gt;</span> -<span class='fl'>3</span>/<span class='fl'>4</span>) + <span class='fl'>0.25</span>*(<span class='no'>x</span>[,<span class='fl'>3</span>] <span class='kw'>&gt;</span> <span class='fl'>0</span>) + <span class='fl'>0.25</span>*(<span class='no'>x</span>[,<span class='fl'>3</span>]<span class='kw'>&gt;</span><span class='fl'>3</span>/<span class='fl'>4</span>))
+
+<span class='co'># generate the response using q, tau and z</span>
+<span class='no'>mu</span> <span class='kw'>=</span> (<span class='no'>q</span> + <span class='no'>tau</span>*<span class='no'>z</span>)
+
+<span class='co'># set the noise level relative to the expected mean function of Y</span>
+<span class='no'>sigma</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/diff.html'>diff</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/range.html'>range</a></span>(<span class='no'>q</span> + <span class='no'>tau</span>*<span class='no'>pi</span>))/<span class='fl'>8</span>
+
+<span class='co'># draw the response variable with additive error</span>
+<span class='no'>y</span> <span class='kw'>=</span> <span class='no'>mu</span> + <span class='no'>sigma</span>*<span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='no'>n</span>)
+
+<span class='co'># If you didn't know pi, you would estimate it here</span>
+<span class='no'>pihat</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>pnorm</a></span>(<span class='no'>q</span>)
+
+<span class='no'>bcf_fit</span> <span class='kw'>=</span> <span class='fu'><a href='bcf.html'>bcf</a></span>(<span class='no'>y</span>, <span class='no'>z</span>, <span class='no'>x</span>, <span class='no'>x</span>, <span class='no'>pihat</span>, <span class='kw'>nburn</span><span class='kw'>=</span><span class='fl'>2000</span>, <span class='kw'>nsim</span><span class='kw'>=</span><span class='fl'>2000</span>)
+
+<span class='co'># Get model fit diagnostics</span>
+<span class='fu'>summarise_bcf</span>(<span class='no'>bcf_fit</span>)</div><div class='output co'>#&gt; <span class='message'>Summary statistics for each Markov Chain Monte Carlo run</span></div><div class='output co'>#&gt; 
+#&gt; Iterations = 1:2000
+#&gt; Thinning interval = 1 
+#&gt; Number of chains = 4 
+#&gt; Sample size per chain = 2000 
+#&gt; 
+#&gt; 1. Empirical mean and standard deviation for each variable,
+#&gt;    plus standard error of the mean:
+#&gt; 
+#&gt;              Mean      SD  Naive SE Time-series SE
+#&gt; sigma     0.34645 0.01795 0.0002007      0.0003487
+#&gt; tau_bar   0.47802 0.05860 0.0006551      0.0014099
+#&gt; mu_bar    0.07486 0.03890 0.0004349      0.0009617
+#&gt; yhat_bar  0.32879 0.02190 0.0002448      0.0002448
+#&gt; mu_scale  0.74997 0.17638 0.0019719      0.0290651
+#&gt; b0       -0.05806 0.07659 0.0008563      0.0054298
+#&gt; b1        0.32507 0.09796 0.0010952      0.0077435
+#&gt; 
+#&gt; 2. Quantiles for each variable:
+#&gt; 
+#&gt;               2.5%     25%      50%       75%   97.5%
+#&gt; sigma     0.313215  0.3340  0.34599  0.358117 0.38300
+#&gt; tau_bar   0.362250  0.4379  0.47839  0.517414 0.59213
+#&gt; mu_bar   -0.002933  0.0491  0.07501  0.101182 0.15104
+#&gt; yhat_bar  0.285457  0.3140  0.32890  0.343472 0.37201
+#&gt; mu_scale  0.479852  0.6106  0.72668  0.864408 1.15249
+#&gt; b0       -0.233721 -0.1011 -0.05118 -0.005843 0.07177
+#&gt; b1        0.157754  0.2565  0.31724  0.384626 0.54238
+#&gt; 
+#&gt; 
+#&gt; ----
+#&gt; </div><div class='output co'>#&gt; <span class='message'>Effective sample size for each parameter</span></div><div class='output co'>#&gt;      sigma    tau_bar     mu_bar   yhat_bar   mu_scale         b0         b1 
+#&gt; 2803.81525 1780.54993 1781.73824 8000.00000   42.51471  195.26432  188.67934 
+#&gt; 
+#&gt; ----
+#&gt; </div><div class='output co'>#&gt; <span class='message'>Gelman and Rubin's convergence diagnostic for each parameter</span></div><div class='output co'>#&gt; Potential scale reduction factors:
+#&gt; 
+#&gt;          Point est. Upper C.I.
+#&gt; sigma          1.01       1.02
+#&gt; tau_bar        1.00       1.00
+#&gt; mu_bar         1.00       1.00
+#&gt; yhat_bar       1.00       1.00
+#&gt; mu_scale       1.18       1.48
+#&gt; b0             1.05       1.12
+#&gt; b1             1.09       1.25
+#&gt; 
+#&gt; Multivariate psrf
+#&gt; 
+#&gt; 1.14</div><div class='input'>
+# }
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#examples">Examples</a></li>
     </ul>
 
   </div>

@@ -2,7 +2,9 @@
 % Please edit documentation in R/bcf.R
 \name{summarise_bcf}
 \alias{summarise_bcf}
-\title{Print Summary Stats for a previous BCF run}
+\title{Print Summary Stats for a previous BCF run
+This function is built using the coda package and meant to mimick output from Stan.
+It includes:}
 \usage{
 summarise_bcf(bcf_out)
 }
@@ -10,5 +12,47 @@ summarise_bcf(bcf_out)
 \item{bcf_out}{output from a BCF predict run}
 }
 \description{
-Print Summary Stats for a previous BCF run
+* summary statistics for MCMC
+ * effective sample sizes for each parameter
+ * Gelman and Rubin's convergence diagnostics for each parameter
+}
+\examples{
+\donttest{
+
+# data generating process
+p = 3 #two control variables and one moderator
+n = 250
+
+set.seed(1)
+
+x = matrix(rnorm(n*p), nrow=n)
+
+# create targeted selection
+q = -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2]))
+
+# generate treatment variable
+pi = pnorm(q)
+z = rbinom(n,1,pi)
+
+# tau is the true (homogeneous) treatment effect
+tau = (0.5*(x[,3] > -3/4) + 0.25*(x[,3] > 0) + 0.25*(x[,3]>3/4))
+
+# generate the response using q, tau and z
+mu = (q + tau*z)
+
+# set the noise level relative to the expected mean function of Y
+sigma = diff(range(q + tau*pi))/8
+
+# draw the response variable with additive error
+y = mu + sigma*rnorm(n)
+
+# If you didn't know pi, you would estimate it here
+pihat = pnorm(q)
+
+bcf_fit = bcf(y, z, x, x, pihat, nburn=2000, nsim=2000)
+
+# Get model fit diagnostics
+summarise_bcf(bcf_fit)
+
+}
 }

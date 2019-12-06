@@ -91,6 +91,9 @@
 <span id="cb1-7"><a href="#cb1-7"></a><span class="co">#&gt; </span></span>
 <span id="cb1-8"><a href="#cb1-8"></a><span class="co">#&gt;     predict</span></span>
 <span id="cb1-9"><a href="#cb1-9"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</span></code></pre></div>
+<div id="simulate-data" class="section level2">
+<h2 class="hasAnchor">
+<a href="#simulate-data" class="anchor"></a>Simulate data</h2>
 <p>First, we simulate some data for testing. This data set has three covariates <span class="math inline">\(X\)</span>, which we divide into two control variables – that is, variables related to <span class="math inline">\(y\)</span> – and one effect moderator – that is, a variable that changes the relationship between <span class="math inline">\(y\)</span> and the treatment effect <span class="math inline">\(\tau\)</span>.</p>
 <p>We draw the <span class="math inline">\(X\)</span>s from a standard normal distribution and generate each unit’s outcome, <span class="math inline">\(\mu_i\)</span>, as a function of these covariates. Each unit’s probability of joining the intervention, <span class="math inline">\(\pi_i\)</span>, is also a function of <span class="math inline">\(\mu_i\)</span>, so that units with larger outcomes are more likely to participate in the intervention. We then assign units to treatment (<span class="math inline">\(z_i = 1\)</span>) or comparison (<span class="math inline">\(z_i = 0\)</span>) as a function of <span class="math inline">\(\pi_i\)</span>.</p>
 <p>Then we generate the true treatment effect for each unit, <span class="math inline">\(\tau_i\)</span>. As noted above, <span class="math inline">\(\tau_i\)</span> is a function of <span class="math inline">\(X_3\)</span>. the observed outcome, <span class="math inline">\(y_i\)</span>, is a function of <span class="math inline">\(\mu_i\)</span>, <span class="math inline">\(\tau_i\)</span>, and a random error term <span class="math inline">\(\sigma\)</span>.</p>
@@ -126,6 +129,10 @@
 <span id="cb2-30"><a href="#cb2-30"></a></span>
 <span id="cb2-31"><a href="#cb2-31"></a><span class="co"># draw the response variable with additive error</span></span>
 <span id="cb2-32"><a href="#cb2-32"></a>y &lt;-<span class="st"> </span>mu <span class="op">+</span><span class="st"> </span>sigma<span class="op">*</span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(n)</span></code></pre></div>
+</div>
+<div id="fit-bcf-model" class="section level2">
+<h2 class="hasAnchor">
+<a href="#fit-bcf-model" class="anchor"></a>Fit BCF model</h2>
 <p>In this data set we have observed <span class="math inline">\(y_i\)</span>, <span class="math inline">\(x_i\)</span>, and <span class="math inline">\(\pi_i\)</span> values to which we can fit our BCF model. We can then compare the <span class="math inline">\(\hat{\tau}_i\)</span> estimates from BCF to the true <span class="math inline">\(\tau_i\)</span> from the data-generating process.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>bcf_out &lt;-<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/bcf.html">bcf</a></span>(<span class="dt">y            =</span> y,</span>
 <span id="cb3-2"><a href="#cb3-2"></a>                 <span class="dt">z                =</span> z,</span>
@@ -143,7 +150,7 @@
 <span id="cb3-14"><a href="#cb3-14"></a><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="st">"BCF run complete</span><span class="ch">\n</span><span class="st">"</span>)</span>
 <span id="cb3-15"><a href="#cb3-15"></a><span class="co">#&gt; BCF run complete</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/summarise_bcf.html">summarise_bcf</a></span>(bcf_out)</span>
-<span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt; Summary statistics for Markov Chain Monte Carlo chains</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt; Summary statistics for each Markov Chain Monte Carlo run</span></span>
 <span id="cb4-3"><a href="#cb4-3"></a><span class="co">#&gt; </span></span>
 <span id="cb4-4"><a href="#cb4-4"></a><span class="co">#&gt; Iterations = 1:150</span></span>
 <span id="cb4-5"><a href="#cb4-5"></a><span class="co">#&gt; Thinning interval = 1 </span></span>
@@ -175,12 +182,12 @@
 <span id="cb4-31"><a href="#cb4-31"></a><span class="co">#&gt; </span></span>
 <span id="cb4-32"><a href="#cb4-32"></a><span class="co">#&gt; </span></span>
 <span id="cb4-33"><a href="#cb4-33"></a><span class="co">#&gt; ----</span></span>
-<span id="cb4-34"><a href="#cb4-34"></a><span class="co">#&gt; Effective sample size for estimating the mean</span></span>
+<span id="cb4-34"><a href="#cb4-34"></a><span class="co">#&gt; Effective sample size for each parameter</span></span>
 <span id="cb4-35"><a href="#cb4-35"></a><span class="co">#&gt;     sigma   tau_bar    mu_bar  yhat_bar  mu_scale        b0        b1 </span></span>
 <span id="cb4-36"><a href="#cb4-36"></a><span class="co">#&gt; 141.88246 129.85328 139.24265 577.36477  19.31879  38.52633  53.86256 </span></span>
 <span id="cb4-37"><a href="#cb4-37"></a><span class="co">#&gt; </span></span>
 <span id="cb4-38"><a href="#cb4-38"></a><span class="co">#&gt; ----</span></span>
-<span id="cb4-39"><a href="#cb4-39"></a><span class="co">#&gt; Gelman and Rubin's convergence diagnostic</span></span>
+<span id="cb4-39"><a href="#cb4-39"></a><span class="co">#&gt; Gelman and Rubin's convergence diagnostic for each parameter</span></span>
 <span id="cb4-40"><a href="#cb4-40"></a><span class="co">#&gt; Potential scale reduction factors:</span></span>
 <span id="cb4-41"><a href="#cb4-41"></a><span class="co">#&gt; </span></span>
 <span id="cb4-42"><a href="#cb4-42"></a><span class="co">#&gt;          Point est. Upper C.I.</span></span>
@@ -195,29 +202,53 @@
 <span id="cb4-51"><a href="#cb4-51"></a><span class="co">#&gt; Multivariate psrf</span></span>
 <span id="cb4-52"><a href="#cb4-52"></a><span class="co">#&gt; </span></span>
 <span id="cb4-53"><a href="#cb4-53"></a><span class="co">#&gt; 1.42</span></span></code></pre></div>
-<ol style="list-style-type: decimal">
-<li>Comparison of <span class="math inline">\(\hat{\tau}_i\)</span> matches up with <span class="math inline">\(\tau_i\)</span>
-</li>
-</ol>
+</div>
+<div id="examine-output" class="section level2">
+<h2 class="hasAnchor">
+<a href="#examine-output" class="anchor"></a>Examine output</h2>
+<p>Now that we’ve successfully fit our model, let’s see what we can do with the output. First, in this simulation setting, let’s compare the fitted treatment effect estimates <span class="math inline">\(\hat{\tau}_i\)</span> to the true treatment effects <span class="math inline">\(\tau_i\)</span>.</p>
+<div id="estimates-vs--true-treatment-effects" class="section level3">
+<h3 class="hasAnchor">
+<a href="#estimates-vs--true-treatment-effects" class="anchor"></a>Estimates vs. true treatment effects</h3>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">ggplot</span>(<span class="ot">NULL</span>, <span class="kw">aes</span>(<span class="dt">x =</span> tau, <span class="dt">y =</span> <span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(bcf_out<span class="op">$</span>tau))) <span class="op">+</span></span>
 <span id="cb5-2"><a href="#cb5-2"></a><span class="st">  </span><span class="kw">geom_abline</span>() <span class="op">+</span></span>
 <span id="cb5-3"><a href="#cb5-3"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
 <span id="cb5-4"><a href="#cb5-4"></a><span class="st">  </span><span class="kw">ylab</span>(<span class="st">"tau estimate"</span>)</span></code></pre></div>
 <p><img src="simple-example_files/figure-html/unnamed-chunk-2-1.png" width="700"></p>
+<p>Clearly, BCF correctly recovers the true treatment effects in this simple example. We can also calculate how well the BCF treatment effect estimates explain variation in the true treatment effects.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>tau_fit &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/lm.html">lm</a></span>(tau <span class="op">~</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(bcf_out<span class="op">$</span>tau))</span>
-<span id="cb6-2"><a href="#cb6-2"></a>coef &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(tau_fit)<span class="op">$</span>coef[<span class="dv">2</span>,<span class="st">"Estimate"</span>]</span></code></pre></div>
-<p>Our estimate of <span class="math inline">\(\tau\)</span> explains 47% of the variation in <span class="math inline">\(\tau\)</span>.</p>
-<ol start="2" style="list-style-type: decimal">
-<li>In this figure, we show unit-specific treatment effects for the first unit</li>
-</ol>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">ggplot</span>(<span class="ot">NULL</span>, <span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">1</span><span class="op">:</span>(<span class="dv">4</span><span class="op">*</span>n_sim), <span class="dt">y =</span> bcf_out<span class="op">$</span>tau[,<span class="dv">1</span>])) <span class="op">+</span></span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></span>
-<span id="cb7-3"><a href="#cb7-3"></a><span class="st">  </span><span class="kw">ylab</span>(<span class="st">"tau estimate for unit 1"</span>) <span class="op">+</span></span>
-<span id="cb7-4"><a href="#cb7-4"></a><span class="st">  </span><span class="kw">xlab</span>(<span class="st">"draws"</span>)</span></code></pre></div>
-<p><img src="simple-example_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
-<ol start="3" style="list-style-type: decimal">
-<li>Figure showing distribution of treatment effects in subgroups defined based on the first and bottom quartiles of X3</li>
-</ol>
+<span id="cb6-2"><a href="#cb6-2"></a>coef &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(tau_fit)<span class="op">$</span>coef[<span class="dv">2</span>,<span class="st">"Estimate"</span>]</span>
+<span id="cb6-3"><a href="#cb6-3"></a></span>
+<span id="cb6-4"><a href="#cb6-4"></a><span class="co">## LVF added code to extract the adjusted R2</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a>adjR2 &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(tau_fit)<span class="op">$</span>adj.r.squared</span></code></pre></div>
+<p>Our estimates <span class="math inline">\(\hat{\tau}_i\)</span> explain 65% of the variation in the <span class="math inline">\(\tau_i\)</span>, reaffirming the idea that BCF provides accurate treatment effect estimates.</p>
+</div>
+<div id="distribution-of-treatment-effects" class="section level3">
+<h3 class="hasAnchor">
+<a href="#distribution-of-treatment-effects" class="anchor"></a>Distribution of treatment effects</h3>
+<p>Now that we have confidence in BCF’s estimates of unit-specific treatment effects, we examine the results more closely. First we consider the distribution of unit-specific treatment effects, to see how differently the treatment affects different units. This plot shows the impact estimate and 95 percent credible interval for each unit, arranged from the smallest (most negative) impact to the largest (most positive).</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>tau_ests &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">Mean  =</span> <span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(bcf_out<span class="op">$</span>tau),</span>
+<span id="cb7-2"><a href="#cb7-2"></a>                       <span class="dt">Low95 =</span> <span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(bcf_out<span class="op">$</span>tau, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x, <span class="fl">0.025</span>)),</span>
+<span id="cb7-3"><a href="#cb7-3"></a>                       <span class="dt">Up95  =</span> <span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(bcf_out<span class="op">$</span>tau, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x, <span class="fl">0.975</span>)))</span>
+<span id="cb7-4"><a href="#cb7-4"></a></span>
+<span id="cb7-5"><a href="#cb7-5"></a>tau_ests &lt;-<span class="st"> </span>tau_ests[<span class="kw"><a href="https://rdrr.io/r/base/order.html">order</a></span>(tau_ests<span class="op">$</span>Mean), ]</span>
+<span id="cb7-6"><a href="#cb7-6"></a>tau_ests[, <span class="st">"id"</span>] &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span>(bcf_out<span class="op">$</span>tau)</span>
+<span id="cb7-7"><a href="#cb7-7"></a></span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="kw">ggplot</span>(tau_ests, <span class="kw">aes</span>(<span class="dt">x =</span> id, <span class="dt">y =</span> Mean)) <span class="op">+</span></span>
+<span id="cb7-9"><a href="#cb7-9"></a><span class="st">  </span><span class="kw">theme_bw</span>() <span class="op">+</span></span>
+<span id="cb7-10"><a href="#cb7-10"></a><span class="st">  </span><span class="kw">geom_pointrange</span>(<span class="kw">aes</span>(<span class="dt">ymin =</span> Low95, <span class="dt">ymax =</span> Up95), <span class="dt">color =</span> <span class="st">"blue"</span>) <span class="op">+</span></span>
+<span id="cb7-11"><a href="#cb7-11"></a><span class="st">  </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> <span class="dv">0</span>, <span class="dt">color =</span> <span class="st">"black"</span>) <span class="op">+</span></span>
+<span id="cb7-12"><a href="#cb7-12"></a><span class="st">  </span><span class="kw">ylab</span>(<span class="st">"Unit-Specific Treatment Effect"</span>) <span class="op">+</span></span>
+<span id="cb7-13"><a href="#cb7-13"></a><span class="st">  </span><span class="kw">xlab</span>(<span class="st">"Unit Number"</span>) <span class="op">+</span></span>
+<span id="cb7-14"><a href="#cb7-14"></a><span class="st">  </span><span class="kw">coord_flip</span>()</span></code></pre></div>
+<p><img src="simple-example_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+</div>
+<div id="identifying-possible-subgroups" class="section level3">
+<h3 class="hasAnchor">
+<a href="#identifying-possible-subgroups" class="anchor"></a>Identifying possible subgroups</h3>
+<p>The BCF model obtains more accurate treatment effect estimates than other approaches in part by considering more flexible effect modification relationships with more possible effect modifiers. These relationships are often of substantive interest; researchers want to know what characteristics are associated with higher or lower impacts. However, because the BCF model is difficult to interpret, we cannot simply look at the coefficients on the effect modifiers to determine which characteristics drive the impacts. Instead, we can use existing techniques to look for patterns in the unit-specific treatment effects, linking each unit’s treatment effect to its background characteristics.</p>
+<p>Hill (2010) recommends searching for patterns by fitting a CART model where the response variable is the estimated treatment effects from the BCF fit and the predictor variables are the effect modifiers used to fit the BCF model. The resulting tree identifies characteristics that strongly predict impacts, which are strong candidate subgroup variables. However, because the CART fit does not account for the uncertainty in the treatment effect estimates, it is possible that tree splits do not identify characteristics that create subgroups with meaningfully different impacts. To determine whether impacts differ meaningfully based on a characteristic, we can look back at the posterior draws from the BCF model.</p>
+<p>Here we skip the CART fit step and show just a comparison of the impacts for units in the top quartile of <span class="math inline">\(X_3\)</span> vs. impacts for units in the bottom quartile of <span class="math inline">\(X_3\)</span>, which we know to be a strong effect modifier because we specified it as such in the data generation step.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>q1 &lt;-<span class="st"> </span>x[,<span class="dv">3</span>] <span class="op">&lt;</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x[,<span class="dv">3</span>], <span class="fl">0.25</span>)</span>
 <span id="cb8-2"><a href="#cb8-2"></a>q4 &lt;-<span class="st"> </span>x[,<span class="dv">3</span>] <span class="op">&gt;</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x[,<span class="dv">3</span>], <span class="fl">0.75</span>)</span>
 <span id="cb8-3"><a href="#cb8-3"></a></span>
@@ -232,11 +263,23 @@
 <span id="cb8-12"><a href="#cb8-12"></a></span>
 <span id="cb8-13"><a href="#cb8-13"></a><span class="kw">ggplot</span>(groupTaus, <span class="kw">aes</span>(taus, <span class="dt">fill =</span> quartile, <span class="dt">color =</span> quartile)) <span class="op">+</span></span>
 <span id="cb8-14"><a href="#cb8-14"></a><span class="st">  </span><span class="kw">geom_density</span>(<span class="dt">alpha =</span> <span class="fl">0.5</span>)</span></code></pre></div>
-<p><img src="simple-example_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<p><img src="simple-example_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
+<p>[add text here showing what we found]</p>
+</div>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
 
+        <div id="tocnav">
+      <h2 class="hasAnchor">
+<a href="#tocnav" class="anchor"></a>Contents</h2>
+      <ul class="nav nav-pills nav-stacked">
+<li><a href="#simulate-data">Simulate data</a></li>
+      <li><a href="#fit-bcf-model">Fit BCF model</a></li>
+      <li><a href="#examine-output">Examine output</a></li>
+      </ul>
+</div>
       </div>
 
 </div>

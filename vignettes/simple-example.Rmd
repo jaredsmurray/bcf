@@ -123,12 +123,12 @@ ggplot(NULL, aes(x = 1:(4*n_sim), y = bcf_out$tau[,1])) +
 ```
 
 ```{r}
-# LVF added this code to show distribution of unit-specific treatment effects, with 95% CIs.
-tau_ests <- data.frame(Mean = colMeans(bcf_out$tau),
+tau_ests <- data.frame(Mean  = colMeans(bcf_out$tau),
                        Low95 = apply(bcf_out$tau, 2, function(x) quantile(x, 0.025)),
-                       Up95 = apply(bcf_out$tau, 2, function(x) quantile(x, 0.975))) %>%
-  arrange(desc(Mean)) %>%
-  mutate(id = 1:ncol(bcf_out$tau))
+                       Up95  = apply(bcf_out$tau, 2, function(x) quantile(x, 0.975)))
+
+tau_ests <- tau_ests[order(tau_ests$Mean), ]
+tau_ests[, "id"] <- 1:ncol(bcf_out$tau)
 
 ggplot(tau_ests, aes(x = id, y = Mean)) +
   theme_bw() +
@@ -137,7 +137,6 @@ ggplot(tau_ests, aes(x = id, y = Mean)) +
   ylab("Unit-Specific Treatment Effect") +
   xlab("Unit Number") +
   coord_flip()
-  
 ```
 
 

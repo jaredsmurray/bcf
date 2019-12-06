@@ -59,6 +59,8 @@ bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL,
 
 \item{power_moderate}{Power for the tree prior on tau(x) trees (see details)}
 
+\item{save_tree_directory}{Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory.}
+
 \item{nu}{Degrees of freedom in the chisq prior on \eqn{sigma^2}}
 
 \item{lambda}{Scale parameter in the chisq prior on \eqn{sigma^2}}

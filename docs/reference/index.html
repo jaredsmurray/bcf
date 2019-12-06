@@ -146,13 +146,19 @@
         <td>
           <p><code><a href="predict.html">predict()</a></code> </p>
         </td>
-        <td><p>Predict from Previously Fit Forests</p></td>
+        <td><p>Predict from Previously Fit Forests 
+This function takes in an existing BCF model fit and uses it to predict estimates for new data.
+It is important to note that this function requires that you indicate where the trees from the model fit are saved.
+You can do so using the save_tree_directory argument in bcf(). Otherwise, they will be saved in the working directory.
+The bcf() function automatically saves those in the same directory as the</p></td>
       </tr><tr>
         
         <td>
           <p><code><a href="summarise_bcf.html">summarise_bcf()</a></code> </p>
         </td>
-        <td><p>Print Summary Stats for a previous BCF run</p></td>
+        <td><p>Print Summary Stats for a previous BCF run
+This function is built using the coda package and meant to mimick output from Stan.
+It includes:</p></td>
       </tr>
     </tbody>
     </table>
