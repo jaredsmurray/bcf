@@ -77,11 +77,22 @@
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#bayesian-causal-forests" class="anchor"></a>Bayesian Causal Forests</h1></div>
 <p>Welcome to the BCF site! This page provides more details on this implementation of Bayesian causal forests (BCF).</p>
+<div id="why-bcf" class="section level2">
+<h2 class="hasAnchor">
+<a href="#why-bcf" class="anchor"></a>Why BCF?</h2>
+<p>BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, Chipman, George, and McCulloch 1998). BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, is not overfit to the training data. BCF further extends BART’s flexibility by specifying different models for relationships between covariates and the outcome and relationships between covariates and the treatment effect. For more information, you can find the original BCF paper here: <a href="https://arxiv.org/pdf/1706.09523.pdf">https://arxiv.org/pdf/1706.09523.pdf</a>.</p>
+<p>BCF performs remarkably well in simulation and has led the pack at recent rigorous causal inference competitions, such as those held at the Atlantic Causal Inference Conference. This implementation further extends existing BCF functionality by:</p>
+<ul>
+<li>allowing for heteroskedastic error</li>
+<li>automating multi-chain, multi-core implementations</li>
+<li>providing a suite of convergence diagnostic functions via the <code>{coda}</code> package</li>
+<li>accelerating some underlying computations, resulting in shorter runtimes</li>
+</ul>
+</div>
 <div id="getting-started" class="section level2">
 <h2 class="hasAnchor">
 <a href="#getting-started" class="anchor"></a>Getting Started</h2>
 <p>If you are just getting started with BCF, we recommend starting with the tutorial vignette and the examples throughout the package documentation.</p>
-<p>Something else that may be useful is the original BCF paper here: <a href="https://arxiv.org/pdf/1706.09523.pdf">https://arxiv.org/pdf/1706.09523.pdf</a>.</p>
 </div>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
@@ -108,14 +119,14 @@ n_sim &lt;- 1000
 x &lt;- matrix(rnorm(n*p), nrow=n)
 
 
-# create targeted selection, whereby a practice's likelihood of joining the intervention (pi) is related to their expected outcome (mu)
+# create targeted selection, whereby a unit's likelihood of joining the intervention (pi) is related to its expected outcome (mu)
 q &lt;- -1*(x[,1]&gt;(x[,2])) + 1*(x[,1]&lt;(x[,2])) -0.1
 
 # generate treatment variable
 pi &lt;- pnorm(q)
 z &lt;- rbinom(n,1,pi)
 
-# tau is the true treatment effect. It varies across practices as a function of
+# tau is the true treatment effect. It varies across units as a function of
 # X3, the effect moderator
 tau &lt;-  1/(1 + exp(-x[,3]))
 
@@ -174,6 +185,18 @@ print("mu Mean")
 print(mean(mu))
 
 assess_closeness(bcf_out$mu,mu_correct,'mu_compare')</code></pre>
+</div>
+<div id="latest-package-updates-weights" class="section level2">
+<h2 class="hasAnchor">
+<a href="#latest-package-updates-weights" class="anchor"></a>Latest package updates: weights</h2>
+<p>The original version of {bcf} does not allow for weights. In the new version, the model is specified as follows:</p>
+<p><code>y_i∼N(μ(x_i)+τ(x_i ) z_i,σ^2/w_i )</code></p>
+<p>We changed several parts of the code to incorporate these weights:</p>
+<ul>
+<li>Code to calculate sufficient statistics</li>
+<li>Code to update leaf node means</li>
+<li>Code to update variance across leaf node means</li>
+</ul>
 </div>
 </div>
   </div>

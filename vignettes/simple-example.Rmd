@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(bcf2)
+library(ggplot2)
 ```
 
 First, we simulate some data for testing.  This data set has three covariates $X$, which we divide into two control variables -- that is, variables related to $y$ -- and one effect moderator -- that is, a variable that changes the relationship between $y$ and the treatment effect $\tau$.
@@ -23,13 +24,14 @@ First, we simulate some data for testing.  This data set has three covariates $X
 We draw the $X$s from a standard normal distribution and generate each unit's outcome, $\mu_i$, as a function of these covariates.  Each unit's probability of joining the intervention, $\pi_i$, is also a function of $\mu_i$, so that units with larger outcomes are more likely to participate in the intervention.  We then assign units to treatment ($z_i = 1$) or comparison ($z_i = 0$) as a function of $\pi_i$.
 
 Then we generate the true treatment effect for each unit, $\tau_i$.  As noted above, $\tau_i$ is a function of $X_3$.  the observed outcome, $y_i$, is a function of $\mu_i$, $\tau_i$, and a random error term $\sigma$.
+
 ```{r data creation}
 set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
-n <- 10
-n_burn <- 10
-n_sim <- 15
+n <- 20
+n_burn <- 100
+n_sim <- 150
 
 
 x <- matrix(rnorm(n*p), nrow=n)
@@ -59,21 +61,21 @@ y <- mu + sigma*rnorm(n)
 ```
 
 In this data set we have observed $y_i$, $x_i$, and $\pi_i$ values to which we can fit our BCF model.  We can then compare the $\hat{\tau}_i$ estimates from BCF to the true $\tau_i$ from the data-generating process.
+
 ```{r model}
-out2 <- bcf2::bcf(y          = y,
-                  z          = z,
-                  x_control  = x,
-                  x_moderate = x,
-                  pihat      = pi,
-                  nburn      = n_burn,
-                  nsim       = n_sim,
-                  w          = weights, 
-                  update_interval = 1,
-                  ntree_moderate = 3,
-                  ntree_control = 3,
-                  verbose=TRUE,
-                  random_seed = list(1, 2),  #LVF: this line causes an error for me
-                  n_chains = 2)
+bcf_out <- bcf2::bcf(y            = y,
+                 z                = z,
+                 x_control        = x,
+                 x_moderate       = x,
+                 pihat            = pi,
+                 nburn            = n_burn,
+                 nsim             = n_sim,
+                 w                = weights,
+                 n_chains         = 4,
+                 n_chain_clusters = 2,
+                 random_seed      = 1,
+                 update_interval  = 1)
+
 cat("BCF run complete\n")
 ```
 
@@ -81,8 +83,47 @@ cat("BCF run complete\n")
 bcf2::summarise_bcf(bcf_out)
 ```
 
-** Add figures here**
+1. Comparison of $\hat{\tau}_i$ matches up with $\tau_i$
 
-1. Figure showing that $\hat{\tau}_i$ matches up with $\tau_i$
-2. Figure showing unit-specific treatment effects?
-3. Figure showing distribution of treatment effects in subgroups defined based on an arbitrary cut-point in X3?
+```{r}
+ggplot(NULL, aes(x = tau, y = colMeans(bcf_out$tau))) +
+  geom_abline() +
+  geom_point() +
+  ylab("tau estimate")
+```
+
+```{r}
+tau_fit <- lm(tau ~ colMeans(bcf_out$tau))
+coef <- summary(tau_fit)$coef[2,"Estimate"]
+```
+Our estimate of $\tau$ explains `r round(coef, 2)*100`% of the variation in $\tau$.
+
+2. In this figure, we show unit-specific treatment effects for the first unit
+
+```{r}
+ggplot(NULL, aes(x = 1:(4*n_sim), y = bcf_out$tau[,1])) +
+  geom_line() +
+  ylab("tau estimate for unit 1") +
+  xlab("draws")
+```
+
+
+3. Figure showing distribution of treatment effects in subgroups defined based on the first and bottom quartiles of X3
+
+```{r}
+q1 <- x[,3] < quantile(x[,3], 0.25)
+q4 <- x[,3] > quantile(x[,3], 0.75)
+
+q1Taus <- bcf_out$tau[,q1]
+q4Taus <- bcf_out$tau[,q4]
+
+wq1Taus <- apply(q1Taus, 1, weighted.mean, weights[q1])
+wq4Taus <- apply(q4Taus, 1, weighted.mean, weights[q4])
+
+groupTaus <- data.frame(taus     = c(wq1Taus, wq4Taus),
+                        quartile = c(rep("q1", 4*n_sim), rep("q4", 4*n_sim)))
+
+ggplot(groupTaus, aes(taus, fill = quartile, color = quartile)) +
+  geom_density(alpha = 0.5)
+```
+

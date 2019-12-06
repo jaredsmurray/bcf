@@ -101,6 +101,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param sd_moderate SD(tau(x)) marginally at any covariate value (or its prior median if use_tauscale=TRUE)
 #' @param base_moderate Base for tree prior on tau(x) trees (see details)
 #' @param power_moderate Power for the tree prior on tau(x) trees (see details)
+#' @param save_tree_directory Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory.
 #' @param nu Degrees of freedom in the chisq prior on \eqn{sigma^2}
 #' @param lambda Scale parameter in the chisq prior on \eqn{sigma^2}
 #' @param sigq Calibration quantile for the chisq prior on \eqn{sigma^2}
@@ -447,23 +448,68 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 }
 
 #' Print Summary Stats for a previous BCF run
+#' This function is built using the coda package and meant to mimick output from Stan.
+#' It includes:
+#' 
+#'  * summary statistics for MCMC
+#'  * effective sample sizes for each parameter
+#'  * Gelman and Rubin's convergence diagnostics for each parameter
 #' @param bcf_out output from a BCF predict run
+#' @examples
+#'\donttest{
+#'
+#' # data generating process
+#' p = 3 #two control variables and one moderator
+#' n = 250
+#' 
+#' set.seed(1)
+#'
+#' x = matrix(rnorm(n*p), nrow=n)
+#'
+#' # create targeted selection
+#' q = -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2]))
+#'
+#' # generate treatment variable
+#' pi = pnorm(q)
+#' z = rbinom(n,1,pi)
+#'
+#' # tau is the true (homogeneous) treatment effect
+#' tau = (0.5*(x[,3] > -3/4) + 0.25*(x[,3] > 0) + 0.25*(x[,3]>3/4))
+#'
+#' # generate the response using q, tau and z
+#' mu = (q + tau*z)
+#'
+#' # set the noise level relative to the expected mean function of Y
+#' sigma = diff(range(q + tau*pi))/8
+#'
+#' # draw the response variable with additive error
+#' y = mu + sigma*rnorm(n)
+#'
+#' # If you didn't know pi, you would estimate it here
+#' pihat = pnorm(q)
+#'
+#' bcf_fit = bcf(y, z, x, x, pihat, nburn=2000, nsim=2000)
+#'
+#' # Get model fit diagnostics
+#' summarise_bcf(bcf_fit)
+#'
+#'}
 #' @export
 summarise_bcf <- function(bcf_out){
   library(coda)
 
-  message("Summary statistics for Markov Chain Monte Carlo chains")
+  message("Summary statistics for each Markov Chain Monte Carlo run")
   print(summary(bcf_out$coda_chains))
 
   cat("\n----\n\n")
 
 
-  message("Effective sample size for estimating the mean")
+  message("Effective sample size for each parameter")
   print(effectiveSize(bcf_out$coda_chains))
   
   cat("\n----\n\n")
   
-  message("Gelman and Rubin's convergence diagnostic")
+  message("Gelman and Rubin's convergence diagnostic for each parameter")
   print(gelman.diag(bcf_out$coda_chains))
   
   
@@ -471,6 +517,10 @@ summarise_bcf <- function(bcf_out){
 
 
 #' Predict from Previously Fit Forests 
+#' This function takes in an existing BCF model fit and uses it to predict estimates for new data.
+#' It is important to note that this function requires that you indicate where the trees from the model fit are saved.
+#' You can do so using the save_tree_directory argument in bcf(). Otherwise, they will be saved in the working directory.
+#' The bcf() function automatically saves those in the same directory as the 
 #' @param bcf_out output from a BCF predict run
 #' @param x_predict_control matrix of covariates for the "prognostic" function mu(x) for predictions (optional)
 #' @param x_predict_moderate matrix of covariates for the covariate-dependent treatment effects tau(x) for predictions (optional)
@@ -478,6 +528,60 @@ summarise_bcf <- function(bcf_out){
 #' @param pi_pred propensity score for prediction
 #' @param save_tree_directory directory where the trees have been saved
 #' @param n_chain_clusters An optional integer of the number of clusters to run your MCMC chains on
+#' @examples
+#'\donttest{
+#'
+#' # data generating process
+#' p = 3 #two control variables and one moderator
+#' n = 250
+#'
+#' x = matrix(rnorm(n*p), nrow=n)
+#'
+#' # create targeted selection
+#' q = -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2]))
+#'
+#' # generate treatment variable
+#' pi = pnorm(q)
+#' z = rbinom(n,1,pi)
+#'
+#' # tau is the true (homogeneous) treatment effect
+#' tau = (0.5*(x[,3] > -3/4) + 0.25*(x[,3] > 0) + 0.25*(x[,3]>3/4))
+#'
+#' # generate the response using q, tau and z
+#' mu = (q + tau*z)
+#'
+#' # set the noise level relative to the expected mean function of Y
+#' sigma = diff(range(q + tau*pi))/8
+#'
+#' # draw the response variable with additive error
+#' y = mu + sigma*rnorm(n)
+#'
+#' # If you didn't know pi, you would estimate it here
+#' pihat = pnorm(q)
+#'
+#' bcf_fit = bcf2::bcf(y               = y,
+#'                     z               = z,
+#'                     x_control       = x,
+#'                     x_moderate      = x,
+#'                     pihat           = pihat,
+#'                     nburn           = n_burn,
+#'                     nsim            = n_sim,
+#'                     n_chains        = 2,
+#'                     update_interval = 1,
+#'                     save_tree_directory = './trees')
+#'
+#' # Predict using new data
+#' 
+#' x_pred = matrix(rnorm(n*p), nrow=n)
+#' 
+#' pred_out = bcf2::predict(bcf_out=bcf_fit,
+#'                         x_predict_control=x_pred,
+#'                         x_predict_moderate=x_pred,
+#'                         pi_pred=pihat,
+#'                         z_pred=z,
+#'                         save_tree_directory = './trees')
+#'
+#'}
 #' @export
 predict <- function(bcf_out, 
                     x_predict_control,
