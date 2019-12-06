@@ -4,7 +4,7 @@ Welcome to the BCF site! This page provides more details on this implementation 
 
 ## Why BCF?
 
-BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, Chipman, George, and McCulloch 1998).  BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, is not overfit to the training data.  BCF further extends BART's flexibility by specifying different models for relationships between covariates and the outcome and relationships between covariates and the treatment effect.  For more information, you can find the original BCF paper here: [https://arxiv.org/pdf/1706.09523.pdf](https://arxiv.org/pdf/1706.09523.pdf).
+BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, Chipman, George, and McCulloch 2010).  BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, is not overfit to the training data.  BCF further extends BART's flexibility by specifying different models for relationships between covariates and the outcome and relationships between covariates and the treatment effect.  For more information, you can find the original BCF paper here: [https://arxiv.org/pdf/1706.09523.pdf](https://arxiv.org/pdf/1706.09523.pdf).
 
 BCF performs remarkably well in simulation and has led the pack at recent rigorous causal inference competitions, such as those held at the Atlantic Causal Inference Conference. This implementation further extends existing BCF functionality by:
 
