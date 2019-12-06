@@ -19,6 +19,8 @@ library(bcf2)
 library(ggplot2)
 ```
 
+## Simulate data
+
 First, we simulate some data for testing.  This data set has three covariates $X$, which we divide into two control variables -- that is, variables related to $y$ -- and one effect moderator -- that is, a variable that changes the relationship between $y$ and the treatment effect $\tau$.
 
 We draw the $X$s from a standard normal distribution and generate each unit's outcome, $\mu_i$, as a function of these covariates.  Each unit's probability of joining the intervention, $\pi_i$, is also a function of $\mu_i$, so that units with larger outcomes are more likely to participate in the intervention.  We then assign units to treatment ($z_i = 1$) or comparison ($z_i = 0$) as a function of $\pi_i$.
@@ -60,6 +62,8 @@ sigma <- diff(range(q + tau*pi))/8
 y <- mu + sigma*rnorm(n)
 ```
 
+## Fit BCF model
+
 In this data set we have observed $y_i$, $x_i$, and $\pi_i$ values to which we can fit our BCF model.  We can then compare the $\hat{\tau}_i$ estimates from BCF to the true $\tau_i$ from the data-generating process.
 
 ```{r model}
@@ -83,7 +87,12 @@ cat("BCF run complete\n")
 bcf2::summarise_bcf(bcf_out)
 ```
 
-1. Comparison of $\hat{\tau}_i$ matches up with $\tau_i$
+## Examine output
+
+Now that we've successfully fit our model, let's see what we can do with the output.  First, in this simulation setting, let's compare the fitted treatment effect estimates $\hat{\tau}_i$ to the true treatment effects $\tau_i$.
+
+
+### Estimates vs. true treatment effects
 
 ```{r}
 ggplot(NULL, aes(x = tau, y = colMeans(bcf_out$tau))) +
@@ -92,23 +101,53 @@ ggplot(NULL, aes(x = tau, y = colMeans(bcf_out$tau))) +
   ylab("tau estimate")
 ```
 
+Clearly, BCF correctly recovers the true treatment effects in this simple example.  We can also calculate how well the BCF treatment effect estimates explain variation in the true treatment effects.
 ```{r}
 tau_fit <- lm(tau ~ colMeans(bcf_out$tau))
 coef <- summary(tau_fit)$coef[2,"Estimate"]
+
+## LVF added code to extract the adjusted R2
+adjR2 <- summary(tau_fit)$adj.r.squared
 ```
-Our estimate of $\tau$ explains `r round(coef, 2)*100`% of the variation in $\tau$.
+Our estimates $\hat{\tau}_i$ explain `r round(adjR2, 2)*100`% of the variation in the $\tau_i$, reaffirming the idea that BCF provides accurate treatment effect estimates.
 
-2. In this figure, we show unit-specific treatment effects for the first unit
+### Distribution of treatment effects
 
-```{r}
+Now that we have confidence in BCF's estimates of unit-specific treatment effects, we examine the results more closely.  First we consider the distribution of unit-specific treatment effects, to see how differently the treatment affects different units.  This plot shows the impact estimate and 95 percent credible interval for each unit, arranged from the smallest (most negative) impact to the largest (most positive).
+
+```{r, echo = FALSE, eval = FALSE}
 ggplot(NULL, aes(x = 1:(4*n_sim), y = bcf_out$tau[,1])) +
   geom_line() +
   ylab("tau estimate for unit 1") +
   xlab("draws")
 ```
 
+```{r}
+# LVF added this code to show distribution of unit-specific treatment effects, with 95% CIs.
+tau_ests <- data.frame(Mean = colMeans(bcf_out$tau),
+                       Low95 = apply(bcf_out$tau, 2, function(x) quantile(x, 0.025)),
+                       Up95 = apply(bcf_out$tau, 2, function(x) quantile(x, 0.975))) %>%
+  arrange(desc(Mean)) %>%
+  mutate(id = 1:ncol(bcf_out$tau))
 
-3. Figure showing distribution of treatment effects in subgroups defined based on the first and bottom quartiles of X3
+ggplot(tau_ests, aes(x = id, y = Mean)) +
+  theme_bw() +
+  geom_pointrange(aes(ymin = Low95, ymax = Up95), color = "blue") +
+  geom_vline(xintercept = 0, color = "black") +
+  ylab("Unit-Specific Treatment Effect") +
+  xlab("Unit Number") +
+  coord_flip()
+  
+```
+
+
+### Identifying possible subgroups
+
+The BCF model obtains more accurate treatment effect estimates than other approaches in part by considering more flexible effect modification relationships with more possible effect modifiers.  These relationships are often of substantive interest; researchers want to know what characteristics are associated with higher or lower impacts.  However, because the BCF model is difficult to interpret, we cannot simply look at the coefficients on the effect modifiers to determine which characteristics drive the impacts.  Instead, we can use existing techniques to look for patterns in the unit-specific treatment effects, linking each unit's treatment effect to its background characteristics.
+
+Hill (2010) recommends searching for patterns by fitting a CART model where the response variable is the estimated treatment effects from the BCF fit and the predictor variables are the effect modifiers used to fit the BCF model.  The resulting tree identifies characteristics that strongly predict impacts, which are strong candidate subgroup variables.  However, because the CART fit does not account for the uncertainty in the treatment effect estimates, it is possible that tree splits do not identify characteristics that create subgroups with meaningfully different impacts.  To determine whether impacts differ meaningfully based on a characteristic, we can look back at the posterior draws from the BCF model.
+
+Here we skip the CART fit step and show just a comparison of the impacts for units in the top quartile of $X_3$ vs. impacts for units in the bottom quartile of $X_3$, which we know to be a strong effect modifier because we specified it as such in the data generation step.
 
 ```{r}
 q1 <- x[,3] < quantile(x[,3], 0.25)
@@ -127,3 +166,4 @@ ggplot(groupTaus, aes(taus, fill = quartile, color = quartile)) +
   geom_density(alpha = 0.5)
 ```
 
+[add text here showing what we found]
