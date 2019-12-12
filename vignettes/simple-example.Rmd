@@ -64,7 +64,7 @@ y <- mu + sigma*rnorm(n)
 
 ## Fit BCF model
 
-In this data set we have observed $y_i$, $x_i$, and $\pi_i$ values to which we can fit our BCF model.  We can then compare the $\hat{\tau}_i$ estimates from BCF to the true $\tau_i$ from the data-generating process.
+In this data set we have observed $y_i$, $x_i$, and $\pi_i$ values to which we can fit our BCF model.  We can then compare the $\hat{\tau}_i$ estimates from BCF to the true $\tau_i$ from the data-generating process.  Note that we are using the `n_chains` argument to `bcf()`, which allows us to run several chains of the same model in parallel and assess whether they have reached the same posterior distribution.
 
 ```{r model}
 bcf_out <- bcf2::bcf(y            = y,
@@ -113,7 +113,7 @@ Our estimates $\hat{\tau}_i$ explain `r round(adjR2, 2)*100`% of the variation i
 
 ### Distribution of treatment effects
 
-Now that we have confidence in BCF's estimates of unit-specific treatment effects, we examine the results more closely.  First we consider the distribution of unit-specific treatment effects, to see how differently the treatment affects different units.  This plot shows the impact estimate and 95 percent credible interval for each unit, arranged from the smallest (most negative) impact to the largest (most positive).
+Now that we have confidence in BCF's estimates of unit-specific treatment effects, we examine the results more closely.  First we consider the distribution of unit-specific treatment effects, to see how differently the treatment affects different units.  This plot shows the impact estimate and 95 percent credible interval for each unit, arranged by the size of the impact.
 
 ```{r, echo = FALSE, eval = FALSE}
 ggplot(NULL, aes(x = 1:(4*n_sim), y = bcf_out$tau[,1])) +
@@ -139,6 +139,7 @@ ggplot(tau_ests, aes(x = id, y = Mean)) +
   coord_flip()
 ```
 
+In this example, although we do see variation in the point estimates across units, the uncertainty intervals all overlap.  In actual applications, the differences among units are likely to be more pronounced and to suggest demarcations between groups of high-performers and low-performers.
 
 ### Identifying possible subgroups
 
@@ -165,4 +166,4 @@ ggplot(groupTaus, aes(taus, fill = quartile, color = quartile)) +
   geom_density(alpha = 0.5)
 ```
 
-[add text here showing what we found]
+As anticipated based on the overlap across the credible intervals of the unit-specific treatment effects, this plot indicates that the posterior distributions for the impact in these two subgroups overlap considerably.  We would therefore not conclude that $X_3$ is an important subgroup variable. 
