@@ -214,7 +214,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 sd_moderate = sd(y),
                 base_moderate = 0.25,
                 power_moderate = 3,
-                save_tree_directory = '',
+                save_tree_directory = '..',
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
 ) {
@@ -517,6 +517,7 @@ summarise_bcf <- function(bcf_out){
 
 
 #' Predict from Previously Fit Forests 
+#' 
 #' This function takes in an existing BCF model fit and uses it to predict estimates for new data.
 #' It is important to note that this function requires that you indicate where the trees from the model fit are saved.
 #' You can do so using the save_tree_directory argument in bcf(). Otherwise, they will be saved in the working directory.

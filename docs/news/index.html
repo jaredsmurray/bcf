@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Articles • bcf2</title>
+<title>Changelog • bcf2</title>
 
 
 <!-- jquery -->
@@ -35,7 +35,7 @@
 
 
 
-<meta property="og:title" content="Articles" />
+<meta property="og:title" content="Changelog" />
 
 
 
@@ -54,7 +54,7 @@
   </head>
 
   <body>
-    <div class="container template-article-index">
+    <div class="container template-news">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -116,19 +116,55 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Articles</h1>
+      <h1>Changelog <small></small></h1>
+      
     </div>
 
-    <div class="section ">
-      <h3>All vignettes</h3>
-      <p class="section-desc"></p>
+    <div id="bcf-200-bcf2" class="section level1">
+<h1 class="page-header">
+<a href="#bcf-200-bcf2" class="anchor"></a>bcf 2.0.0 (bcf2)</h1>
+<p>This page provides more details on the latest updates to bcf.</p>
+<div id="major-changes" class="section level2">
+<h2 class="hasAnchor">
+<a href="#major-changes" class="anchor"></a>Major changes</h2>
+<div id="weights" class="section level3">
+<h3 class="hasAnchor">
+<a href="#weights" class="anchor"></a>Weights</h3>
+<p>The original version of {bcf} does not allow for weights, which we often use in practical applications to account for heteroskedasticity. Where the original BCF model was specified as:</p>
+<p>$y_i \sim N(\mu(x_i) + \tau(x_i) z_i, \sigma^2)$,</p>
+<p>which assumes that all outcomes $y_i$ have the same variance $\sigma^2$, in the extended version we can relax this assumption to allow the variance to reflect the uncertainty in the $y_i$:</p>
+<p>$y_i∼N(μ(x_i)+τ(x_i ) z_i,σ^2/w_i )$</p>
+<p>We changed several parts of the code to incorporate these weights:</p>
+<ul>
+<li>Code to calculate sufficient statistics</li>
+<li>Code to update leaf node means</li>
+<li>Code to update variance across leaf node means</li>
+</ul>
+</div>
+<div id="automating-multichain-processing" class="section level3">
+<h3 class="hasAnchor">
+<a href="#automating-multichain-processing" class="anchor"></a>Automating multichain processing</h3>
+<p>It is useful in Bayesian analysis to produce different runs of the same model, with different starting values, as a way of assessing convergence; if the different runs produce drastically different posterior distributions, it is a sign that the model has not converged fully. In this version of {bcf} we have automated multichain processing and incorporated key MCMC diagnostics from the {coda} package, including effective sample sizes and the Gelman-Rubin statistic (“R hat”).</p>
+<p><em>Question for Peter</em>: is the multichain processing also multicore? If so, we should talk it up.</p>
+</div>
+<div id="speed-ups" class="section level3">
+<h3 class="hasAnchor">
+<a href="#speed-ups" class="anchor"></a>Speed-ups</h3>
+<p>Finally, our implementation parallelizes some steps of the sampling procedure to maximize efficiency in a multicore environment. Our testing shows that these enhancements have reduced runtimes by [<em>Peter please fill in here</em>].</p>
+</div>
+</div>
+</div>
+  </div>
 
-      <ul>
-        <li><a href="predict-example.html">Prediction with BCF</a></li>
-        <li><a href="simple-example.html">A Simple Example</a></li>
+  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+    <div id="tocnav">
+      <h2>Contents</h2>
+      <ul class="nav nav-pills nav-stacked">
+        <li><a href="#bcf-200-bcf2">2.0.0</a></li>
       </ul>
     </div>
   </div>
+
 </div>
 
 

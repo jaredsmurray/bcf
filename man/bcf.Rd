@@ -10,7 +10,7 @@ bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL,
   nthin = 1, update_interval = 100, ntree_control = 200,
   sd_control = 2 * sd(y), base_control = 0.95, power_control = 2,
   ntree_moderate = 50, sd_moderate = sd(y), base_moderate = 0.25,
-  power_moderate = 3, save_tree_directory = "", nu = 3,
+  power_moderate = 3, save_tree_directory = "..", nu = 3,
   lambda = NULL, sigq = 0.9, sighat = NULL, include_pi = "control",
   use_muscale = TRUE, use_tauscale = TRUE, verbose = FALSE)
 }

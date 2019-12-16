@@ -2,11 +2,7 @@
 % Please edit documentation in R/bcf.R
 \name{predict}
 \alias{predict}
-\title{Predict from Previously Fit Forests 
-This function takes in an existing BCF model fit and uses it to predict estimates for new data.
-It is important to note that this function requires that you indicate where the trees from the model fit are saved.
-You can do so using the save_tree_directory argument in bcf(). Otherwise, they will be saved in the working directory.
-The bcf() function automatically saves those in the same directory as the}
+\title{Predict from Previously Fit Forests}
 \usage{
 predict(bcf_out, x_predict_control, x_predict_moderate, pi_pred, z_pred,
   save_tree_directory, n_chain_clusters = 2)
@@ -27,7 +23,6 @@ predict(bcf_out, x_predict_control, x_predict_moderate, pi_pred, z_pred,
 \item{n_chain_clusters}{An optional integer of the number of clusters to run your MCMC chains on}
 }
 \description{
-Predict from Previously Fit Forests 
 This function takes in an existing BCF model fit and uses it to predict estimates for new data.
 It is important to note that this function requires that you indicate where the trees from the model fit are saved.
 You can do so using the save_tree_directory argument in bcf(). Otherwise, they will be saved in the working directory.

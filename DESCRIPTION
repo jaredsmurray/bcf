@@ -4,9 +4,14 @@ Title: Causal Inference for a Binary Treatment and Continuous Outcome
         using Bayesian Causal Forests
 Version: 2.0.0
 Date: 2019-01-02
-Author: P. Richard Hahn, Jared S. Murray, and Carlos Carvalho
-Contributors: Mariel Finucane, Lauren V. Forrow, Peter Mariani, Constance Delannoy
-Maintainer: Jared S. Murray <jared.murray@mccombs.utexas.edu>
+Authors@R: c(
+    person("Jared S.", "Murray", , "jared.murray@mccombs.utexas.edu", c("aut", "cre")),
+    person("P. Richard", "Hahn", role = "aut"),
+    person("Carlos", "Carvalho", role = "aut"),
+    person("Peter", "Mariani", role = "ctb"),
+    person("Constance", "Delannoy", role = "ctb"),
+    person("Mariel", "Finucane", role = "ctb"),
+    person("Lauren V.", "Forrow", role = "ctb"))
 Description: Causal inference for a binary treatment and continuous outcome using Bayesian Causal Forests. See Hahn, Murray and Carvalho (2017) <arXiv:1706.09523> for additional information. This implementation relies on code originally accompanying Pratola et. al. (2013) <arXiv:1309.1906>.
 License: GPL-3
 LinkingTo: Rcpp, RcppArmadillo, RcppParallel

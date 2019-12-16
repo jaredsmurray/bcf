@@ -9,3 +9,21 @@
 \description{
 Causal inference for a binary treatment and continuous outcome using Bayesian Causal Forests. See Hahn, Murray and Carvalho (2017) <arXiv:1706.09523> for additional information. This implementation relies on code originally accompanying Pratola et. al. (2013) <arXiv:1309.1906>.
 }
+\author{
+\strong{Maintainer}: Jared S. Murray \email{jared.murray@mccombs.utexas.edu}
+
+Authors:
+\itemize{
+  \item P. Richard Hahn
+  \item Carlos Carvalho
+}
+
+Other contributors:
+\itemize{
+  \item Peter Mariani [contributor]
+  \item Constance Delannoy [contributor]
+  \item Mariel Finucane [contributor]
+  \item Lauren V. Forrow [contributor]
+}
+
+}

@@ -56,9 +56,15 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="articles/predict-example.html">Prediction with BCF</a>
+    </li>
+    <li>
       <a href="articles/simple-example.html">A Simple Example</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="news/index.html">Changelog</a>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right"></ul>
@@ -186,18 +192,6 @@ print(mean(mu))
 
 assess_closeness(bcf_out$mu,mu_correct,'mu_compare')</code></pre>
 </div>
-<div id="latest-package-updates-weights" class="section level2">
-<h2 class="hasAnchor">
-<a href="#latest-package-updates-weights" class="anchor"></a>Latest package updates: weights</h2>
-<p>The original version of {bcf} does not allow for weights. In the new version, the model is specified as follows:</p>
-<p><code>y_i∼N(μ(x_i)+τ(x_i ) z_i,σ^2/w_i )</code></p>
-<p>We changed several parts of the code to incorporate these weights:</p>
-<ul>
-<li>Code to calculate sufficient statistics</li>
-<li>Code to update leaf node means</li>
-<li>Code to update variance across leaf node means</li>
-</ul>
-</div>
 </div>
   </div>
 
@@ -217,7 +211,10 @@ assess_closeness(bcf_out$mu,mu_correct,'mu_compare')</code></pre>
 <div class="developers">
 <h2>Developers</h2>
 <ul class="list-unstyled">
-<li>Jared S. Murray <br><small class="roles"> Maintainer </small>  </li>
+<li>Jared S. Murray <br><small class="roles"> Author, maintainer </small>  </li>
+<li>P. Richard Hahn <br><small class="roles"> Author </small>  </li>
+<li>Carlos Carvalho <br><small class="roles"> Author </small>  </li>
+<li><a href="authors.html">All authors...</a></li>
 </ul>
 </div>
 
@@ -226,7 +223,7 @@ assess_closeness(bcf_out$mu,mu_correct,'mu_compare')</code></pre>
 
 
       <footer><div class="copyright">
-  <p>Developed by Jared S. Murray.</p>
+  <p>Developed by Jared S. Murray, P. Richard Hahn, Carlos Carvalho.</p>
 </div>
 
 <div class="pkgdown">

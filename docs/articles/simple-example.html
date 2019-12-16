@@ -54,9 +54,15 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/predict-example.html">Prediction with BCF</a>
+    </li>
+    <li>
       <a href="../articles/simple-example.html">A Simple Example</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right"></ul>
@@ -133,7 +139,7 @@
 <div id="fit-bcf-model" class="section level2">
 <h2 class="hasAnchor">
 <a href="#fit-bcf-model" class="anchor"></a>Fit BCF model</h2>
-<p>In this data set we have observed <span class="math inline">\(y_i\)</span>, <span class="math inline">\(x_i\)</span>, and <span class="math inline">\(\pi_i\)</span> values to which we can fit our BCF model. We can then compare the <span class="math inline">\(\hat{\tau}_i\)</span> estimates from BCF to the true <span class="math inline">\(\tau_i\)</span> from the data-generating process.</p>
+<p>In this data set we have observed <span class="math inline">\(y_i\)</span>, <span class="math inline">\(x_i\)</span>, and <span class="math inline">\(\pi_i\)</span> values to which we can fit our BCF model. We can then compare the <span class="math inline">\(\hat{\tau}_i\)</span> estimates from BCF to the true <span class="math inline">\(\tau_i\)</span> from the data-generating process. Note that we are using the <code>n_chains</code> argument to <code><a href="../reference/bcf.html">bcf()</a></code>, which allows us to run several chains of the same model in parallel and assess whether they have reached the same posterior distribution.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>bcf_out &lt;-<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/bcf.html">bcf</a></span>(<span class="dt">y            =</span> y,</span>
 <span id="cb3-2"><a href="#cb3-2"></a>                 <span class="dt">z                =</span> z,</span>
 <span id="cb3-3"><a href="#cb3-3"></a>                 <span class="dt">x_control        =</span> x,</span>
@@ -226,7 +232,7 @@
 <div id="distribution-of-treatment-effects" class="section level3">
 <h3 class="hasAnchor">
 <a href="#distribution-of-treatment-effects" class="anchor"></a>Distribution of treatment effects</h3>
-<p>Now that we have confidence in BCF’s estimates of unit-specific treatment effects, we examine the results more closely. First we consider the distribution of unit-specific treatment effects, to see how differently the treatment affects different units. This plot shows the impact estimate and 95 percent credible interval for each unit, arranged from the smallest (most negative) impact to the largest (most positive).</p>
+<p>Now that we have confidence in BCF’s estimates of unit-specific treatment effects, we examine the results more closely. First we consider the distribution of unit-specific treatment effects, to see how differently the treatment affects different units. This plot shows the impact estimate and 95 percent credible interval for each unit, arranged by the size of the impact.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>tau_ests &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">Mean  =</span> <span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(bcf_out<span class="op">$</span>tau),</span>
 <span id="cb7-2"><a href="#cb7-2"></a>                       <span class="dt">Low95 =</span> <span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(bcf_out<span class="op">$</span>tau, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x, <span class="fl">0.025</span>)),</span>
 <span id="cb7-3"><a href="#cb7-3"></a>                       <span class="dt">Up95  =</span> <span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(bcf_out<span class="op">$</span>tau, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x, <span class="fl">0.975</span>)))</span>
@@ -242,6 +248,7 @@
 <span id="cb7-13"><a href="#cb7-13"></a><span class="st">  </span><span class="kw">xlab</span>(<span class="st">"Unit Number"</span>) <span class="op">+</span></span>
 <span id="cb7-14"><a href="#cb7-14"></a><span class="st">  </span><span class="kw">coord_flip</span>()</span></code></pre></div>
 <p><img src="simple-example_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<p>In this example, although we do see variation in the point estimates across units, the uncertainty intervals all overlap. In actual applications, the differences among units are likely to be more pronounced and to suggest demarcations between groups of high-performers and low-performers.</p>
 </div>
 <div id="identifying-possible-subgroups" class="section level3">
 <h3 class="hasAnchor">
@@ -264,7 +271,7 @@
 <span id="cb8-13"><a href="#cb8-13"></a><span class="kw">ggplot</span>(groupTaus, <span class="kw">aes</span>(taus, <span class="dt">fill =</span> quartile, <span class="dt">color =</span> quartile)) <span class="op">+</span></span>
 <span id="cb8-14"><a href="#cb8-14"></a><span class="st">  </span><span class="kw">geom_density</span>(<span class="dt">alpha =</span> <span class="fl">0.5</span>)</span></code></pre></div>
 <p><img src="simple-example_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
-<p>[add text here showing what we found]</p>
+<p>As anticipated based on the overlap across the credible intervals of the unit-specific treatment effects, this plot indicates that the posterior distributions for the impact in these two subgroups overlap considerably. We would therefore not conclude that <span class="math inline">\(X_3\)</span> is an important subgroup variable.</p>
 </div>
 </div>
   </div>
@@ -287,7 +294,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Jared S. Murray.</p>
+  <p>Developed by Jared S. Murray, P. Richard Hahn, Carlos Carvalho.</p>
 </div>
 
 <div class="pkgdown">
