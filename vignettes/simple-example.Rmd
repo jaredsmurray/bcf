@@ -33,14 +33,14 @@ Then we generate the true treatment effect for each unit, $\tau_i$.  As noted ab
 set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
-n <- 20 [MMF: Shall we increase `n` a bit to make this a more interesting example?]
+n <- 20 # [MMF: Shall we increase `n` a bit to make this a more interesting example?]
 n_burn <- 100
 n_sim <- 150
 
 
 x <- matrix(rnorm(n*p), nrow=n)
 
-weights <- 1.0*rep(1, n) # [MMF: Shall we allow these to vary? Shall we allow them to affect the variance of y?]
+weights <- rnorm(n)
 
 
 # create targeted selection, whereby a unit's likelihood of joining the intervention (pi) is related to its expected outcome (mu)
@@ -61,7 +61,7 @@ mu <- (q + tau*z)
 sigma <- diff(range(q + tau*pi))/8
 
 # draw the response variable with additive error
-y <- mu + sigma*rnorm(n)
+y <- mu + sigma*rnorm(n)/sqrt(weights)
 ```
 
 ## Fit BCF model
