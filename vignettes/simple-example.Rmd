@@ -7,6 +7,8 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+[MMF: Shall we add a little intro? "In this simple example,... "]
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -21,11 +23,11 @@ library(ggplot2)
 
 ## Simulate data
 
-First, we simulate some data for testing.  This data set has three covariates $X$, which we divide into two control variables -- that is, variables related to $y$ -- and one effect moderator -- that is, a variable that changes the relationship between $y$ and the treatment effect $\tau$.
+First, we simulate some data for testing.  This data set has three covariates $X$, which we divide into two control variables -- that is, two covariates related to the outcome, $y$ -- and one effect moderator -- that is, a covariates related to the treatment effect, $\tau$.
 
-We draw the $X$s from a standard normal distribution and generate each unit's outcome, $\mu_i$, as a function of these covariates.  Each unit's probability of joining the intervention, $\pi_i$, is also a function of $\mu_i$, so that units with larger outcomes are more likely to participate in the intervention.  We then assign units to treatment ($z_i = 1$) or comparison ($z_i = 0$) as a function of $\pi_i$.
+We draw three random $X$s for each unit and generate each unit's outcome, $\mu_i$, [MMF: let's save the word "outcome" for referring to $y$. What does Jared refer to $\mu$ as in the paper? It would be nice to clearly differentiate between $y$ vs. $\mu$ both here in the text, and also down below in the code.] as a function of $x^{(1)}_i$ and $x^{(2)}_i$.  Each unit's probability of joining the intervention, $\pi_i$, is also a function of $\mu_i$, so that units with larger outcomes are more likely to participate in the intervention.  We then assign units to treatment ($z_i = 1$) or comparison ($z_i = 0$) as a function of $\pi_i$.
 
-Then we generate the true treatment effect for each unit, $\tau_i$.  As noted above, $\tau_i$ is a function of $X_3$.  the observed outcome, $y_i$, is a function of $\mu_i$, $\tau_i$, and a random error term $\sigma$.
+Then we generate the true treatment effect for each unit, $\tau_i$.  As noted above, $\tau_i$ is a function of $x^{(3)}_i$.  The observed outcome, $y_i$, is a function of $\mu_i$, $\tau_i$, and a random error term $\sigma$. [MMF: and weights?]
 
 ```{r data creation}
 set.seed(1)
@@ -38,7 +40,7 @@ n_sim <- 150
 
 x <- matrix(rnorm(n*p), nrow=n)
 
-weights <- 1.0*rep(1, n)
+weights <- 1.0*rep(1, n) # [Shall we allow these to vary? Shall we allow them to affect the variance of y?]
 
 
 # create targeted selection, whereby a unit's likelihood of joining the intervention (pi) is related to its expected outcome (mu)
@@ -48,7 +50,7 @@ q <- -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2])) -0.1
 pi <- pnorm(q)
 z <- rbinom(n,1,pi)
 
-# tau is the true treatment effect. It varies across practices as a function of
+# tau is the true treatment effect. It varies across units as a function of
 # X3, the effect moderator
 tau <- 1/(1 + exp(-x[,3]))
 
@@ -64,7 +66,7 @@ y <- mu + sigma*rnorm(n)
 
 ## Fit BCF model
 
-In this data set we have observed $y_i$, $x_i$, and $\pi_i$ values to which we can fit our BCF model.  We can then compare the $\hat{\tau}_i$ estimates from BCF to the true $\tau_i$ from the data-generating process.  Note that we are using the `n_chains` argument to `bcf()`, which allows us to run several chains of the same model in parallel and assess whether they have reached the same posterior distribution.
+In this data set we have observed $y_i$, $x_i$, and $\pi_i$ values to which we can fit our BCF model.  We can then compare the $\hat{\tau}_i$ estimates from BCF to the true $\tau_i$ from the data-generating process.  Note that we are using the `n_chains` argument to `bcf()`, which allows us to run several MCMC chains in parallel and assess whether they have converged to the posterior distribution.
 
 ```{r model}
 bcf_out <- bcf2::bcf(y            = y,
@@ -76,11 +78,11 @@ bcf_out <- bcf2::bcf(y            = y,
                  nsim             = n_sim,
                  w                = weights,
                  n_chains         = 4,
-                 n_chain_clusters = 2,
+                 n_chain_clusters = 2, # [MMF: do we clarify somewhere what this argument does?]
                  random_seed      = 1,
-                 update_interval  = 1)
+                 update_interval  = 1) # [MMF: and this argument too?]
 
-cat("BCF run complete\n")
+cat("BCF run complete\n") #[MMF: cut?]
 ```
 
 ```{r diagnostics}
