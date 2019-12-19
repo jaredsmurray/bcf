@@ -33,7 +33,7 @@ Then we generate the true treatment effect for each unit, $\tau_i$.  As noted ab
 set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
-n <- 20
+n <- 20 [MMF: Shall we increase `n` a bit to make this a more interesting example?]
 n_burn <- 100
 n_sim <- 150
 
@@ -84,13 +84,17 @@ bcf_out <- bcf2::bcf(y            = y,
 
 ```
 
+## Check MCMC diagnostics
+
+[MMF: Let's (a) add some text around these checks and (b) increase `n_sim` and `n_burn` so that we pass the diagnostic checks.]
+
 ```{r diagnostics}
 bcf2::summarise_bcf(bcf_out)
 ```
 
-## Examine output
+## Explore the posterior
 
-Now that we've successfully fit our model, let's see what we can do with the output.  First, in this simulation setting, let's compare the fitted treatment effect estimates $\hat{\tau}_i$ to the true treatment effects $\tau_i$.
+Now that we've successfully [MMF: ?] fit our model, let's expore the output.  First, since this is a simulation, let's compare the unit-speciifc treatment effect estimates $\hat{\tau}_i$ to the true unit-specific treatment effects $\tau_i$.
 
 
 ### Estimates vs. true treatment effects
@@ -99,10 +103,11 @@ Now that we've successfully fit our model, let's see what we can do with the out
 ggplot(NULL, aes(x = tau, y = colMeans(bcf_out$tau))) +
   geom_abline() +
   geom_point() +
-  ylab("tau estimate")
+  xlab("True unit-specific treatment effect (tau_i)") + # [MMF: can we TeX tau_i?]
+  ylab("Estimate (posterior mean) of unit-specific treatment effect (tau\hat_i)") # [MMF: can we TeX tau\hat_i?]
 ```
 
-Clearly, BCF correctly recovers the true treatment effects in this simple example.  We can also calculate how well the BCF treatment effect estimates explain variation in the true treatment effects.
+Clearly, BCF correctly recovers the true treatment effects in this simple example. [MMF: hm... this isn't so clear to me. That's a pretty loose scatter. Hopefully it'll tighten up as (a) we increase $n$ and (b) we increase `n_burn` and `n_sim`.] We can also calculate how well the BCF treatment effect estimates explain variation in the true treatment effects. [MMF: I think the scatterplot suffices. OK to cut this sentence and the rest of this section?]
 ```{r}
 tau_fit <- lm(tau ~ colMeans(bcf_out$tau))
 coef <- summary(tau_fit)$coef[2,"Estimate"]
@@ -113,7 +118,7 @@ Our estimates $\hat{\tau}_i$ explain `r round(adjR2, 2)*100`% of the variation i
 
 ### Distribution of treatment effects
 
-Now that we have confidence in BCF's estimates of unit-specific treatment effects, we examine the results more closely.  First we consider the distribution of unit-specific treatment effects, to see how differently the treatment affects different units.  This plot shows the impact estimate and 95 percent credible interval for each unit, arranged by the size of the impact.
+Now that we have confidence in BCF's estimates of unit-specific treatment effects, we examine the results more closely.  First we consider the distribution of unit-specific treatment effects, to assess treatment effect heterogeneity across units.  This plot shows the impact estimate and 95 percent credible interval for each unit, arranged by the size of the impact.
 
 ```{r, echo = FALSE, eval = FALSE}
 ggplot(NULL, aes(x = 1:(4*n_sim), y = bcf_out$tau[,1])) +
@@ -134,23 +139,23 @@ ggplot(tau_ests, aes(x = id, y = Mean)) +
   theme_bw() +
   geom_pointrange(aes(ymin = Low95, ymax = Up95), color = "blue") +
   geom_vline(xintercept = 0, color = "black") +
-  ylab("Unit-Specific Treatment Effect") +
-  xlab("Unit Number") +
+  ylab("Estimate of unit-specific treatment effect (posterior mean and 95% CI)") +
+  xlab("Unit") +
   coord_flip()
 ```
 
-In this example, although we do see variation in the point estimates across units, the uncertainty intervals all overlap.  In actual applications, the differences among units are likely to be more pronounced and to suggest demarcations between groups of high-performers and low-performers.
+In this example, although we do see variation in the point estimates across units, the uncertainty intervals all overlap.  [MMF: OK to cut the next sentence? In actual applications, results will vary depending on the application!] In actual applications, the differences among units are likely to be more pronounced and to suggest demarcations between groups of high-performers and low-performers.
 
 ### Identifying possible subgroups
 
-The BCF model obtains more accurate treatment effect estimates than other approaches in part by considering more flexible effect modification relationships with more possible effect modifiers.  These relationships are often of substantive interest; researchers want to know what characteristics are associated with higher or lower impacts.  However, because the BCF model is difficult to interpret, we cannot simply look at the coefficients on the effect modifiers to determine which characteristics drive the impacts.  Instead, we can use existing techniques to look for patterns in the unit-specific treatment effects, linking each unit's treatment effect to its background characteristics.
+The BCF model obtains more accurate treatment effect estimates than other approaches in part by allowing flexible relationships with many possible effect modifiers.  These relationships are often of substantive interest; researchers want to know what covariates are associated with higher or lower impacts.  However, the BCF model is difficult to interpret directly: we cannot simply look at the coefficients on the effect modifiers to determine which characteristics drive the impacts.  Instead, we can look for patterns in the unit-specific treatment effects, linking each unit's treatment effect estimate to its covariates.
 
-Hill (2010) recommends searching for patterns by fitting a CART model where the response variable is the estimated treatment effects from the BCF fit and the predictor variables are the effect modifiers used to fit the BCF model.  The resulting tree identifies characteristics that strongly predict impacts, which are strong candidate subgroup variables.  However, because the CART fit does not account for the uncertainty in the treatment effect estimates, it is possible that tree splits do not identify characteristics that create subgroups with meaningfully different impacts.  To determine whether impacts differ meaningfully based on a characteristic, we can look back at the posterior draws from the BCF model.
+Specifically, Hill (2010) [MMF: Which paper is this?] recommends fitting a CART model where the response variable is the estimated unit-specific treatment effect from BCF and the predictor variables are the effect modifiers used to fit the BCF model.  The resulting tree identifies covariates that best distinguish units with high vs. low impacts, which are strong candidate subgroup variables.  However, because the CART fit does not account for the uncertainty in the treatment effect estimates, it is possible that its tree splits do not identify characteristics that create subgroups with meaningfully different impacts.  To conduct inference on whether impacts differ meaningfully based on a characteristic, we can use the posterior draws from the fitted BCF model.
 
-Here we skip the CART fit step and show just a comparison of the impacts for units in the top quartile of $X_3$ vs. impacts for units in the bottom quartile of $X_3$, which we know to be a strong effect modifier because we specified it as such in the data generation step.
+Here we skip [MMF: why?] the CART fit step and show just a comparison of the impacts for units in the top quartile of $X_3$ vs. impacts for units in the bottom quartile of $X_3$, which we know to be a strong effect modifier because we specified it as such in the data generation step.
 
 ```{r}
-q1 <- x[,3] < quantile(x[,3], 0.25)
+q1 <- x[,3] < quantile(x[,3], 0.25) # [MMF: Thoughts on tidyverse-ing this code chunk?]
 q4 <- x[,3] > quantile(x[,3], 0.75)
 
 q1Taus <- bcf_out$tau[,q1]
@@ -166,4 +171,6 @@ ggplot(groupTaus, aes(taus, fill = quartile, color = quartile)) +
   geom_density(alpha = 0.5)
 ```
 
-As anticipated based on the overlap across the credible intervals of the unit-specific treatment effects, this plot indicates that the posterior distributions for the impact in these two subgroups overlap considerably.  We would therefore not conclude that $X_3$ is an important subgroup variable. 
+[MMF: say what's being shown here.]
+
+As anticipated based on the overlap across the credible intervals of the unit-specific treatment effects, this plot indicates that the posterior distributions for the impact in these two subgroups overlap considerably.  We would therefore not conclude that $X_3$ is an important subgroup variable. [MMF: hopefully, if we increase $n$, these will separate out. Report P(tau_q4 > tau_q1)?]
