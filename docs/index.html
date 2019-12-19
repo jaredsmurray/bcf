@@ -82,23 +82,17 @@
 <div id="bayesian-causal-forests" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#bayesian-causal-forests" class="anchor"></a>Bayesian Causal Forests</h1></div>
-<p>Welcome to the BCF site! This page provides more details on this implementation of Bayesian causal forests (BCF).</p>
+<p>Welcome to the <code>BCF</code> site! This page provides hands-on examples of how to conduct Bayesian causal forest (BCF) analyses. You can find methodological details on the underlying modeling approach in the original BCF paper: <a href="https://arxiv.org/pdf/1706.09523.pdf">Hahn, Murray, and Carvalho 2017</a>.</p>
 <div id="why-bcf" class="section level2">
 <h2 class="hasAnchor">
 <a href="#why-bcf" class="anchor"></a>Why BCF?</h2>
-<p>BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, Chipman, George, and McCulloch 2010). BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, is not overfit to the training data. BCF further extends BART’s flexibility by specifying different models for relationships between covariates and the outcome and relationships between covariates and the treatment effect. For more information, you can find the original BCF paper here: <a href="https://arxiv.org/pdf/1706.09523.pdf">https://arxiv.org/pdf/1706.09523.pdf</a>.</p>
-<p>BCF performs remarkably well in simulation and has led the pack at recent rigorous causal inference competitions, such as those held at the Atlantic Causal Inference Conference. This implementation further extends existing BCF functionality by:</p>
-<ul>
-<li>allowing for heteroskedastic error</li>
-<li>automating multi-chain, multi-core implementations</li>
-<li>providing a suite of convergence diagnostic functions via the <code>{coda}</code> package</li>
-<li>accelerating some underlying computations, resulting in shorter runtimes</li>
-</ul>
+<p>BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, <a href="https://projecteuclid.org/euclid.aoas/1273584455">Chipman, George, and McCulloch 2010</a>). More immediately, it builds on the application of BART to causal inference (<a href="https://www.tandfonline.com/doi/abs/10.1198/jcgs.2010.08162">Hill 2011</a>). BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, is not overfit to the training data. BCF further extends BART’s flexibility by specifying different models for relationships between (a) covariates and the outcome and (b) covariates and the treatment effect.</p>
+<p>BCF performs remarkably well in simulation and has led the pack at recent rigorous causal inference competitions, such as those held at the Atlantic Causal Inference Conference.</p>
 </div>
 <div id="getting-started" class="section level2">
 <h2 class="hasAnchor">
 <a href="#getting-started" class="anchor"></a>Getting Started</h2>
-<p>If you are just getting started with BCF, we recommend starting with the tutorial vignette and the examples throughout the package documentation.</p>
+<p>If you are just getting started with BCF, we recommend starting with the tutorial vignettes on the “Articles” page of this website.</p>
 </div>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
@@ -111,86 +105,6 @@
   install.packages("devtools")
 }
 devtools::install_github("jaredsmurray/bcf")</code></pre>
-</div>
-<div id="examples" class="section level2">
-<h2 class="hasAnchor">
-<a href="#examples" class="anchor"></a>Examples</h2>
-<pre class="{r}"><code>set.seed(1)
-
-p &lt;- 3 # two control variables and one effect moderator
-n &lt;- 1000
-n_burn &lt;- 1000
-n_sim &lt;- 1000
-
-x &lt;- matrix(rnorm(n*p), nrow=n)
-
-
-# create targeted selection, whereby a unit's likelihood of joining the intervention (pi) is related to its expected outcome (mu)
-q &lt;- -1*(x[,1]&gt;(x[,2])) + 1*(x[,1]&lt;(x[,2])) -0.1
-
-# generate treatment variable
-pi &lt;- pnorm(q)
-z &lt;- rbinom(n,1,pi)
-
-# tau is the true treatment effect. It varies across units as a function of
-# X3, the effect moderator
-tau &lt;-  1/(1 + exp(-x[,3]))
-
-mu &lt;- q
-
-# generate the response using q, tau and z
-y_noiseless &lt;- mu + tau*z
-
-# set the noise level relative to the expected mean function of Y
-sigma &lt;- diff(range(mu + tau*pi))/8
-
-# draw the response variable with additive error
-y &lt;- y_noiseless + sigma*rnorm(n)
-
-weights &lt;- 1000.0*rep(1, n)
-
-bcf_out &lt;- bcf2::bcf(y            = y,
-                 z                = z,
-                 x_control        = x,
-                 x_moderate       = x,
-                 pihat            = pi,
-                 nburn            = n_burn,
-                 nsim             = n_sim,
-                 w                = weights,
-                 n_chains         = 4,
-                 n_chain_clusters = 2,
-                 random_seed      = 1,
-                 update_interval  = 1)
-</code></pre>
-<pre class="{r}"><code>bcf2::summarise_bcf(bcf_out)
-
-mean_square_error &lt;- function (x,y){
-  mean((x-y)^2)
-}</code></pre>
-<pre class="{r}"><code>assess_closeness &lt;- function(x,y, title){
-  cat("Assessing Cloesness of ", title, "\n")
-  
-  mse = mean_square_error(x,y)
-  
-  print("MSE")
-  print(mse)
-  
-  print("Error")
-  print(sqrt(mse)/abs(mean(x)))
-}
-
-mu_correct = bcf_out$yhat - t(t(bcf_out$tau)*z)
-
-print("Y Mean")
-print(mean(y))
-
-print("Tau Mean")
-print(mean(tau))
-
-print("mu Mean")
-print(mean(mu))
-
-assess_closeness(bcf_out$mu,mu_correct,'mu_compare')</code></pre>
 </div>
 </div>
   </div>

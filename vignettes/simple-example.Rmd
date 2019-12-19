@@ -40,7 +40,7 @@ n_sim <- 150
 
 x <- matrix(rnorm(n*p), nrow=n)
 
-weights <- 1.0*rep(1, n) # [Shall we allow these to vary? Shall we allow them to affect the variance of y?]
+weights <- 1.0*rep(1, n) # [MMF: Shall we allow these to vary? Shall we allow them to affect the variance of y?]
 
 
 # create targeted selection, whereby a unit's likelihood of joining the intervention (pi) is related to its expected outcome (mu)
@@ -82,7 +82,6 @@ bcf_out <- bcf2::bcf(y            = y,
                  random_seed      = 1,
                  update_interval  = 1) # [MMF: and this argument too?]
 
-cat("BCF run complete\n") #[MMF: cut?]
 ```
 
 ```{r diagnostics}
@@ -108,7 +107,6 @@ Clearly, BCF correctly recovers the true treatment effects in this simple exampl
 tau_fit <- lm(tau ~ colMeans(bcf_out$tau))
 coef <- summary(tau_fit)$coef[2,"Estimate"]
 
-## LVF added code to extract the adjusted R2
 adjR2 <- summary(tau_fit)$adj.r.squared
 ```
 Our estimates $\hat{\tau}_i$ explain `r round(adjR2, 2)*100`% of the variation in the $\tau_i$, reaffirming the idea that BCF provides accurate treatment effect estimates.

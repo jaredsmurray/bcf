@@ -78,8 +78,6 @@ out2 <- bcf2::bcf(y               = y,
                   w               = weights,
                   n_chains        = 2,
                   update_interval = 1)
-
-cat("BCF run complete\n")
 ```
 
 
@@ -91,16 +89,12 @@ We will use the same data as our training set for prediction.
 This will allow us to assess whether BCF predicts accurately.
 
 ```{r}
-cat("Starting Prediction \n")
-
 pred_out = bcf2::predict(bcf_out=out2,
                          x_predict_control=x,
                          x_predict_moderate=x,
                          pi_pred=pi,
                          z_pred=z,
                          save_tree_directory = '..')
-
-cat("Predictions Complete\n")
 ```
 
 ## Assessing our prediction

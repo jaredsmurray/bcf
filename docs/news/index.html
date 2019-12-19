@@ -127,13 +127,20 @@
 <div id="major-changes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#major-changes" class="anchor"></a>Major changes</h2>
+<p>This implementation further extends existing BCF functionality by:</p>
+<ul>
+<li>allowing for heteroskedastic error</li>
+<li>automating multi-chain, multi-core implementations</li>
+<li>providing a suite of convergence diagnostic functions via the <code>coda</code> package</li>
+<li>accelerating some underlying computations, resulting in shorter runtimes</li>
+</ul>
 <div id="weights" class="section level3">
 <h3 class="hasAnchor">
 <a href="#weights" class="anchor"></a>Weights</h3>
 <p>The original version of {bcf} does not allow for weights, which we often use in practical applications to account for heteroskedasticity. Where the original BCF model was specified as:</p>
-<p>$y_i \sim N(\mu(x_i) + \tau(x_i) z_i, \sigma^2)$,</p>
-<p>which assumes that all outcomes $y_i$ have the same variance $\sigma^2$, in the extended version we can relax this assumption to allow the variance to reflect the uncertainty in the $y_i$:</p>
-<p>$y_i∼N(μ(x_i)+τ(x_i ) z_i,σ^2/w_i )$</p>
+<p>y<sub>i</sub> ∼ N(μ(x<sub>i</sub>) + τ(x<sub>i</sub>) z<sub>i</sub>, σ<sup>2</sup>),</p>
+<p>which assumes that all outcomes y<sub>i</sub> have the same variance &amp;sigma.<sup>2</sup>, in the extended version we can relax this assumption to allow the variance to reflect the uncertainty in the y<sub>i</sub>:</p>
+<p>y<sub>i</sub> ∼ N(μ(x<sub>i</sub>) + τ(x<sub>i</sub>) z<sub>i</sub>, σ<sup>2</sup>/w<sub>i</sub>)</p>
 <p>We changed several parts of the code to incorporate these weights:</p>
 <ul>
 <li>Code to calculate sufficient statistics</li>
@@ -144,8 +151,12 @@
 <div id="automating-multichain-processing" class="section level3">
 <h3 class="hasAnchor">
 <a href="#automating-multichain-processing" class="anchor"></a>Automating multichain processing</h3>
-<p>It is useful in Bayesian analysis to produce different runs of the same model, with different starting values, as a way of assessing convergence; if the different runs produce drastically different posterior distributions, it is a sign that the model has not converged fully. In this version of {bcf} we have automated multichain processing and incorporated key MCMC diagnostics from the {coda} package, including effective sample sizes and the Gelman-Rubin statistic (“R hat”).</p>
-<p><em>Question for Peter</em>: is the multichain processing also multicore? If so, we should talk it up.</p>
+<p>It is useful in Bayesian analysis to produce different runs of the same model, with different starting values, as a way of assessing convergence; if the different runs produce drastically different posterior distributions, it is a sign that the model has not converged fully. In this version of {bcf} we have automated multichain processing and incorporated key MCMC diagnostics from the {coda} package, including effective sample sizes and the Gelman-Rubin statistic (“R hat”). In addition, all runs happen in parallel, on different cores, so as to provide all these extra benefits without much cost to the timing of the runs.</p>
+</div>
+<div id="implementing-a-prediction-method" class="section level3">
+<h3 class="hasAnchor">
+<a href="#implementing-a-prediction-method" class="anchor"></a>Implementing a prediction method</h3>
+<p>In this version of the package, we have incorporated code from Jared Murray (one of the original package authors) to predict values of the outcome based on a new set of covariates. Once users have produced a satisfactory BCF run (using training data), they are able to use this run to predict on a new set of (test) data. This is possible even with runs that have multiple chains.</p>
 </div>
 <div id="speed-ups" class="section level3">
 <h3 class="hasAnchor">

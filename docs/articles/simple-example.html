@@ -88,9 +88,10 @@
 
     
     
+<p>[MMF: Shall we add a little intro? “In this simple example,…”]</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(bcf2)</span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="co">#&gt; Warning: replacing previous import 'Rcpp::LdFlags' by</span></span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; 'RcppParallel::LdFlags' when loading 'bcf2'</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="co">#&gt; Warning: replacing previous import 'Rcpp::LdFlags' by 'RcppParallel::LdFlags'</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; when loading 'bcf2'</span></span>
 <span id="cb1-4"><a href="#cb1-4"></a><span class="co">#&gt; </span></span>
 <span id="cb1-5"><a href="#cb1-5"></a><span class="co">#&gt; Attaching package: 'bcf2'</span></span>
 <span id="cb1-6"><a href="#cb1-6"></a><span class="co">#&gt; The following object is masked from 'package:stats':</span></span>
@@ -100,9 +101,9 @@
 <div id="simulate-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#simulate-data" class="anchor"></a>Simulate data</h2>
-<p>First, we simulate some data for testing. This data set has three covariates <span class="math inline">\(X\)</span>, which we divide into two control variables – that is, variables related to <span class="math inline">\(y\)</span> – and one effect moderator – that is, a variable that changes the relationship between <span class="math inline">\(y\)</span> and the treatment effect <span class="math inline">\(\tau\)</span>.</p>
-<p>We draw the <span class="math inline">\(X\)</span>s from a standard normal distribution and generate each unit’s outcome, <span class="math inline">\(\mu_i\)</span>, as a function of these covariates. Each unit’s probability of joining the intervention, <span class="math inline">\(\pi_i\)</span>, is also a function of <span class="math inline">\(\mu_i\)</span>, so that units with larger outcomes are more likely to participate in the intervention. We then assign units to treatment (<span class="math inline">\(z_i = 1\)</span>) or comparison (<span class="math inline">\(z_i = 0\)</span>) as a function of <span class="math inline">\(\pi_i\)</span>.</p>
-<p>Then we generate the true treatment effect for each unit, <span class="math inline">\(\tau_i\)</span>. As noted above, <span class="math inline">\(\tau_i\)</span> is a function of <span class="math inline">\(X_3\)</span>. the observed outcome, <span class="math inline">\(y_i\)</span>, is a function of <span class="math inline">\(\mu_i\)</span>, <span class="math inline">\(\tau_i\)</span>, and a random error term <span class="math inline">\(\sigma\)</span>.</p>
+<p>First, we simulate some data for testing. This data set has three covariates <span class="math inline">\(X\)</span>, which we divide into two control variables – that is, two covariates related to the outcome, <span class="math inline">\(y\)</span> – and one effect moderator – that is, a covariates related to the treatment effect, <span class="math inline">\(\tau\)</span>.</p>
+<p>We draw three random <span class="math inline">\(X\)</span>s for each unit and generate each unit’s outcome, <span class="math inline">\(\mu_i\)</span>, [MMF: let’s save the word “outcome” for referring to <span class="math inline">\(y\)</span>. What does Jared refer to <span class="math inline">\(\mu\)</span> as in the paper? It would be nice to clearly differentiate between <span class="math inline">\(y\)</span> vs. <span class="math inline">\(\mu\)</span> both here in the text, and also down below in the code.] as a function of <span class="math inline">\(x^{(1)}_i\)</span> and <span class="math inline">\(x^{(2)}_i\)</span>. Each unit’s probability of joining the intervention, <span class="math inline">\(\pi_i\)</span>, is also a function of <span class="math inline">\(\mu_i\)</span>, so that units with larger outcomes are more likely to participate in the intervention. We then assign units to treatment (<span class="math inline">\(z_i = 1\)</span>) or comparison (<span class="math inline">\(z_i = 0\)</span>) as a function of <span class="math inline">\(\pi_i\)</span>.</p>
+<p>Then we generate the true treatment effect for each unit, <span class="math inline">\(\tau_i\)</span>. As noted above, <span class="math inline">\(\tau_i\)</span> is a function of <span class="math inline">\(x^{(3)}_i\)</span>. The observed outcome, <span class="math inline">\(y_i\)</span>, is a function of <span class="math inline">\(\mu_i\)</span>, <span class="math inline">\(\tau_i\)</span>, and a random error term <span class="math inline">\(\sigma\)</span>. [MMF: and weights?]</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="dv">1</span>)</span>
 <span id="cb2-2"><a href="#cb2-2"></a></span>
 <span id="cb2-3"><a href="#cb2-3"></a>p &lt;-<span class="st"> </span><span class="dv">3</span> <span class="co"># two control variables and one effect moderator</span></span>
@@ -113,7 +114,7 @@
 <span id="cb2-8"><a href="#cb2-8"></a></span>
 <span id="cb2-9"><a href="#cb2-9"></a>x &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span>(<span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(n<span class="op">*</span>p), <span class="dt">nrow=</span>n)</span>
 <span id="cb2-10"><a href="#cb2-10"></a></span>
-<span id="cb2-11"><a href="#cb2-11"></a>weights &lt;-<span class="st"> </span><span class="fl">1.0</span><span class="op">*</span><span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="dv">1</span>, n)</span>
+<span id="cb2-11"><a href="#cb2-11"></a>weights &lt;-<span class="st"> </span><span class="fl">1.0</span><span class="op">*</span><span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="dv">1</span>, n) <span class="co"># [MMF: Shall we allow these to vary? Shall we allow them to affect the variance of y?]</span></span>
 <span id="cb2-12"><a href="#cb2-12"></a></span>
 <span id="cb2-13"><a href="#cb2-13"></a></span>
 <span id="cb2-14"><a href="#cb2-14"></a><span class="co"># create targeted selection, whereby a unit's likelihood of joining the intervention (pi) is related to its expected outcome (mu)</span></span>
@@ -123,7 +124,7 @@
 <span id="cb2-18"><a href="#cb2-18"></a>pi &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">pnorm</a></span>(q)</span>
 <span id="cb2-19"><a href="#cb2-19"></a>z &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span>(n,<span class="dv">1</span>,pi)</span>
 <span id="cb2-20"><a href="#cb2-20"></a></span>
-<span id="cb2-21"><a href="#cb2-21"></a><span class="co"># tau is the true treatment effect. It varies across practices as a function of</span></span>
+<span id="cb2-21"><a href="#cb2-21"></a><span class="co"># tau is the true treatment effect. It varies across units as a function of</span></span>
 <span id="cb2-22"><a href="#cb2-22"></a><span class="co"># X3, the effect moderator</span></span>
 <span id="cb2-23"><a href="#cb2-23"></a>tau &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">/</span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(<span class="op">-</span>x[,<span class="dv">3</span>]))</span>
 <span id="cb2-24"><a href="#cb2-24"></a></span>
@@ -139,7 +140,7 @@
 <div id="fit-bcf-model" class="section level2">
 <h2 class="hasAnchor">
 <a href="#fit-bcf-model" class="anchor"></a>Fit BCF model</h2>
-<p>In this data set we have observed <span class="math inline">\(y_i\)</span>, <span class="math inline">\(x_i\)</span>, and <span class="math inline">\(\pi_i\)</span> values to which we can fit our BCF model. We can then compare the <span class="math inline">\(\hat{\tau}_i\)</span> estimates from BCF to the true <span class="math inline">\(\tau_i\)</span> from the data-generating process. Note that we are using the <code>n_chains</code> argument to <code><a href="../reference/bcf.html">bcf()</a></code>, which allows us to run several chains of the same model in parallel and assess whether they have reached the same posterior distribution.</p>
+<p>In this data set we have observed <span class="math inline">\(y_i\)</span>, <span class="math inline">\(x_i\)</span>, and <span class="math inline">\(\pi_i\)</span> values to which we can fit our BCF model. We can then compare the <span class="math inline">\(\hat{\tau}_i\)</span> estimates from BCF to the true <span class="math inline">\(\tau_i\)</span> from the data-generating process. Note that we are using the <code>n_chains</code> argument to <code><a href="../reference/bcf.html">bcf()</a></code>, which allows us to run several MCMC chains in parallel and assess whether they have converged to the posterior distribution.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>bcf_out &lt;-<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/bcf.html">bcf</a></span>(<span class="dt">y            =</span> y,</span>
 <span id="cb3-2"><a href="#cb3-2"></a>                 <span class="dt">z                =</span> z,</span>
 <span id="cb3-3"><a href="#cb3-3"></a>                 <span class="dt">x_control        =</span> x,</span>
@@ -149,12 +150,9 @@
 <span id="cb3-7"><a href="#cb3-7"></a>                 <span class="dt">nsim             =</span> n_sim,</span>
 <span id="cb3-8"><a href="#cb3-8"></a>                 <span class="dt">w                =</span> weights,</span>
 <span id="cb3-9"><a href="#cb3-9"></a>                 <span class="dt">n_chains         =</span> <span class="dv">4</span>,</span>
-<span id="cb3-10"><a href="#cb3-10"></a>                 <span class="dt">n_chain_clusters =</span> <span class="dv">2</span>,</span>
+<span id="cb3-10"><a href="#cb3-10"></a>                 <span class="dt">n_chain_clusters =</span> <span class="dv">2</span>, <span class="co"># [MMF: do we clarify somewhere what this argument does?]</span></span>
 <span id="cb3-11"><a href="#cb3-11"></a>                 <span class="dt">random_seed      =</span> <span class="dv">1</span>,</span>
-<span id="cb3-12"><a href="#cb3-12"></a>                 <span class="dt">update_interval  =</span> <span class="dv">1</span>)</span>
-<span id="cb3-13"><a href="#cb3-13"></a></span>
-<span id="cb3-14"><a href="#cb3-14"></a><span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="st">"BCF run complete</span><span class="ch">\n</span><span class="st">"</span>)</span>
-<span id="cb3-15"><a href="#cb3-15"></a><span class="co">#&gt; BCF run complete</span></span></code></pre></div>
+<span id="cb3-12"><a href="#cb3-12"></a>                 <span class="dt">update_interval  =</span> <span class="dv">1</span>) <span class="co"># [MMF: and this argument too?]</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/summarise_bcf.html">summarise_bcf</a></span>(bcf_out)</span>
 <span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt; Summary statistics for each Markov Chain Monte Carlo run</span></span>
 <span id="cb4-3"><a href="#cb4-3"></a><span class="co">#&gt; </span></span>
@@ -225,8 +223,7 @@
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>tau_fit &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/lm.html">lm</a></span>(tau <span class="op">~</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(bcf_out<span class="op">$</span>tau))</span>
 <span id="cb6-2"><a href="#cb6-2"></a>coef &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(tau_fit)<span class="op">$</span>coef[<span class="dv">2</span>,<span class="st">"Estimate"</span>]</span>
 <span id="cb6-3"><a href="#cb6-3"></a></span>
-<span id="cb6-4"><a href="#cb6-4"></a><span class="co">## LVF added code to extract the adjusted R2</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a>adjR2 &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(tau_fit)<span class="op">$</span>adj.r.squared</span></code></pre></div>
+<span id="cb6-4"><a href="#cb6-4"></a>adjR2 &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(tau_fit)<span class="op">$</span>adj.r.squared</span></code></pre></div>
 <p>Our estimates <span class="math inline">\(\hat{\tau}_i\)</span> explain 65% of the variation in the <span class="math inline">\(\tau_i\)</span>, reaffirming the idea that BCF provides accurate treatment effect estimates.</p>
 </div>
 <div id="distribution-of-treatment-effects" class="section level3">
