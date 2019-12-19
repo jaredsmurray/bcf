@@ -1,6 +1,6 @@
 # Bayesian Causal Forests
 
-Welcome to the `BCF` site! This page provides hands-on examples of how to conduct Bayesian causal forest (BCF) analyses. For methodological details on the underlying modeling approach, you can find the original BCF paper here: [https://arxiv.org/pdf/1706.09523.pdf](https://arxiv.org/pdf/1706.09523.pdf).
+Welcome to the `BCF` site! This page provides hands-on examples of how to conduct Bayesian causal forest (BCF) analyses. For methodological details on the underlying modeling approach, you can find the original BCF paper: [Hahn, Murray, and Carvalho 2017](https://arxiv.org/pdf/1706.09523.pdf).
 
 ## Why BCF?
 
