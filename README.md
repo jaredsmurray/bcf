@@ -4,9 +4,11 @@ Welcome to the `BCF` site! This page provides hands-on examples of how to conduc
 
 ## Why BCF?
 
-BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, [Chipman, George, and McCulloch 2010](https://projecteuclid.org/euclid.aoas/1273584455)) and -- more immediately -- the application of BART to causal inference ([Hill 2011](https://www.tandfonline.com/doi/abs/10.1198/jcgs.2010.08162)).  BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, is not overfit to the training data.  BCF further extends BART's flexibility by specifying different models for relationships between covariates and the outcome and relationships between covariates and the treatment effect.
+BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, [Chipman, George, and McCulloch 2010](https://projecteuclid.org/euclid.aoas/1273584455)). More immediately, it builds on the application of BART to causal inference ([Hill 2011](https://www.tandfonline.com/doi/abs/10.1198/jcgs.2010.08162)).  BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, is not overfit to the training data.  BCF further extends BART's flexibility by specifying different models for relationships between (a) covariates and the outcome and (b) covariates and the treatment effect.
 
-BCF performs remarkably well in simulation and has led the pack at recent rigorous causal inference competitions, such as those held at the Atlantic Causal Inference Conference. [MMF: this list of bullets doesn't seem like it belongs here, on the front page for the package, does it?]This implementation further extends existing BCF functionality by:
+BCF performs remarkably well in simulation and has led the pack at recent rigorous causal inference competitions, such as those held at the Atlantic Causal Inference Conference. 
+
+[MMF: the following list of bullets doesn't seem like it belongs here, on the front page for the whole package, does it? If you agree, OK to move this to the changelog?]This implementation further extends existing BCF functionality by:
 
 - allowing for heteroskedastic error
 - automating multi-chain, multi-core implementations
@@ -36,9 +38,9 @@ if (!require("devtools")) {
 devtools::install_github("jaredsmurray/bcf")
 ```
 
-## Examples
+## Example
 
-[MMF: This seems redundant with, but less clear than, the vignette. Cut? If we don't cut it, I'll go back through and review more closely.]
+[MMF: This example seems redundant with, but less clear than, the vignette. Cut? If we don't cut it, I'll go back through and review more closely.]
 
 ```{r}
 set.seed(1)
