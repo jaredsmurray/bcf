@@ -1,21 +1,21 @@
 # Bayesian Causal Forests
 
-Welcome to the BCF site! This page provides more details on this implementation of Bayesian causal forests (BCF).  
+Welcome to the `BCF` site! This page provides hands-on examples of how to conduct Bayesian causal forest (BCF) analyses. For methodological details on the underlying modeling approach, you can find the original BCF paper here: [https://arxiv.org/pdf/1706.09523.pdf](https://arxiv.org/pdf/1706.09523.pdf).
 
 ## Why BCF?
 
-BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, Chipman, George, and McCulloch 2010).  BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, is not overfit to the training data.  BCF further extends BART's flexibility by specifying different models for relationships between covariates and the outcome and relationships between covariates and the treatment effect.  For more information, you can find the original BCF paper here: [https://arxiv.org/pdf/1706.09523.pdf](https://arxiv.org/pdf/1706.09523.pdf).
+BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, [Chipman, George, and McCulloch 2010](https://projecteuclid.org/euclid.aoas/1273584455)) and -- more immediately -- the application of BART to causal inference ([Hill 2011](https://www.tandfonline.com/doi/abs/10.1198/jcgs.2010.08162)).  BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, is not overfit to the training data.  BCF further extends BART's flexibility by specifying different models for relationships between covariates and the outcome and relationships between covariates and the treatment effect.
 
-BCF performs remarkably well in simulation and has led the pack at recent rigorous causal inference competitions, such as those held at the Atlantic Causal Inference Conference. This implementation further extends existing BCF functionality by:
+BCF performs remarkably well in simulation and has led the pack at recent rigorous causal inference competitions, such as those held at the Atlantic Causal Inference Conference. [MMF: this list of bullets doesn't seem like it belongs here, on the front page for the package, does it?]This implementation further extends existing BCF functionality by:
 
 - allowing for heteroskedastic error
 - automating multi-chain, multi-core implementations
-- providing a suite of convergence diagnostic functions via the `{coda}` package
+- providing a suite of convergence diagnostic functions via the `coda` package
 - accelerating some underlying computations, resulting in shorter runtimes
 
 ## Getting Started
 
-If you are just getting started with BCF, we recommend starting with the tutorial vignette and the examples throughout the package documentation.
+If you are just getting started with BCF, we recommend starting with the tutorial vignettes on the "Articles" page of this website.
 
 ## Installation
 
@@ -38,6 +38,8 @@ devtools::install_github("jaredsmurray/bcf")
 
 ## Examples
 
+[MMF: This seems redundant with, but less clear than, the vignette. Cut? If we don't cut it, I'll go back through and review more closely.]
+
 ```{r}
 set.seed(1)
 
@@ -49,14 +51,15 @@ n_sim <- 1000
 x <- matrix(rnorm(n*p), nrow=n)
 
 
-# create targeted selection, whereby a unit's likelihood of joining the intervention (pi) is related to its expected outcome (mu)
+# create targeted selection, whereby a unit's likelihood of joining the intervention 
+# (pi) is related to its expected outcome (mu)
 q <- -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2])) -0.1
 
 # generate treatment variable
 pi <- pnorm(q)
 z <- rbinom(n,1,pi)
 
-# tau is the true treatment effect. It varies across units as a function of
+# tau is the true treatment effect, which varies across units as a function of
 # X3, the effect moderator
 tau <-  1/(1 + exp(-x[,3]))
 
@@ -71,7 +74,7 @@ sigma <- diff(range(mu + tau*pi))/8
 # draw the response variable with additive error
 y <- y_noiseless + sigma*rnorm(n)
 
-weights <- 1000.0*rep(1, n)
+weights <- 1000.0*rep(1, n) # [MMF: doesn't affect sigma --> not needed?]
 
 bcf_out <- bcf2::bcf(y            = y,
                  z                = z,
@@ -91,12 +94,11 @@ bcf_out <- bcf2::bcf(y            = y,
 ```{r}
 bcf2::summarise_bcf(bcf_out)
 
+# [MMF: Even if we keep this example on the home page, I don't think we need the following checks here, do we? Seems like TMI, since we haven't yet clarified what mu/tau/etc are...]
 mean_square_error <- function (x,y){
   mean((x-y)^2)
 }
-```
 
-```{r}
 assess_closeness <- function(x,y, title){
   cat("Assessing Cloesness of ", title, "\n")
   
