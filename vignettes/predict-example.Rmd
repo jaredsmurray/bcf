@@ -37,7 +37,8 @@ n_sim <- 150
 
 x <- matrix(rnorm(n*p), nrow=n)
 
-weights <- rnorm(n)
+#Weights are squared just to make them positive
+weights <- rnorm(n)^2
 
 
 # create targeted selection, whereby a practice's likelihood of joining the intervention (pi) is related to their expected outcome (mu)
