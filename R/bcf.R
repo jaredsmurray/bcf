@@ -495,23 +495,29 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 #'
 #'}
 #' @export
-summarise_bcf <- function(bcf_out){
+summarise_bcf <- function(bcf_out, 
+                         params_2_summarise = c('sigma','tau_bar','mu_bar','yhat_bar') ){
   library(coda)
 
+  chains_2_summarise <- bcf_out$coda_chains[,params_2_summarise]
+
   message("Summary statistics for each Markov Chain Monte Carlo run")
-  print(summary(bcf_out$coda_chains))
+  print(summary(chains_2_summarise))
 
   cat("\n----\n\n")
 
 
   message("Effective sample size for each parameter")
-  print(effectiveSize(bcf_out$coda_chains))
-  
+  print(effectiveSize(chains_2_summarise))
   cat("\n----\n\n")
   
-  message("Gelman and Rubin's convergence diagnostic for each parameter")
-  print(gelman.diag(bcf_out$coda_chains))
   
+  if (length(length(chains_2_summarise)) > 1){
+    message("Gelman and Rubin's convergence diagnostic for each parameter")
+    print(gelman.diag(chains_2_summarise))
+    cat("\n----\n\n")
+    
+  }
   
 }
 
