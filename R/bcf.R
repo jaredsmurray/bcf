@@ -418,6 +418,15 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                             "b0"  = b0, 
                             "b1"  = b1)
     
+    # y_df <- as.data.frame(chain$yhat)
+    # colnames(y_df) <- paste0('y',1:ncol(y_df))
+    # 
+    # mu_df <- as.data.frame(chain$mu)
+    # colnames(mu_df) <- paste0('mu',1:ncol(mu_df))
+    # 
+    # tau_df <- as.data.frame(chain$tau)
+    # colnames(tau_df) <- paste0('tau',1:ncol(tau_df))
+    
     chain_list[[iChain]] <- coda::as.mcmc(scalar_df)
     # -----------------------------    
     # Sanity Check Constants Accross Chains
