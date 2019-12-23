@@ -518,7 +518,7 @@ summarise_bcf <- function(bcf_out,
   cat("\n----\n\n")
   
   
-  if (length(length(chains_2_summarise)) > 1){
+  if (length(chains_2_summarise) > 1){
     message("Gelman and Rubin's convergence diagnostic for each parameter")
     print(gelman.diag(chains_2_summarise))
     cat("\n----\n\n")
