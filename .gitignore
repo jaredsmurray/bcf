@@ -42,11 +42,8 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 tmp
-<<<<<<< HEAD
-=======
 *.vscode/
 *.pdf
->>>>>>> wbcf
 
 # Prerequisites
 *.d
