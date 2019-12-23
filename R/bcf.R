@@ -447,13 +447,13 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
        raw_chains = chain_out)
 }
 
-#' Print Summary Stats for a previous BCF run
-#' This function is built using the coda package and meant to mimick output from Stan.
+#' Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+#' This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 #' It includes:
 #' 
-#'  * summary statistics for MCMC
-#'  * effective sample sizes for each parameter
-#'  * Gelman and Rubin's convergence diagnostics for each parameter
+#'  * posterior summary stats [MMF: These three bullets aren't showing up for me on the "Reference" page.]
+#'  * effective sample sizes for key parameters
+#'  * Gelman and Rubin's convergence diagnostics for key parameters
 #' @param bcf_out output from a BCF predict run
 #' @examples
 #'\donttest{
@@ -516,7 +516,7 @@ summarise_bcf <- function(bcf_out){
 }
 
 
-#' Predict from Previously Fit Forests 
+#' Predict from a fitted BCF object
 #' 
 #' This function takes in an existing BCF model fit and uses it to predict estimates for new data.
 #' It is important to note that this function requires that you indicate where the trees from the model fit are saved.
