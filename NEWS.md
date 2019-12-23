@@ -31,7 +31,7 @@ Incorporating weights impacts several parts of the code, including the computati
 
 ### Automating multichain processing
 
-It is useful in Bayesian analysis to produce different runs of the same model, with different starting values, as a way of assessing convergence; if the different runs produce drastically different posterior distributions, it is a sign that the model has not converged fully.  In this version of `bcf` we have automated multichain processing and incorporated key MCMC diagnostics from the `coda` package, including effective sample sizes and the Gelman-Rubin statistic ("&rcirc;"). In addition, all runs happen in parallel, on different cores, so as to provide all these extra benefits without much cost to the timing of the runs.
+It is useful in Bayesian analysis to produce different runs of the same model, with different starting values, as a way of assessing convergence; if the different runs produce drastically different posterior distributions, it is a sign that the model has not converged fully.  In this version of `bcf` we have automated multichain processing and incorporated key MCMC diagnostics from the `coda` package, including effective sample sizes and the Gelman-Rubin statistic ("R hat"). In addition, all runs happen in parallel, on different cores, so as to provide all these extra benefits without much cost to the timing of the runs.
 
 ### Within chain parallel processing
 
@@ -39,4 +39,4 @@ Finally, our implementation parallelizes some steps of the sampling procedure to
 
 ### Implementing a prediction method
 
-In this version of the package, we have incorporated code from Jared Murray (one of the original package authors) to predict values of the outcome based on a new set of covariates. Once users have produced a satisfactory BCF run (using training data), they are able to use this run to predict on a new set of (test) data. This is possible even with runs that have multiple chains.
+In this version of the package, we have incorporated code from Jared Murray (one of the original package authors) to predict values of the outcome based on a new set of covariates. Once users have produced a satisfactory `bcf` run (using training data), they are able to use this run to predict on a new set of (test) data. This is possible even with runs that have multiple chains.

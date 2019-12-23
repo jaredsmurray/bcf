@@ -95,8 +95,6 @@ bcf_out <- bcf2::bcf(y               = y,
 
 We now use our testing Xs for prediction.
 
-We will use the same data as our training set for prediction. This will allow us to assess whether BCF predicts accurately. [MMF: Hm... I hate to throw a wrench in the stew at this late stage, but I  vote that we omit this check. What do you think? When I've read other package vignettes, they haven't typically consisted of checks that the package is working as advertised. Instead, I've usually seen worked examples of typical use cases. With that in mind, what would think of including instead an example where we predict for new Xs? I'm imagining a scatterplot of tau vs. X3, with posterior means and 95% CIs for tau shown as points and lines respectively. Datapoints included in the original fit in one color, new datapoints we're predicting for in anther color. How does that sound to you?]
-
 ```{r}
 pred_out = bcf2::predict(bcf_out=bcf_out,
                          x_predict_control=x_pred,
@@ -112,7 +110,7 @@ Let's compare the results of our training and testing data. We will use $x_3$ as
 
 ```{r}
 lower <- c(apply(bcf_out$tau, 2, quantile, 0.025), apply(pred_out$tau, 2, quantile, 0.025))
-upper <- c(apply(bcf_out$tau, 2, quantile, 0.975), apply(pred_out$tau, 2, quantile, 0.025))
+upper <- c(apply(bcf_out$tau, 2, quantile, 0.975), apply(pred_out$tau, 2, quantile, 0.975))
 group <- factor(c(rep("training", n), rep("testing", 50)))
 
 ggplot(NULL, aes(x = c(x[,3], x_pred[,3]), y = c(colMeans(bcf_out$tau), colMeans(pred_out$tau)), color = group)) +
@@ -122,4 +120,4 @@ ggplot(NULL, aes(x = c(x[,3], x_pred[,3]), y = c(colMeans(bcf_out$tau), colMeans
   coord_flip()
 ```
 
-In this plot, we notice that the credible intervals for the testing group are narrower than those for the training group, and that the predictions follow closely the results from our testing data.
+In this plot, we notice that predictions even for Xs that are outside of the range of our training data are within the expected range, and that they have wider credible intervals, as is expected.

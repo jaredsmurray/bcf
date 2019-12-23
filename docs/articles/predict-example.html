@@ -88,6 +88,7 @@
 
     
     
+<p>In this vignette, we show our we can use the BCF package to fit a model and use the fitted object to predict estimates for new data.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(bcf2)</span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="co">#&gt; Warning: replacing previous import 'Rcpp::LdFlags' by 'RcppParallel::LdFlags'</span></span>
 <span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; when loading 'bcf2'</span></span>
@@ -95,131 +96,100 @@
 <span id="cb1-5"><a href="#cb1-5"></a><span class="co">#&gt; Attaching package: 'bcf2'</span></span>
 <span id="cb1-6"><a href="#cb1-6"></a><span class="co">#&gt; The following object is masked from 'package:stats':</span></span>
 <span id="cb1-7"><a href="#cb1-7"></a><span class="co">#&gt; </span></span>
-<span id="cb1-8"><a href="#cb1-8"></a><span class="co">#&gt;     predict</span></span></code></pre></div>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="co">#&gt;     predict</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(latex2exp)</span>
+<span id="cb1-10"><a href="#cb1-10"></a><span class="co">#&gt; Warning: package 'latex2exp' was built under R version 3.6.2</span></span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</span></code></pre></div>
 <div id="simulate-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#simulate-data" class="anchor"></a>Simulate data</h2>
-<p>First, we simulate some data for testing. This data set has three covariates <span class="math inline">\(X\)</span>, which we divide into two control variables – that is, variables related to <span class="math inline">\(y\)</span> – and one effect moderator – that is, a variable that changes the relationship between <span class="math inline">\(y\)</span> and the treatment effect <span class="math inline">\(\tau\)</span>.</p>
-<p>We draw the <span class="math inline">\(X\)</span>s from a standard normal distribution and generate each unit’s outcome, <span class="math inline">\(\mu_i\)</span>, as a function of these covariates. Each unit’s probability of joining the intervention, <span class="math inline">\(\pi_i\)</span>, is also a function of <span class="math inline">\(\mu_i\)</span>, so that units with larger outcomes are more likely to participate in the intervention. We then assign units to treatment (<span class="math inline">\(z_i = 1\)</span>) or comparison (<span class="math inline">\(z_i = 0\)</span>) as a function of <span class="math inline">\(\pi_i\)</span>.</p>
-<p>Then we generate the true treatment effect for each unit, <span class="math inline">\(\tau_i\)</span>. As noted above, <span class="math inline">\(\tau_i\)</span> is a function of <span class="math inline">\(X_3\)</span>. the observed outcome, <span class="math inline">\(y_i\)</span>, is a function of <span class="math inline">\(\mu_i\)</span>, <span class="math inline">\(\tau_i\)</span>, and a random error term <span class="math inline">\(\sigma\)</span>.</p>
+<p>First, we simulate some data for testing. This data set has three covariates <span class="math inline">\(X\)</span>, which we divide into two control variables – that is, two covariates related to the outcome, <span class="math inline">\(y\)</span> – and one effect moderator – that is, a covariates related to the treatment effect, <span class="math inline">\(\tau\)</span>.</p>
+<p>We draw three random <span class="math inline">\(X\)</span>s for each unit and generate each unit’s expected outcome without treatment, <span class="math inline">\(\mu_i\)</span>, as a function of <span class="math inline">\(x^{(1)}_i\)</span> and <span class="math inline">\(x^{(2)}_i\)</span>. Each unit’s probability of joining the intervention, <span class="math inline">\(\pi_i\)</span>, is also a function of <span class="math inline">\(\mu_i\)</span>, so that units with larger responses are more likely to participate in the intervention. We then assign units to treatment (<span class="math inline">\(z_i = 1\)</span>) or comparison (<span class="math inline">\(z_i = 0\)</span>) as a function of <span class="math inline">\(\pi_i\)</span>.</p>
+<p>Then we generate the true treatment effect for each unit, <span class="math inline">\(\tau_i\)</span>. As noted above, <span class="math inline">\(\tau_i\)</span> is a function of <span class="math inline">\(x^{(3)}_i\)</span>. The observed outcome, <span class="math inline">\(y_i\)</span>, is a function of <span class="math inline">\(\mu_i\)</span>, <span class="math inline">\(\tau_i\)</span>, a random error term <span class="math inline">\(\sigma\)</span>, and weights <span class="math inline">\(w\)</span> if applicable.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="dv">1</span>)</span>
 <span id="cb2-2"><a href="#cb2-2"></a></span>
-<span id="cb2-3"><a href="#cb2-3"></a>p &lt;-<span class="st"> </span><span class="dv">3</span> <span class="co"># two control variables and one effect moderator</span></span>
-<span id="cb2-4"><a href="#cb2-4"></a>n &lt;-<span class="st"> </span><span class="dv">1000</span></span>
-<span id="cb2-5"><a href="#cb2-5"></a>n_burn &lt;-<span class="st"> </span><span class="dv">100</span></span>
-<span id="cb2-6"><a href="#cb2-6"></a>n_sim &lt;-<span class="st"> </span><span class="dv">150</span></span>
-<span id="cb2-7"><a href="#cb2-7"></a></span>
-<span id="cb2-8"><a href="#cb2-8"></a></span>
-<span id="cb2-9"><a href="#cb2-9"></a>x &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span>(<span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(n<span class="op">*</span>p), <span class="dt">nrow=</span>n)</span>
-<span id="cb2-10"><a href="#cb2-10"></a></span>
-<span id="cb2-11"><a href="#cb2-11"></a>weights &lt;-<span class="st"> </span><span class="fl">1.0</span><span class="op">*</span><span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="dv">1</span>, n)</span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="co">## Training data</span></span>
+<span id="cb2-4"><a href="#cb2-4"></a></span>
+<span id="cb2-5"><a href="#cb2-5"></a>p &lt;-<span class="st"> </span><span class="dv">3</span> <span class="co"># two control variables and one effect moderator</span></span>
+<span id="cb2-6"><a href="#cb2-6"></a>n &lt;-<span class="st"> </span><span class="dv">100</span></span>
+<span id="cb2-7"><a href="#cb2-7"></a>n_burn &lt;-<span class="st"> </span><span class="dv">2000</span></span>
+<span id="cb2-8"><a href="#cb2-8"></a>n_sim &lt;-<span class="st"> </span><span class="dv">1500</span></span>
+<span id="cb2-9"><a href="#cb2-9"></a></span>
+<span id="cb2-10"><a href="#cb2-10"></a>x &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span>(<span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(n<span class="op">*</span>p), <span class="dt">nrow=</span>n)</span>
+<span id="cb2-11"><a href="#cb2-11"></a>weights &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span>(<span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(n))</span>
 <span id="cb2-12"><a href="#cb2-12"></a></span>
-<span id="cb2-13"><a href="#cb2-13"></a></span>
-<span id="cb2-14"><a href="#cb2-14"></a><span class="co"># create targeted selection, whereby a practice's likelihood of joining the intervention (pi) is related to their expected outcome (mu)</span></span>
-<span id="cb2-15"><a href="#cb2-15"></a>q &lt;-<span class="st"> </span><span class="dv">-1</span><span class="op">*</span>(x[,<span class="dv">1</span>]<span class="op">&gt;</span>(x[,<span class="dv">2</span>])) <span class="op">+</span><span class="st"> </span><span class="dv">1</span><span class="op">*</span>(x[,<span class="dv">1</span>]<span class="op">&lt;</span>(x[,<span class="dv">2</span>])) <span class="fl">-0.1</span></span>
-<span id="cb2-16"><a href="#cb2-16"></a></span>
-<span id="cb2-17"><a href="#cb2-17"></a><span class="co"># generate treatment variable</span></span>
-<span id="cb2-18"><a href="#cb2-18"></a>pi &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">pnorm</a></span>(q)</span>
-<span id="cb2-19"><a href="#cb2-19"></a>z &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span>(n,<span class="dv">1</span>,pi)</span>
-<span id="cb2-20"><a href="#cb2-20"></a></span>
-<span id="cb2-21"><a href="#cb2-21"></a><span class="co"># tau is the true treatment effect. It varies across practices as a function of</span></span>
-<span id="cb2-22"><a href="#cb2-22"></a><span class="co"># X3, the effect moderator</span></span>
-<span id="cb2-23"><a href="#cb2-23"></a>tau &lt;-<span class="st"> </span>(<span class="dv">1</span><span class="op">/</span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(<span class="op">-</span>x[,<span class="dv">3</span>])))</span>
-<span id="cb2-24"><a href="#cb2-24"></a></span>
-<span id="cb2-25"><a href="#cb2-25"></a>mu &lt;-<span class="st"> </span>q</span>
-<span id="cb2-26"><a href="#cb2-26"></a></span>
-<span id="cb2-27"><a href="#cb2-27"></a><span class="co"># generate the response using q, tau and z</span></span>
-<span id="cb2-28"><a href="#cb2-28"></a>y_noiseless &lt;-<span class="st"> </span>mu <span class="op">+</span><span class="st"> </span>tau<span class="op">*</span>z</span>
-<span id="cb2-29"><a href="#cb2-29"></a></span>
-<span id="cb2-30"><a href="#cb2-30"></a><span class="co"># set the noise level relative to the expected mean function of Y</span></span>
-<span id="cb2-31"><a href="#cb2-31"></a>sigma &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/range.html">range</a></span>(mu <span class="op">+</span><span class="st"> </span>tau<span class="op">*</span>pi))<span class="op">/</span><span class="dv">8</span></span>
-<span id="cb2-32"><a href="#cb2-32"></a></span>
-<span id="cb2-33"><a href="#cb2-33"></a><span class="co"># draw the response variable with additive error</span></span>
-<span id="cb2-34"><a href="#cb2-34"></a>y &lt;-<span class="st"> </span>y_noiseless <span class="op">+</span><span class="st"> </span>sigma<span class="op">*</span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(n)</span></code></pre></div>
+<span id="cb2-13"><a href="#cb2-13"></a><span class="co"># create targeted selection, whereby a practice's likelihood of joining the intervention (pi) is related to their expected outcome (mu)</span></span>
+<span id="cb2-14"><a href="#cb2-14"></a>q &lt;-<span class="st"> </span><span class="dv">-1</span><span class="op">*</span>(x[,<span class="dv">1</span>]<span class="op">&gt;</span>(x[,<span class="dv">2</span>])) <span class="op">+</span><span class="st"> </span><span class="dv">1</span><span class="op">*</span>(x[,<span class="dv">1</span>]<span class="op">&lt;</span>(x[,<span class="dv">2</span>])) <span class="fl">-0.1</span></span>
+<span id="cb2-15"><a href="#cb2-15"></a></span>
+<span id="cb2-16"><a href="#cb2-16"></a><span class="co"># generate treatment variable</span></span>
+<span id="cb2-17"><a href="#cb2-17"></a>pi &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">pnorm</a></span>(q)</span>
+<span id="cb2-18"><a href="#cb2-18"></a>z &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span>(n,<span class="dv">1</span>,pi)</span>
+<span id="cb2-19"><a href="#cb2-19"></a></span>
+<span id="cb2-20"><a href="#cb2-20"></a><span class="co"># tau is the true treatment effect. It varies across practices as a function of</span></span>
+<span id="cb2-21"><a href="#cb2-21"></a><span class="co"># X3, the effect moderator</span></span>
+<span id="cb2-22"><a href="#cb2-22"></a>tau &lt;-<span class="st"> </span>(<span class="dv">1</span><span class="op">/</span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(<span class="op">-</span>x[,<span class="dv">3</span>])))</span>
+<span id="cb2-23"><a href="#cb2-23"></a></span>
+<span id="cb2-24"><a href="#cb2-24"></a>mu &lt;-<span class="st"> </span>q</span>
+<span id="cb2-25"><a href="#cb2-25"></a></span>
+<span id="cb2-26"><a href="#cb2-26"></a><span class="co"># generate the response using q, tau and z</span></span>
+<span id="cb2-27"><a href="#cb2-27"></a>y_noiseless &lt;-<span class="st"> </span>mu <span class="op">+</span><span class="st"> </span>tau<span class="op">*</span>z</span>
+<span id="cb2-28"><a href="#cb2-28"></a></span>
+<span id="cb2-29"><a href="#cb2-29"></a><span class="co"># set the noise level relative to the expected mean function of Y</span></span>
+<span id="cb2-30"><a href="#cb2-30"></a>sigma &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/range.html">range</a></span>(mu <span class="op">+</span><span class="st"> </span>tau<span class="op">*</span>pi))<span class="op">/</span><span class="dv">8</span></span>
+<span id="cb2-31"><a href="#cb2-31"></a></span>
+<span id="cb2-32"><a href="#cb2-32"></a><span class="co"># draw the response variable with additive error</span></span>
+<span id="cb2-33"><a href="#cb2-33"></a>y &lt;-<span class="st"> </span>y_noiseless <span class="op">+</span><span class="st"> </span>sigma<span class="op">*</span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(n)<span class="op">/</span><span class="kw"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span>(weights)</span>
+<span id="cb2-34"><a href="#cb2-34"></a></span>
+<span id="cb2-35"><a href="#cb2-35"></a><span class="co">## Testing data (N = 50)</span></span>
+<span id="cb2-36"><a href="#cb2-36"></a>x_pred  &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span>(<span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span>(<span class="dv">50</span><span class="op">*</span>p), <span class="dt">nrow=</span><span class="dv">50</span>)</span>
+<span id="cb2-37"><a href="#cb2-37"></a>x_pred[<span class="dv">46</span><span class="op">:</span><span class="dv">50</span>,<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="op">-</span><span class="fl">3.1</span>, <span class="fl">-2.9</span>, <span class="fl">2.76</span>, <span class="fl">2.8</span>, <span class="fl">2.85</span>) <span class="co"># including some X3s outside of range</span></span>
+<span id="cb2-38"><a href="#cb2-38"></a>q_pred  &lt;-<span class="st"> </span><span class="dv">-1</span><span class="op">*</span>(x_pred[,<span class="dv">1</span>]<span class="op">&gt;</span>(x_pred[,<span class="dv">2</span>])) <span class="op">+</span><span class="st"> </span><span class="dv">1</span><span class="op">*</span>(x_pred[,<span class="dv">1</span>]<span class="op">&lt;</span>(x_pred[,<span class="dv">2</span>])) <span class="op">-</span><span class="st"> </span><span class="fl">0.1</span></span>
+<span id="cb2-39"><a href="#cb2-39"></a>pi_pred &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">pnorm</a></span>(q_pred)</span>
+<span id="cb2-40"><a href="#cb2-40"></a>z_pred  &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span>(<span class="dv">50</span>,<span class="dv">1</span>, pi_pred)</span></code></pre></div>
 </div>
 <div id="fitting-bcf" class="section level2">
 <h2 class="hasAnchor">
 <a href="#fitting-bcf" class="anchor"></a>Fitting BCF</h2>
 <p>We now fit a BCF model.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>out2 &lt;-<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/bcf.html">bcf</a></span>(<span class="dt">y               =</span> y,</span>
-<span id="cb3-2"><a href="#cb3-2"></a>                  <span class="dt">z               =</span> z,</span>
-<span id="cb3-3"><a href="#cb3-3"></a>                  <span class="dt">x_control       =</span> x,</span>
-<span id="cb3-4"><a href="#cb3-4"></a>                  <span class="dt">x_moderate      =</span> x,</span>
-<span id="cb3-5"><a href="#cb3-5"></a>                  <span class="dt">pihat           =</span> pi,</span>
-<span id="cb3-6"><a href="#cb3-6"></a>                  <span class="dt">nburn           =</span> n_burn,</span>
-<span id="cb3-7"><a href="#cb3-7"></a>                  <span class="dt">nsim            =</span> n_sim,</span>
-<span id="cb3-8"><a href="#cb3-8"></a>                  <span class="dt">w               =</span> weights,</span>
-<span id="cb3-9"><a href="#cb3-9"></a>                  <span class="dt">n_chains        =</span> <span class="dv">2</span>,</span>
-<span id="cb3-10"><a href="#cb3-10"></a>                  <span class="dt">update_interval =</span> <span class="dv">1</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>bcf_out &lt;-<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/bcf.html">bcf</a></span>(<span class="dt">y               =</span> y,</span>
+<span id="cb3-2"><a href="#cb3-2"></a>                     <span class="dt">z               =</span> z,</span>
+<span id="cb3-3"><a href="#cb3-3"></a>                     <span class="dt">x_control       =</span> x,</span>
+<span id="cb3-4"><a href="#cb3-4"></a>                     <span class="dt">x_moderate      =</span> x,</span>
+<span id="cb3-5"><a href="#cb3-5"></a>                     <span class="dt">pihat           =</span> pi,</span>
+<span id="cb3-6"><a href="#cb3-6"></a>                     <span class="dt">nburn           =</span> n_burn,</span>
+<span id="cb3-7"><a href="#cb3-7"></a>                     <span class="dt">nsim            =</span> n_sim,</span>
+<span id="cb3-8"><a href="#cb3-8"></a>                     <span class="dt">w               =</span> weights,</span>
+<span id="cb3-9"><a href="#cb3-9"></a>                     <span class="dt">n_chains        =</span> <span class="dv">2</span>,</span>
+<span id="cb3-10"><a href="#cb3-10"></a>                     <span class="dt">update_interval =</span> <span class="dv">1</span>)</span></code></pre></div>
 </div>
 <div id="predicting-using-bcf" class="section level2">
 <h2 class="hasAnchor">
 <a href="#predicting-using-bcf" class="anchor"></a>Predicting using BCF</h2>
-<p>We will use the same data as our training set for prediction.</p>
-<p>This will allow us to assess whether BCF predicts accurately.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>pred_out =<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/predict.html">predict</a></span>(<span class="dt">bcf_out=</span>out2,</span>
-<span id="cb4-2"><a href="#cb4-2"></a>                         <span class="dt">x_predict_control=</span>x,</span>
-<span id="cb4-3"><a href="#cb4-3"></a>                         <span class="dt">x_predict_moderate=</span>x,</span>
-<span id="cb4-4"><a href="#cb4-4"></a>                         <span class="dt">pi_pred=</span>pi,</span>
-<span id="cb4-5"><a href="#cb4-5"></a>                         <span class="dt">z_pred=</span>z,</span>
+<p>We now use our testing Xs for prediction.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>pred_out =<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/predict.html">predict</a></span>(<span class="dt">bcf_out=</span>bcf_out,</span>
+<span id="cb4-2"><a href="#cb4-2"></a>                         <span class="dt">x_predict_control=</span>x_pred,</span>
+<span id="cb4-3"><a href="#cb4-3"></a>                         <span class="dt">x_predict_moderate=</span>x_pred,</span>
+<span id="cb4-4"><a href="#cb4-4"></a>                         <span class="dt">pi_pred=</span>pi_pred,</span>
+<span id="cb4-5"><a href="#cb4-5"></a>                         <span class="dt">z_pred=</span>z_pred,</span>
 <span id="cb4-6"><a href="#cb4-6"></a>                         <span class="dt">save_tree_directory =</span> <span class="st">'..'</span>)</span>
 <span id="cb4-7"><a href="#cb4-7"></a><span class="co">#&gt; Initializing BCF Prediction</span></span>
 <span id="cb4-8"><a href="#cb4-8"></a><span class="co">#&gt; Starting Prediction</span></span></code></pre></div>
 </div>
-<div id="assessing-our-prediction" class="section level2">
+<div id="comparison" class="section level2">
 <h2 class="hasAnchor">
-<a href="#assessing-our-prediction" class="anchor"></a>Assessing our prediction</h2>
-<p>We now compute the mean square error and plot our predicted vs expected results.</p>
-<p>Recall that in BCF, <span class="math inline">\(\hat{y} = \mu + z*\tau\)</span> .</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>mean_square_error &lt;-<span class="st"> </span><span class="cf">function</span> (x,y){</span>
-<span id="cb5-2"><a href="#cb5-2"></a>  <span class="kw"><a href="https://rdrr.io/r/base/mean.html">mean</a></span>((x<span class="op">-</span>y)<span class="op">^</span><span class="dv">2</span>)</span>
-<span id="cb5-3"><a href="#cb5-3"></a>}</span>
+<a href="#comparison" class="anchor"></a>Comparison</h2>
+<p>Let’s compare the results of our training and testing data. We will use <span class="math inline">\(x_3\)</span> as covariate since we know from the data creation phase that this variable is the strongest effect modifier.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>lower &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(bcf_out<span class="op">$</span>tau, <span class="dv">2</span>, quantile, <span class="fl">0.025</span>), <span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(pred_out<span class="op">$</span>tau, <span class="dv">2</span>, quantile, <span class="fl">0.025</span>))</span>
+<span id="cb5-2"><a href="#cb5-2"></a>upper &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(bcf_out<span class="op">$</span>tau, <span class="dv">2</span>, quantile, <span class="fl">0.975</span>), <span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(pred_out<span class="op">$</span>tau, <span class="dv">2</span>, quantile, <span class="fl">0.975</span>))</span>
+<span id="cb5-3"><a href="#cb5-3"></a>group &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/factor.html">factor</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="st">"training"</span>, n), <span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="st">"testing"</span>, <span class="dv">50</span>)))</span>
 <span id="cb5-4"><a href="#cb5-4"></a></span>
-<span id="cb5-5"><a href="#cb5-5"></a>assess_pred &lt;-<span class="st"> </span><span class="cf">function</span>(x, y, z, title){</span>
-<span id="cb5-6"><a href="#cb5-6"></a>  <span class="kw"><a href="https://rdrr.io/r/base/cat.html">cat</a></span>(<span class="st">"Assessing Cloesness of "</span>, title, <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>)</span>
-<span id="cb5-7"><a href="#cb5-7"></a>  <span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="st">"Correlation"</span>)</span>
-<span id="cb5-8"><a href="#cb5-8"></a>  <span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="kw"><a href="https://rdrr.io/r/stats/cor.html">cor</a></span>(x,y))</span>
-<span id="cb5-9"><a href="#cb5-9"></a>  </span>
-<span id="cb5-10"><a href="#cb5-10"></a>  mse =<span class="st"> </span><span class="kw">mean_square_error</span>(x,y)</span>
-<span id="cb5-11"><a href="#cb5-11"></a>  </span>
-<span id="cb5-12"><a href="#cb5-12"></a>  <span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="st">"MSE"</span>)</span>
-<span id="cb5-13"><a href="#cb5-13"></a>  <span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>(mse)</span>
-<span id="cb5-14"><a href="#cb5-14"></a>  </span>
-<span id="cb5-15"><a href="#cb5-15"></a>  <span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="st">"Error"</span>)</span>
-<span id="cb5-16"><a href="#cb5-16"></a>  <span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span>(mse)<span class="op">/</span><span class="kw"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/mean.html">mean</a></span>(x)))</span>
-<span id="cb5-17"><a href="#cb5-17"></a>  <span class="kw"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(x, y, <span class="dt">col =</span> z <span class="op">+</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">main=</span>title)</span>
-<span id="cb5-18"><a href="#cb5-18"></a>  <span class="kw"><a href="https://rdrr.io/r/graphics/abline.html">abline</a></span>(<span class="dt">a=</span><span class="dv">0</span>, <span class="dt">b=</span><span class="dv">1</span>)</span>
-<span id="cb5-19"><a href="#cb5-19"></a>}</span></code></pre></div>
-<p>We first assess our prediction for yhat.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">assess_pred</span>(<span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(pred_out<span class="op">$</span>yhat), <span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(out2<span class="op">$</span>yhat), z, <span class="st">'yhat'</span>)</span>
-<span id="cb6-2"><a href="#cb6-2"></a><span class="co">#&gt; Assessing Cloesness of  yhat </span></span>
-<span id="cb6-3"><a href="#cb6-3"></a><span class="co">#&gt; [1] "Correlation"</span></span>
-<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt; [1] 1</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a><span class="co">#&gt; [1] "MSE"</span></span>
-<span id="cb6-6"><a href="#cb6-6"></a><span class="co">#&gt; [1] 4.445061e-29</span></span>
-<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt; [1] "Error"</span></span>
-<span id="cb6-8"><a href="#cb6-8"></a><span class="co">#&gt; [1] 4.934082e-14</span></span></code></pre></div>
-<p><img src="predict-example_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
-<p>Then for tau.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">assess_pred</span>(<span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(pred_out<span class="op">$</span>tau), <span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(out2<span class="op">$</span>tau), z,<span class="st">'tau'</span>)</span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="co">#&gt; Assessing Cloesness of  tau </span></span>
-<span id="cb7-3"><a href="#cb7-3"></a><span class="co">#&gt; [1] "Correlation"</span></span>
-<span id="cb7-4"><a href="#cb7-4"></a><span class="co">#&gt; [1] 1</span></span>
-<span id="cb7-5"><a href="#cb7-5"></a><span class="co">#&gt; [1] "MSE"</span></span>
-<span id="cb7-6"><a href="#cb7-6"></a><span class="co">#&gt; [1] 3.305419e-30</span></span>
-<span id="cb7-7"><a href="#cb7-7"></a><span class="co">#&gt; [1] "Error"</span></span>
-<span id="cb7-8"><a href="#cb7-8"></a><span class="co">#&gt; [1] 3.527484e-15</span></span></code></pre></div>
-<p><img src="predict-example_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
-<p>Finally, we assess it for mu.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw">assess_pred</span>(<span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(pred_out<span class="op">$</span>mu), <span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(out2<span class="op">$</span>mu), z, <span class="st">'mu'</span>)</span>
-<span id="cb8-2"><a href="#cb8-2"></a><span class="co">#&gt; Assessing Cloesness of  mu </span></span>
-<span id="cb8-3"><a href="#cb8-3"></a><span class="co">#&gt; [1] "Correlation"</span></span>
-<span id="cb8-4"><a href="#cb8-4"></a><span class="co">#&gt; [1] 1</span></span>
-<span id="cb8-5"><a href="#cb8-5"></a><span class="co">#&gt; [1] "MSE"</span></span>
-<span id="cb8-6"><a href="#cb8-6"></a><span class="co">#&gt; [1] 3.943726e-29</span></span>
-<span id="cb8-7"><a href="#cb8-7"></a><span class="co">#&gt; [1] "Error"</span></span>
-<span id="cb8-8"><a href="#cb8-8"></a><span class="co">#&gt; [1] 4.842216e-14</span></span></code></pre></div>
-<p><img src="predict-example_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="kw">ggplot</span>(<span class="ot">NULL</span>, <span class="kw">aes</span>(<span class="dt">x =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(x[,<span class="dv">3</span>], x_pred[,<span class="dv">3</span>]), <span class="dt">y =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(bcf_out<span class="op">$</span>tau), <span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(pred_out<span class="op">$</span>tau)), <span class="dt">color =</span> group)) <span class="op">+</span></span>
+<span id="cb5-6"><a href="#cb5-6"></a><span class="st">  </span><span class="kw">geom_pointrange</span>(<span class="kw">aes</span>(<span class="dt">ymin =</span> lower, <span class="dt">ymax =</span> upper), <span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb5-7"><a href="#cb5-7"></a><span class="st">  </span><span class="kw">xlab</span>(<span class="kw">TeX</span>(<span class="st">"$x_3$"</span>)) <span class="op">+</span></span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="st">  </span><span class="kw">ylab</span>(<span class="kw">TeX</span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">hat{</span><span class="ch">\\</span><span class="st">tau}$"</span>)) <span class="op">+</span></span>
+<span id="cb5-9"><a href="#cb5-9"></a><span class="st">  </span><span class="kw">coord_flip</span>()</span></code></pre></div>
+<p><img src="predict-example_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<p>In this plot, we notice that predictions even for Xs that are outside of the range of our training data are within the expected range, and that they have wider credible intervals, as is expected.</p>
 </div>
   </div>
 
@@ -232,7 +202,7 @@
 <li><a href="#simulate-data">Simulate data</a></li>
       <li><a href="#fitting-bcf">Fitting BCF</a></li>
       <li><a href="#predicting-using-bcf">Predicting using BCF</a></li>
-      <li><a href="#assessing-our-prediction">Assessing our prediction</a></li>
+      <li><a href="#comparison">Comparison</a></li>
       </ul>
 </div>
       </div>

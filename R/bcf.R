@@ -201,7 +201,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @importFrom stats approxfun lm qchisq quantile sd 
 #' @export
 bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, 
-                random_seed,
+                random_seed = sample.int(.Machine$integer.max, 1),
                 n_chains         = 4,
                 n_chain_clusters = 2,
                 n_threads = max(RcppParallel::defaultNumThreads()/2,1),
@@ -458,11 +458,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
 #' Print posterior summary stats and MCMC diagnostics for a fitted BCF object
 #' This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
-#' It includes:
-#' 
-#'* posterior summary stats [MMF: These three bullets aren't showing up for me on the "Reference" page.]
-#'* effective sample sizes for key parameters
-#'* Gelman and Rubin's convergence diagnostics for key parameters
+#' It includes: posterior summary stats, effective sample sizes for key parameters, 
+#' and  Gelman and Rubin's convergence diagnostics for key parameters
 #' @param bcf_out output from a BCF predict run
 #' @examples
 #'\donttest{
@@ -648,7 +645,7 @@ predict <- function(bcf_out,
 
     cat("Starting Prediction \n")
 
-    n_chains = length(out2$coda_chains)
+    n_chains = length(bcf_out$coda_chains)
     
     `%doType%` = .get_do_type(n_chain_clusters)
     
