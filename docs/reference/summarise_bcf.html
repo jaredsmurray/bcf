@@ -6,8 +6,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Print Summary Stats for a previous BCF run
-This function is built using the coda package and meant to mimick output from Stan.
+<title>Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes: — summarise_bcf • bcf2</title>
 
 
@@ -37,12 +37,12 @@ It includes: — summarise_bcf • bcf2</title>
 
 
 
-<meta property="og:title" content="Print Summary Stats for a previous BCF run
-This function is built using the coda package and meant to mimick output from Stan.
+<meta property="og:title" content="Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes: — summarise_bcf" />
-<meta property="og:description" content="* summary statistics for MCMC
- * effective sample sizes for each parameter
- * Gelman and Rubin's convergence diagnostics for each parameter" />
+<meta property="og:description" content="* posterior summary stats [MMF: These three bullets aren't showing up for me on the &quot;Reference&quot; page.]
+* effective sample sizes for key parameters
+* Gelman and Rubin's convergence diagnostics for key parameters" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -124,17 +124,17 @@ It includes: — summarise_bcf" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Print Summary Stats for a previous BCF run
-This function is built using the coda package and meant to mimick output from Stan.
+    <h1>Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes:</h1>
     
     <div class="hidden name"><code>summarise_bcf.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>* summary statistics for MCMC
- * effective sample sizes for each parameter
- * Gelman and Rubin's convergence diagnostics for each parameter</p>
+    <p>* posterior summary stats [MMF: These three bullets aren't showing up for me on the "Reference" page.]
+* effective sample sizes for key parameters
+* Gelman and Rubin's convergence diagnostics for key parameters</p>
     </div>
 
     <pre class="usage"><span class='fu'>summarise_bcf</span>(<span class='no'>bcf_out</span>)</pre>

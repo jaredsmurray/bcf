@@ -14,35 +14,35 @@ knitr::opts_chunk$set(
 )
 ```
 
-[MMF: What would you think of adding a short intro sentence here? "In this vignette, we..."]
+In this vignette, we show our we can use the BCF package to fit a model and use the fitted object to predict estimates for new data.
 
 ```{r setup}
 library(bcf2)
+library(latex2exp)
+library(ggplot2)
 ```
 
 ## Simulate data
 
-[MMF: If it wouldn't be too much trouble, could you please pull through here the suggestions I made to the first vignette, both in the text and the code?]
+First, we simulate some data for testing. This data set has three covariates $X$, which we divide into two control variables -- that is, two covariates related to the outcome, $y$ -- and one effect moderator -- that is, a covariates related to the treatment effect, $\tau$.
 
-First, we simulate some data for testing.  This data set has three covariates $X$, which we divide into two control variables -- that is, variables related to $y$ -- and one effect moderator -- that is, a variable that changes the relationship between $y$ and the treatment effect $\tau$.
+We draw three random $X$s for each unit and generate each unit's expected outcome without treatment, $\mu_i$, as a function of $x^{(1)}_i$ and $x^{(2)}_i$. Each unit's probability of joining the intervention, $\pi_i$, is also a function of $\mu_i$, so that units with larger responses are more likely to participate in the intervention. We then assign units to treatment ($z_i = 1$) or comparison ($z_i = 0$) as a function of $\pi_i$.
 
-We draw the $X$s from a standard normal distribution and generate each unit's outcome, $\mu_i$, as a function of these covariates.  Each unit's probability of joining the intervention, $\pi_i$, is also a function of $\mu_i$, so that units with larger outcomes are more likely to participate in the intervention.  We then assign units to treatment ($z_i = 1$) or comparison ($z_i = 0$) as a function of $\pi_i$.
-
-Then we generate the true treatment effect for each unit, $\tau_i$.  As noted above, $\tau_i$ is a function of $X_3$.  the observed outcome, $y_i$, is a function of $\mu_i$, $\tau_i$, and a random error term $\sigma$.
+Then we generate the true treatment effect for each unit, $\tau_i$. As noted above, $\tau_i$ is a function of $x^{(3)}_i$. The observed outcome, $y_i$, is a function of $\mu_i$, $\tau_i$, a random error term $\sigma$, and weights $w$ if applicable.
 
 ```{r}
 set.seed(1)
 
-p <- 3 # two control variables and one effect moderator
-n <- 1000
-n_burn <- 100
-n_sim <- 150
+## Training data
 
+p <- 3 # two control variables and one effect moderator
+n <- 100
+n_burn <- 2000
+n_sim <- 1500
 
 x <- matrix(rnorm(n*p), nrow=n)
 
-weights <- rnorm(n)
-
+weights <- abs(rnorm(n))
 
 # create targeted selection, whereby a practice's likelihood of joining the intervention (pi) is related to their expected outcome (mu)
 q <- -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2])) -0.1
@@ -65,6 +65,13 @@ sigma <- diff(range(mu + tau*pi))/8
 
 # draw the response variable with additive error
 y <- y_noiseless + sigma*rnorm(n)/sqrt(weights)
+
+## Testing data (N = 50)
+x_pred  <- matrix(rnorm(50*p), nrow=50)
+x_pred[46:50,3] <- c(-3.1, -2.9, 2.76, 2.8, 2.85) # including some X3s outside of range
+q_pred  <- -1*(x_pred[,1]>(x_pred[,2])) + 1*(x_pred[,1]<(x_pred[,2])) - 0.1
+pi_pred <- pnorm(q_pred)
+z_pred  <- rbinom(50,1, pi_pred)
 ```
 
 ## Fitting BCF
@@ -72,75 +79,48 @@ y <- y_noiseless + sigma*rnorm(n)/sqrt(weights)
 We now fit a BCF model. 
 
 ```{r}
-out2 <- bcf2::bcf(y               = y,
-                  z               = z,
-                  x_control       = x,
-                  x_moderate      = x,
-                  pihat           = pi,
-                  nburn           = n_burn,
-                  nsim            = n_sim,
-                  w               = weights,
-                  n_chains        = 2,
-                  update_interval = 1)
+bcf_out <- bcf2::bcf(y               = y,
+                     z               = z,
+                     x_control       = x,
+                     x_moderate      = x,
+                     pihat           = pi,
+                     nburn           = n_burn,
+                     nsim            = n_sim,
+                     w               = weights,
+                     n_chains        = 2,
+                     update_interval = 1)
 ```
-
 
 
 ## Predicting using BCF
 
+We now use our testing Xs for prediction.
+
 We will use the same data as our training set for prediction. This will allow us to assess whether BCF predicts accurately. [MMF: Hm... I hate to throw a wrench in the stew at this late stage, but I  vote that we omit this check. What do you think? When I've read other package vignettes, they haven't typically consisted of checks that the package is working as advertised. Instead, I've usually seen worked examples of typical use cases. With that in mind, what would think of including instead an example where we predict for new Xs? I'm imagining a scatterplot of tau vs. X3, with posterior means and 95% CIs for tau shown as points and lines respectively. Datapoints included in the original fit in one color, new datapoints we're predicting for in anther color. How does that sound to you?]
 
 ```{r}
-pred_out = bcf2::predict(bcf_out=out2,
-                         x_predict_control=x,
-                         x_predict_moderate=x,
-                         pi_pred=pi,
-                         z_pred=z,
+pred_out = bcf2::predict(bcf_out=bcf_out,
+                         x_predict_control=x_pred,
+                         x_predict_moderate=x_pred,
+                         pi_pred=pi_pred,
+                         z_pred=z_pred,
                          save_tree_directory = '..')
 ```
 
-## Assessing our prediction
+## Comparison
 
-We now compute the mean square error and plot our predicted vs expected results.
-
-Recall that in BCF, $\hat{y} = \mu + z*\tau$ .
+Let's compare the results of our training and testing data. We will use $x_3$ as covariate since we know from the data creation phase that this variable is the strongest effect modifier.
 
 ```{r}
-mean_square_error <- function (x,y){
-  mean((x-y)^2)
-}
+lower <- c(apply(bcf_out$tau, 2, quantile, 0.025), apply(pred_out$tau, 2, quantile, 0.025))
+upper <- c(apply(bcf_out$tau, 2, quantile, 0.975), apply(pred_out$tau, 2, quantile, 0.025))
+group <- factor(c(rep("training", n), rep("testing", 50)))
 
-assess_pred <- function(x, y, z, title){
-  cat("Assessing Cloesness of ", title, "\n")
-  print("Correlation")
-  print(cor(x,y))
-  
-  mse = mean_square_error(x,y)
-  
-  print("MSE")
-  print(mse)
-  
-  print("Error")
-  print(sqrt(mse)/abs(mean(x)))
-  plot(x, y, col = z + 1, main=title)
-  abline(a=0, b=1)
-}
+ggplot(NULL, aes(x = c(x[,3], x_pred[,3]), y = c(colMeans(bcf_out$tau), colMeans(pred_out$tau)), color = group)) +
+  geom_pointrange(aes(ymin = lower, ymax = upper), alpha = 0.5) +
+  xlab(TeX("$x_3$")) +
+  ylab(TeX("$\\hat{\\tau}$")) +
+  coord_flip()
 ```
 
-We first assess our prediction for yhat.
-
-```{r}
-assess_pred(colMeans(pred_out$yhat), colMeans(out2$yhat), z, 'yhat')
-```
-
-Then for tau.
-
-```{r}
-assess_pred(colMeans(pred_out$tau), colMeans(out2$tau), z,'tau')
-```
-
-Finally, we assess it for mu.
-
-```{r}
-assess_pred(colMeans(pred_out$mu), colMeans(out2$mu), z, 'mu')
-```
+In this plot, we notice that the credible intervals for the testing group are narrower than those for the training group, and that the predictions follow closely the results from our testing data.

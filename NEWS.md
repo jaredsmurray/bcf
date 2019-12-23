@@ -10,8 +10,7 @@ This implementation further extends existing BCF functionality by:
 - automating multi-chain, multi-core implementations
 - providing a suite of convergence diagnostic functions via the `coda` package
 - accelerating some underlying computations, resulting in shorter runtimes
-- [MMF: predict?]
-- [MMF: is it worth mentioning that you can now set a seed? feel free to say 'no'!]
+- providing a function to predict estimates based on an existing model using new data
 
 ### Weights
 
@@ -23,12 +22,12 @@ which assumes that all outcomes y<sub>i</sub> have the same variance &sigma.<sup
 
 y<sub>i</sub> &sim; N(&mu;(x<sub>i</sub>) + &tau;(x<sub>i</sub>) z<sub>i</sub>, &sigma;<sup>2</sup>/w<sub>i</sub>)
 
-We changed several parts of the code to incorporate these weights:
+Incorporating weights impacts several parts of the code, including the computation of:
 
-* Code to calculate sufficient statistics
-* Code to update leaf node means
-* Code to update variance across leaf node means
-* [MMF: sigma too?]
+* sufficient statistics
+* leaf node means
+* leaf node means variance
+* error variance (sigma)
 
 ### Automating multichain processing
 
@@ -40,4 +39,10 @@ In this version of the package, we have incorporated code from Jared Murray (one
 
 ### Speed-ups
 
-Finally, our implementation parallelizes some steps of the sampling procedure to maximize efficiency in a multicore environment.  Our testing shows that these enhancements have reduced runtimes by [*Peter please fill in here*].
+Finally, our implementation parallelizes some steps of the sampling procedure to maximize efficiency in a multicore environment. Our testing shows that these enhancements have reduced runtimes. We did a computational experiment to take a look at how much faster the code got because of our work to multi-thread some of the within MCMC chain calculations. We did a BCF run for all combinations of cores, columns, and rows below, and our code was around 2 times faster than a serial run for all these combinations. The 2x speedup is good, however there appears to be some diminishing returns to parallelizing within chain MCMC calculations to many cores. However we also did some work to run several MCMC chains in parallel, which can put those extra cores to use very effectively! (That is not assessed here, all results are for 1 chain).  
+
+| N Cores | N Columns | N Rows    |
+|---------|-----------|-----------|
+| 9       | 50        | 100,000   |
+| 17      | 100       | 500,000   |
+| 25      | 200       | 1,000,000 |

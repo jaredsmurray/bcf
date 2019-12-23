@@ -2,7 +2,7 @@
 % Please edit documentation in R/bcf.R
 \name{predict}
 \alias{predict}
-\title{Predict from Previously Fit Forests}
+\title{Predict from a fitted BCF object}
 \usage{
 predict(bcf_out, x_predict_control, x_predict_moderate, pi_pred, z_pred,
   save_tree_directory, n_chain_clusters = 2)
