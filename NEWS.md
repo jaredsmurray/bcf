@@ -10,14 +10,16 @@ This implementation further extends existing BCF functionality by:
 - automating multi-chain, multi-core implementations
 - providing a suite of convergence diagnostic functions via the `coda` package
 - accelerating some underlying computations, resulting in shorter runtimes
+- [MMF: predict?]
+- [MMF: is it worth mentioning that you can now set a seed? feel free to say 'no'!]
 
 ### Weights
 
-The original version of {bcf} does not allow for weights, which we often use in practical applications to account for heteroskedasticity. Where the original BCF model was specified as:
+The original version of `bcf` does not allow for weights, which we often use in practical applications to account for heteroskedasticity. Where the original BCF model was specified as:
 
 y<sub>i</sub> &sim; N(&mu;(x<sub>i</sub>) + &tau;(x<sub>i</sub>) z<sub>i</sub>, &sigma;<sup>2</sup>),
 
-which assumes that all outcomes y<sub>i</sub> have the same variance &sigma.<sup>2</sup>, in the extended version we can relax this assumption to allow the variance to reflect the uncertainty in the y<sub>i</sub>:
+which assumes that all outcomes y<sub>i</sub> have the same variance &sigma.<sup>2</sup>, in the extended version we can relax this assumption to allow for heteroskedasticity in the y<sub>i</sub>:
 
 y<sub>i</sub> &sim; N(&mu;(x<sub>i</sub>) + &tau;(x<sub>i</sub>) z<sub>i</sub>, &sigma;<sup>2</sup>/w<sub>i</sub>)
 
@@ -26,10 +28,11 @@ We changed several parts of the code to incorporate these weights:
 * Code to calculate sufficient statistics
 * Code to update leaf node means
 * Code to update variance across leaf node means
+* [MMF: sigma too?]
 
 ### Automating multichain processing
 
-It is useful in Bayesian analysis to produce different runs of the same model, with different starting values, as a way of assessing convergence; if the different runs produce drastically different posterior distributions, it is a sign that the model has not converged fully.  In this version of {bcf} we have automated multichain processing and incorporated key MCMC diagnostics from the {coda} package, including effective sample sizes and the Gelman-Rubin statistic ("R hat"). In addition, all runs happen in parallel, on different cores, so as to provide all these extra benefits without much cost to the timing of the runs.
+It is useful in Bayesian analysis to produce different runs of the same model, with different starting values, as a way of assessing convergence; if the different runs produce drastically different posterior distributions, it is a sign that the model has not converged fully.  In this version of `bcf` we have automated multichain processing and incorporated key MCMC diagnostics from the `coda` package, including effective sample sizes and the Gelman-Rubin statistic ("R hat"). In addition, all runs happen in parallel, on different cores, so as to provide all these extra benefits without much cost to the timing of the runs.
 
 ### Implementing a prediction method
 
