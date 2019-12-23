@@ -66,7 +66,7 @@ y <- mu + sigma*rnorm(n)/sqrt(weights)
 
 ## Fit BCF model
 
-In this data set we have observed $y_i$, $x_i$, and $\pi_i$ values to which we can fit our BCF model. We can then compare the $\hat{\tau}_i$ estimates from BCF to the true $\tau_i$ from the data-generating process. Note that we are using the `n_chains` argument to `bcf()`, which allows us to run several MCMC chains in parallel and assess whether they have converged to the posterior distribution.
+In this data set we have observed $y_i$, $x_i$, and $\pi_i$ values to which we can fit our BCF model. We can then compare the $\hat{\tau}_i$ estimates from BCF to the true $\tau_i$ from the data-generating process. Note that we are using the `n_chains` and 'n_chain_clusters' arguments to `bcf()`, which allow us to run several MCMC chains in parallel and assess whether they have converged to the posterior distribution.
 
 ```{r model}
 bcf_out <- bcf2::bcf(y            = y,
