@@ -14,11 +14,15 @@ knitr::opts_chunk$set(
 )
 ```
 
+[MMF: What would you think of adding a short intro sentence here? "In this vignette, we..."]
+
 ```{r setup}
 library(bcf2)
 ```
 
 ## Simulate data
+
+[MMF: If it wouldn't be too much trouble, could you please pull through here the suggestions I made to the first vignette, both in the text and the code?]
 
 First, we simulate some data for testing.  This data set has three covariates $X$, which we divide into two control variables -- that is, variables related to $y$ -- and one effect moderator -- that is, a variable that changes the relationship between $y$ and the treatment effect $\tau$.
 
@@ -84,9 +88,7 @@ out2 <- bcf2::bcf(y               = y,
 
 ## Predicting using BCF
 
-We will use the same data as our training set for prediction. 
-
-This will allow us to assess whether BCF predicts accurately.
+We will use the same data as our training set for prediction. This will allow us to assess whether BCF predicts accurately. [MMF: Hm... I hate to throw a wrench in the stew at this late stage, but I  vote that we omit this check. What do you think? When I've read other package vignettes, they haven't typically consisted of checks that the package is working as advertised. Instead, I've usually seen worked examples of typical use cases. With that in mind, what would think of including instead an example where we predict for new Xs? I'm imagining a scatterplot of tau vs. X3, with posterior means and 95% CIs for tau shown as points and lines respectively. Datapoints included in the original fit in one color, new datapoints we're predicting for in anther color. How does that sound to you?]
 
 ```{r}
 pred_out = bcf2::predict(bcf_out=out2,
