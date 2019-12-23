@@ -2,8 +2,8 @@
 % Please edit documentation in R/bcf.R
 \name{summarise_bcf}
 \alias{summarise_bcf}
-\title{Print Summary Stats for a previous BCF run
-This function is built using the coda package and meant to mimick output from Stan.
+\title{Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes:}
 \usage{
 summarise_bcf(bcf_out)
@@ -12,9 +12,9 @@ summarise_bcf(bcf_out)
 \item{bcf_out}{output from a BCF predict run}
 }
 \description{
-* summary statistics for MCMC
- * effective sample sizes for each parameter
- * Gelman and Rubin's convergence diagnostics for each parameter
+* posterior summary stats [MMF: These three bullets aren't showing up for me on the "Reference" page.]
+* effective sample sizes for key parameters
+* Gelman and Rubin's convergence diagnostics for key parameters
 }
 \examples{
 \donttest{
