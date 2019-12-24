@@ -6,10 +6,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+<title>Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
-It includes: posterior summary stats, effective sample sizes for key parameters, 
-and  Gelman and Rubin's convergence diagnostics for key parameters — summarise_bcf • bcf2</title>
+It includes, posterior summary stats; effective sample sizes for key parameters; 
+and  Gelman and Rubin's convergence diagnostics. — summarise_bcf • bcf2</title>
 
 
 <!-- jquery -->
@@ -38,14 +38,14 @@ and  Gelman and Rubin's convergence diagnostics for key parameters — summarise
 
 
 
-<meta property="og:title" content="Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+<meta property="og:title" content="Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
-It includes: posterior summary stats, effective sample sizes for key parameters, 
-and  Gelman and Rubin's convergence diagnostics for key parameters — summarise_bcf" />
-<meta property="og:description" content="Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+It includes, posterior summary stats; effective sample sizes for key parameters; 
+and  Gelman and Rubin's convergence diagnostics. — summarise_bcf" />
+<meta property="og:description" content="Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
-It includes: posterior summary stats, effective sample sizes for key parameters, 
-and  Gelman and Rubin's convergence diagnostics for key parameters" />
+It includes, posterior summary stats; effective sample sizes for key parameters; 
+and  Gelman and Rubin's convergence diagnostics." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -127,23 +127,25 @@ and  Gelman and Rubin's convergence diagnostics for key parameters" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+    <h1>Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
-It includes: posterior summary stats, effective sample sizes for key parameters, 
-and  Gelman and Rubin's convergence diagnostics for key parameters</h1>
+It includes, posterior summary stats; effective sample sizes for key parameters; 
+and  Gelman and Rubin's convergence diagnostics.</h1>
     
     <div class="hidden name"><code>summarise_bcf.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+    <p>Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
-It includes: posterior summary stats, effective sample sizes for key parameters, 
-and  Gelman and Rubin's convergence diagnostics for key parameters</p>
+It includes, posterior summary stats; effective sample sizes for key parameters; 
+and  Gelman and Rubin's convergence diagnostics.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>summarise_bcf</span>(<span class='no'>bcf_out</span>, <span class='kw'>params_2_summarise</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"sigma"</span>, <span class='st'>"tau_bar"</span>,
-  <span class='st'>"mu_bar"</span>, <span class='st'>"yhat_bar"</span>))</pre>
+    <pre class="usage"><span class='fu'>summarise_bcf</span>(
+  <span class='no'>bcf_out</span>,
+  <span class='kw'>params_2_summarise</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"sigma"</span>, <span class='st'>"tau_bar"</span>, <span class='st'>"mu_bar"</span>, <span class='st'>"yhat_bar"</span>)
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -218,6 +220,19 @@ and  Gelman and Rubin's convergence diagnostics for key parameters</p>
 #&gt; ----
 #&gt; </div><div class='output co'>#&gt; <span class='message'>Effective sample size for each parameter</span></div><div class='output co'>#&gt;    sigma  tau_bar   mu_bar yhat_bar 
 #&gt; 2240.084 2421.469 2308.988 8379.601 
+#&gt; 
+#&gt; ----
+#&gt; </div><div class='output co'>#&gt; <span class='message'>Gelman and Rubin's convergence diagnostic for each parameter</span></div><div class='output co'>#&gt; Potential scale reduction factors:
+#&gt; 
+#&gt;          Point est. Upper C.I.
+#&gt; sigma          1.01       1.03
+#&gt; tau_bar        1.00       1.00
+#&gt; mu_bar         1.00       1.00
+#&gt; yhat_bar       1.00       1.00
+#&gt; 
+#&gt; Multivariate psrf
+#&gt; 
+#&gt; 1.01
 #&gt; 
 #&gt; ----
 #&gt; </div><div class='input'>
