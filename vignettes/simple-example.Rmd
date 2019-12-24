@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-In this vignette, we show how to use BCF to infer treatment effects for an imaginary intervention.
+In this vignette, we show how to use BCF to estimate treatment effects of a simulated intervention.
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -26,11 +26,11 @@ library(rpart.plot)
 
 ## Simulate data
 
-First, we simulate some data for testing. This data set has three covariates $X$, which we divide into two control variables -- that is, two covariates related to the outcome, $y$ -- and one effect moderator -- that is, a covariates related to the treatment effect, $\tau$.
+First, we simulate some data for testing. This data set has three covariates $X$, which we divide into two control variables (that is, two covariates related to the outcome, $y$) and one effect moderator (that is, a covariates related to the treatment effect, $\tau$).
 
 We draw three random $X$s for each unit and generate each unit's expected outcome without treatment, $\mu_i$, as a function of $x^{(1)}_i$ and $x^{(2)}_i$. Each unit's probability of joining the intervention, $\pi_i$, is also a function of $\mu_i$, so that units with larger responses are more likely to participate in the intervention. We then assign units to treatment ($z_i = 1$) or comparison ($z_i = 0$) as a function of $\pi_i$.
 
-Then we generate the true treatment effect for each unit, $\tau_i$. As noted above, $\tau_i$ is a function of $x^{(3)}_i$. The observed outcome, $y_i$, is a function of $\mu_i$, $\tau_i$, a random error term $\sigma$, and weights $w$ if applicable.
+Then we generate the true treatment effect for each unit, $\tau_i$. As noted above, $\tau_i$ is a function of $x^{(3)}_i$. The observed outcome, $y_i$, is a function of $\mu_i$, $\tau_i$, a random error term with variance $\sigma^{2}$, and weights $w$ if applicable.
 
 ```{r data creation}
 set.seed(1)
@@ -50,7 +50,7 @@ q <- -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2])) -0.1
 pi <- pnorm(q)
 z <- rbinom(n,1,pi)
 
-# tau is the true treatment effect. It varies across units as a function of
+# tau is the true treatment effect; it varies across units as a function of
 # X3, the effect moderator
 tau <- 1/(1 + exp(-x[,3]))
 
@@ -86,13 +86,13 @@ bcf_out <- bcf2::bcf(y            = y,
 
 ## Check MCMC diagnostics
 
-We use the `summarise_bcf` function to get diagnostics similar to those in Stan for our 4 chains. We uses those diagnostics to assess convergence of our run and get a sense of the distribution of our parameters.
+We use the `summarise_bcf` function to obtain posterior summary stats and MCMC diagnostics. We uses those diagnostics to assess convergence of our run.
 
 ```{r diagnostics}
 bcf2::summarise_bcf(bcf_out)
 ```
 
-Since our "$\hat{R}$" (Gelman and Rubin's convergence factor) are between 0.9 and 1.1, we know that our run successfully achieved convergence. This is reinforced by our multivariate PSRF of 1.7. 
+Since our "$\hat{R}$" values (Gelman and Rubin's convergence statistics, which equal to 1 at convergence) are between 0.9 and 1.1, we know that our run successfully achieved convergence.
 
 ## Explore the posterior
 
@@ -114,7 +114,7 @@ ggplot(NULL, aes(x = tau, y = colMeans(bcf_out$tau))) +
   ylim(0, 1)
 ```
 
-Clearly, BCF correctly recovers the true treatment effects in this simple example.
+BCF recovers the true unit-specific treatment effects with a high degree of accuracy in this simple example.
 
 ### Distribution of treatment effects
 
@@ -133,9 +133,9 @@ tau_ests <- data.frame(Mean  = colMeans(bcf_out$tau),
                        Up95  = apply(bcf_out$tau, 2, function(x) quantile(x, 0.975)))
 
 tau_ests <- tau_ests[order(tau_ests$Mean), ]
-tau_ests[, "id"] <- 1:ncol(bcf_out$tau)
+tau_ests[, "unit"] <- 1:ncol(bcf_out$tau)
 
-ggplot(tau_ests, aes(x = id, y = Mean)) +
+ggplot(tau_ests, aes(x = unit, y = Mean)) +
   theme_bw() +
   geom_pointrange(aes(ymin = Low95, ymax = Up95), color = "blue") +
   geom_vline(xintercept = 0, color = "black") +
@@ -144,13 +144,13 @@ ggplot(tau_ests, aes(x = id, y = Mean)) +
   coord_flip()
 ```
 
-In this example, although we do see variation in the point estimates across units, most uncertainty intervals all overlap, except for pionts at the extremes.
+In this example, although we do see variation in the point estimates across units, most uncertainty intervals overlap, except for units at the extremes.
 
 ### Identifying possible subgroups
 
 The BCF model obtains more accurate treatment effect estimates than other approaches in part by allowing flexible relationships with many possible effect modifiers.  These relationships are often of substantive interest; researchers want to know what covariates are associated with higher or lower impacts.  However, the BCF model is difficult to interpret directly: we cannot simply look at the coefficients on the effect modifiers to determine which characteristics drive the impacts.  Instead, we can look for patterns in the unit-specific treatment effects, linking each unit's treatment effect estimate to its covariates.
 
-Specifically, the BCF paper (linked in the `Home` page) recommends fitting a CART model where the response variable is the estimated unit-specific treatment effect from BCF and the predictor variables are the effect modifiers used to fit the BCF model. The resulting tree identifies covariates that best distinguish units with high vs. low impacts, which are strong candidate subgroup variables. 
+Specifically, the BCF paper (https://arxiv.org/pdf/1706.09523.pdf) recommends fitting a CART model where the response variable is the estimated unit-specific treatment effect from BCF and the predictor variables are the effect modifiers used to fit the BCF model. The resulting tree identifies covariates that best distinguish units with high vs. low impacts, which are strong candidate subgroup variables. 
 
 ```{r}
 tree <- rpart(colMeans(bcf_out$tau) ~ x, weights = weights)
@@ -162,7 +162,7 @@ Our tree identifies $x_3$ as the strongest effect modifier, which is correct, be
 
 Because the CART fit does not account for the uncertainty in the treatment effect estimates, it is possible that its tree splits do not identify characteristics that create subgroups with meaningfully different impacts. To conduct inference on whether impacts differ meaningfully based on a characteristic, we can use the posterior draws from the fitted BCF model.
 
-Here we show just a comparison of the impacts for units in the top quartile of $X_3$ vs. impacts for units in the bottom quartile of $X_3$.
+Here we show just a comparison of the average treatment effect for units in the top quartile of $X_3$ vs. the average treatment effect for units in the bottom quartile of $X_3$.
 
 ```{r}
 q1 <- x[,3] < quantile(x[,3], 0.25)
@@ -181,13 +181,13 @@ ggplot(groupTaus, aes(taus, fill = quartile, color = quartile)) +
   geom_density(alpha = 0.5)
 ```
 
-Those two graphs show that the posterior distributions for the treatment effects of the top and bottom quartile units do not overlap.
+The posterior distributions for the average treatment effect of the top- and bottom-quartile units do not overlap.
 
-As anticipated based on the lack of overlap across the credible intervals of the unit-specific treatment effects for extreme units above, this plot indicates that the posterior distributions for the impact in these two subgroups do not overlap. We would therefore conclude that $X_3$ is an important subgroup variable. We can confirm this by computing the probability that the treatment effects for the top quartile (q4) are greater than those for the bottom quartile (q1). 
+We would therefore conclude that $X_3$ is an important subgroup variable. We can confirm this by computing the probability that the average treatment effect for the top-quartile units (q4) is greater than the average treatment effect for the bottom-quartile units (q1). 
 
 
 ```{r}
-sum(wq4Taus > wq1Taus)/(n_sim*4)
+mean(wq4Taus > wq1Taus)
 ```
 
 We found that there is a 100% probability that treatment effects for the top quartile (q4) are greater than those for the bottom quartile (q1).
