@@ -4,8 +4,15 @@
 \alias{predict}
 \title{Predict from a fitted BCF object}
 \usage{
-predict(bcf_out, x_predict_control, x_predict_moderate, pi_pred, z_pred,
-  save_tree_directory, n_chain_clusters = 2)
+predict(
+  bcf_out,
+  x_predict_control,
+  x_predict_moderate,
+  pi_pred,
+  z_pred,
+  save_tree_directory,
+  n_chain_clusters = 2
+)
 }
 \arguments{
 \item{bcf_out}{output from a BCF predict run}

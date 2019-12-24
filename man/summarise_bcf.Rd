@@ -2,22 +2,24 @@
 % Please edit documentation in R/bcf.R
 \name{summarise_bcf}
 \alias{summarise_bcf}
-\title{Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+\title{Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
-It includes: posterior summary stats, effective sample sizes for key parameters, 
-and  Gelman and Rubin's convergence diagnostics for key parameters}
+It includes, posterior summary stats; effective sample sizes for key parameters; 
+and  Gelman and Rubin's convergence diagnostics.}
 \usage{
-summarise_bcf(bcf_out, params_2_summarise = c("sigma", "tau_bar",
-  "mu_bar", "yhat_bar"))
+summarise_bcf(
+  bcf_out,
+  params_2_summarise = c("sigma", "tau_bar", "mu_bar", "yhat_bar")
+)
 }
 \arguments{
 \item{bcf_out}{output from a BCF predict run}
 }
 \description{
-Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
-It includes: posterior summary stats, effective sample sizes for key parameters, 
-and  Gelman and Rubin's convergence diagnostics for key parameters
+It includes, posterior summary stats; effective sample sizes for key parameters; 
+and  Gelman and Rubin's convergence diagnostics.
 }
 \examples{
 \donttest{
