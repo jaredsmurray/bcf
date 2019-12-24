@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-In this vignette, we show our we can use the BCF package to fit a model and use the fitted object to predict estimates for new data.
+In this vignette, we show how we can use the BCF package to predict estimates for new data off a fitted BCF object.
 
 ```{r setup}
 library(bcf2)
@@ -36,7 +36,7 @@ set.seed(1)
 ## Training data
 
 p <- 3 # two control variables and one effect moderator
-n <- 100
+n <- 1000
 n_burn <- 2000
 n_sim <- 1500
 
@@ -65,12 +65,16 @@ sigma <- diff(range(mu + tau*pi))/8
 # draw the response variable with additive error
 y <- y_noiseless + sigma*rnorm(n)/sqrt(weights)
 
-## Testing data (N = 50)
-x_pred  <- matrix(rnorm(50*p), nrow=50)
-x_pred[46:50,3] <- c(-3.1, -2.9, 2.76, 2.8, 2.85) # including some X3s outside of range
+## Testing data
+n_test = 50
+
+x_pred  <- matrix(rnorm(n_test*p), nrow=n_test)
+special_x3 <- c(-3.1, -2.9, 2.76, 2.8, 2.85)
+x_pred[ (n_test - length(special_x3) + 1 ):n_test,3] <- special_x3 # including some X3s outside of range
+
 q_pred  <- -1*(x_pred[,1]>(x_pred[,2])) + 1*(x_pred[,1]<(x_pred[,2])) - 0.1
 pi_pred <- pnorm(q_pred)
-z_pred  <- rbinom(50,1, pi_pred)
+z_pred  <- rbinom(n_test,1, pi_pred)
 ```
 
 ## Fitting BCF
@@ -111,13 +115,17 @@ Let's compare the results of our training and testing data. We will use $x_3$ as
 ```{r}
 lower <- c(apply(bcf_out$tau, 2, quantile, 0.025), apply(pred_out$tau, 2, quantile, 0.025))
 upper <- c(apply(bcf_out$tau, 2, quantile, 0.975), apply(pred_out$tau, 2, quantile, 0.975))
-group <- factor(c(rep("training", n), rep("testing", 50)))
+group <- factor(c(rep("training", n), rep("testing", n_test)))
 
-ggplot(NULL, aes(x = c(x[,3], x_pred[,3]), y = c(colMeans(bcf_out$tau), colMeans(pred_out$tau)), color = group)) +
-  geom_pointrange(aes(ymin = lower, ymax = upper), alpha = 0.5) +
+ggplot(NULL, aes(x = c(x[,3], x_pred[,3]), 
+                 y = c(colMeans(bcf_out$tau), colMeans(pred_out$tau)),
+                 alpha = group,
+                 color = group)) +
+  geom_pointrange(aes(ymin = lower, ymax = upper)) +
+  scale_alpha_discrete(range = c(1.0, 0.3)) +
   xlab(TeX("$x_3$")) +
   ylab(TeX("$\\hat{\\tau}$")) +
   coord_flip()
 ```
 
-In this plot, we notice that predictions even for Xs that are outside of the range of our training data are within the expected range, and that they have wider credible intervals, as is expected.
+In this plot, we notice that predictions even for Xs that are outside of the range of our training data are within the expected range, and that they have wider credible intervals, as expected.
