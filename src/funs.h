@@ -94,16 +94,15 @@ void update_counts(int i, std::vector<int>& cts, tree& x, xinfo& xi, dinfo& di, 
 bool min_leaf(int minct, std::vector<tree>& t, xinfo& xi, dinfo& di);
 //--------------------------------------------------
 //get sufficient stats for children (v,c) of node nx in tree x
-void getsuff(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr);
+void getsuffBirth(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr);
 //--------------------------------------------------
 //get sufficient stats for pair of bottom children nl(left) and nr(right) in tree x
-void getsuff(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr);
+void getsuffDeath(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr);
 
 //--------------------------------------------------
 //log of the integreted likelihood
-double lil(double n, double sy, double sy2, double sigma, double tau);
+double lil(double n, double sy, double sigma, double tau);
 //sy isn't needed, but convenient to maintain fcn sig
-//double lilprec(double n, double sy, double sy2, double sigma, double tau);
 //--------------------------------------------------
 //fit
 void fit(tree& t, xinfo& xi, dinfo& di, std::vector<double>& fv);

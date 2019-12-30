@@ -1,11 +1,13 @@
 #include <cmath>
 #include "funs.h"
 #include <map>
+#include <RcppParallel.h>
 #ifdef MPIBART
 #include "mpi.h"
 #endif
 
 using Rcpp::Rcout;
+using namespace RcppParallel;
 
 //--------------------------------------------------
 // normal density N(x, mean, variance)
@@ -191,6 +193,78 @@ void getpertLU(tree::tree_p pertnode, size_t pertvar, xinfo& xi, int* L, int* U)
     pertnode->r->ru(pertvar,U);
   }
 }
+//--------------------------------------------------
+//get sufficients stats for all bottom nodes
+struct AllSuffWorker: public Worker
+{
+	// -------------------
+	// Inputs
+	// -------------------
+	tree& x;
+	xinfo& xi;
+	dinfo& di;
+	size_t nb;
+	std::map<tree::tree_cp,size_t> bnmap;
+	double* weight;
+
+	// -------------------
+	// Internal State
+	// -------------------
+	double n;
+	double sy;
+	double n0;
+
+	std::vector<sinfo> sv_tmp;
+	double *xx;//current x
+	double y;  //current y
+	size_t ni; //the  index into vector of the current bottom node
+
+
+	AllSuffWorker(tree& x,
+								xinfo& xi,
+								dinfo& di,
+								std::map<tree::tree_cp,size_t> bnmap,
+								size_t nb,
+								double* weight):x(x),xi(xi),di(di),nb(nb),bnmap(bnmap),weight(weight) {
+		n=0.0;
+		sy=0.0;
+		n0=0.0;
+		sv_tmp.resize(nb);
+	}
+
+	AllSuffWorker(const AllSuffWorker& asw, Split):x(asw.x),xi(asw.xi),di(asw.di),nb(asw.nb),bnmap(asw.bnmap),weight(asw.weight) {
+		n=0.0;
+		sy=0.0;
+		n0=0.0;
+		sv_tmp.resize(nb);
+	}
+
+	void operator()(std::size_t begin, std::size_t end){
+		for(size_t i=begin;i<end;i++) {
+			xx = di.x + i*di.p;
+			y=di.y[i]; // @peter I suspect that di.y is the Rj, this trees residual thing
+			
+			ni = bnmap[x.bn(xx,xi)];
+
+			sv_tmp[ni].n0 += 1;
+			sv_tmp[ni].n += weight[i];
+			sv_tmp[ni].sy += weight[i]*y;
+
+		}
+	}
+	void join(const AllSuffWorker& asw){
+		for(size_t i=0; i!=nb; i++){
+			sv_tmp[i].n0  += asw.sv_tmp[i].n0;  
+			sv_tmp[i].n   += asw.sv_tmp[i].n;
+			sv_tmp[i].sy  += asw.sv_tmp[i].sy; 
+		}
+	}
+
+
+};
+
+
+
 
 
 //--------------------------------------------------
@@ -223,24 +297,15 @@ void allsuff(tree& x,
 	// It seems like it's using a tree defined by x, with node xi
 	// to calculate stuff from data on di
 	// 
-	for(size_t i=0;i<di.n;i++) {
-		xx = di.x + i*di.p;
-		y=di.y[i]; // @peter I suspect that di.y is the Rj, this trees residual thing
-		
-		tbn = x.bn(xx,xi); // gets the bottom node for xx from xi
-		ni = bnmap[tbn];
-		
-		/*
-		++(sv[ni].n);
-		sv[ni].sy += y;
-		sv[ni].sy2 += y*y;
-		*/
 
-	sv[ni].n0 += 1;
-    sv[ni].n += weight[i];
-    sv[ni].sy += weight[i]*y;
-	sv[ni].sy2 += weight[i]*y*y;
+	AllSuffWorker asw(x,xi,di,bnmap,nb,weight);
 
+	parallelReduce(0, di.n, asw);
+
+	for(size_t i=0; i!=nb; i++){
+			sv[i].n0  += asw.sv_tmp[i].n0;  
+			sv[i].n   += asw.sv_tmp[i].n;
+			sv[i].sy  += asw.sv_tmp[i].sy; 
 	}
 }
 
@@ -454,57 +519,222 @@ void MPIslaveallsuff(tree& x, xinfo& xi, dinfo& di, tree::npv& bnv)
 //--------------------------------------------------
 //get sufficient stats for children (v,c) of node nx in tree x
 //n = sum_i phi_i, sumy = \sum \phi_iy_i, sumy^2 \sum \phi_iy_i^2
-void getsuff(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
+
+//  Is is probably this get suff that matters
+// getsuff(x,nx->getl(),nx->getr(),xi,di,phi,sl,sr)
+struct GetSuffBirthWorker: public Worker
 {
-  double *xx;//current x
-	double y;  //current y
-	sl.n=0;sl.sy=0.0;sl.sy2=0.0;sl.n0=0;
-	sr.n=0;sr.sy=0.0;sr.sy2=0.0;sr.n0=0;
-	
-	for(size_t i=0;i<di.n;i++) {
+// -------------------
+// Inputs
+// -------------------
+tree& x;
+tree::tree_cp nx;
+size_t v;
+size_t c;
+xinfo& xi;
+dinfo& di;
+double* phi;
+
+// -------------------
+// Internal State
+// -------------------
+double l_n;
+double l_sy;
+double l_n0;
+
+double r_n;
+double r_sy;
+double r_n0;
+
+double *xx;//current x
+double y;  //current y
+
+// -------------------
+// Constructors
+// -------------------
+// Standard Constructor
+GetSuffBirthWorker(tree& x,
+							tree::tree_cp nx,
+							size_t v,
+							size_t c,
+							xinfo& xi,
+							dinfo& di,
+							double* phi):x(x),nx(nx),v(v),c(c),xi(xi),di(di),phi(phi) {
+
+    l_n=0.0;
+	l_sy=0.0;
+	l_n0=0.0;
+
+	r_n=0.0;
+	r_sy=0.0;
+	r_n0=0.0;
+} 
+// Splitting Constructor
+GetSuffBirthWorker(const GetSuffBirthWorker& gsw, Split):x(gsw.x),nx(gsw.nx),v(gsw.v),c(gsw.c),xi(gsw.xi),di(gsw.di),phi(gsw.phi) {
+
+	l_n=0.0;
+	l_sy=0.0;
+	l_n0=0.0;
+
+	r_n=0.0;
+	r_sy=0.0;
+	r_n0=0.0;
+} 
+
+void operator()(std::size_t begin, std::size_t end){
+	for(size_t i=begin;i<end;i++) {
 		xx = di.x + i*di.p;
 		if(nx==x.bn(xx,xi)) { //does the bottom node = xx's bottom node
 			y = di.y[i];
 			if(xx[v] < xi[v][c]) {
-        		sl.n0 += 1;
-				sl.n += phi[i];
-				sl.sy += phi[i]*y;
-				sl.sy2 += phi[i]*y*y;
+        		l_n0 += 1;
+				l_n += phi[i];
+				l_sy += phi[i]*y;
 			} else {
-       			sr.n0 += 1;
-				sr.n += phi[i];
-				sr.sy += phi[i]*y;
-				sr.sy2 += phi[i]*y*y;
+       			r_n0 += 1;
+				r_n += phi[i];
+				r_sy += phi[i]*y;
 			}
 		}
 	}
 }
 
-//--------------------------------------------------
-//get sufficient stats for pair of bottom children nl(left) and nr(right) in tree x
-void getsuff(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
+void join(const GetSuffBirthWorker& gsw){
+	l_n   += gsw.l_n;
+	l_sy  += gsw.l_sy;
+	l_n0  += gsw.l_n0;
+
+	r_n   += gsw.r_n;
+	r_sy  += gsw.r_sy;
+	r_n0  += gsw.r_n0;
+}
+
+}; // End Get Suff Birth Worker
+
+
+// birth get suff 
+void getsuffBirth(tree& x, tree::tree_cp nx, size_t v, size_t c, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
 {
-  	double *xx;//current x
-	double y;  //current y
-	sl.n=0;sl.sy=0.0;sl.sy2=0.0;
-	sr.n=0;sr.sy=0.0;sr.sy2=0.0;
+	GetSuffBirthWorker gsw(x,nx,v,c,xi,di,phi);
+
+	parallelReduce(0, di.n, gsw);
+
+	sl.n   = gsw.l_n;
+	sl.sy  = gsw.l_sy;
+	sl.n0  = gsw.l_n0;
+
+	sr.n   = gsw.r_n;
+	sr.sy  = gsw.r_sy;
+	sr.n0  = gsw.r_n0;
+
 	
-	for(size_t i=0;i<di.n;i++) {
+}
+
+// ----------------------------------------------------
+// Rcpp Parrell get suff worker
+struct GetSuffDeathWorker: public Worker
+{
+// -------------------
+// Inputs
+// -------------------
+tree& x;
+tree::tree_cp nl; 
+tree::tree_cp nr; 
+xinfo& xi; 
+dinfo& di; 
+double* phi; 
+
+// -------------------
+// Internal State
+// -------------------
+double l_n;
+double l_sy;
+double l_n0;
+
+double r_n;
+double r_sy;
+double r_n0;
+
+double *xx;//current x
+double y;  //current y
+
+// -------------------
+// Constructors
+// -------------------
+// Standard Constructor
+GetSuffDeathWorker(tree& x,
+				   tree::tree_cp nl,
+                   tree::tree_cp nr,
+				   xinfo& xi,
+				   dinfo& di,
+				   double* phi):x(x),nl(nl),nr(nr),xi(xi),di(di),phi(phi) {
+
+    l_n=0.0;
+	l_sy=0.0;
+	l_n0=0.0;
+
+	r_n=0.0;
+	r_sy=0.0;
+	r_n0=0.0;
+} 
+// Splitting Constructor
+GetSuffDeathWorker(const GetSuffDeathWorker& gsw, Split):x(gsw.x),nl(gsw.nl),nr(gsw.nr),xi(gsw.xi),di(gsw.di),phi(gsw.phi){
+
+	l_n=0.0;
+	l_sy=0.0;
+	l_n0=0.0;
+
+	r_n=0.0;
+	r_sy=0.0;
+	r_n0=0.0;
+} 
+
+void operator()(std::size_t begin, std::size_t end){
+	for(size_t i=begin;i<end;i++) {
 		xx = di.x + i*di.p;
 		tree::tree_cp bn = x.bn(xx,xi);
+        y = di.y[i];
+        
 		if(bn==nl) {
-			y = di.y[i];
-			sl.n += phi[i];
-			sl.sy += phi[i]*y;
-			sl.sy2 += phi[i]*y*y;
+			l_n0 += 1;
+			l_n  += phi[i];
+			l_sy += phi[i]*y;
 		}
 		if(bn==nr) {
-			y = di.y[i];
-			sr.n += phi[i];
-			sr.sy += phi[i]*y;
-			sr.sy2 += phi[i]*y*y;
+			r_n0 += 1;
+			r_n  += phi[i];
+			r_sy += phi[i]*y;
 		}
 	}
+}
+
+void join(const GetSuffDeathWorker& gsw){
+	l_n   += gsw.l_n;
+	l_sy  += gsw.l_sy;
+	l_n0  += gsw.l_n0;
+
+	r_n   += gsw.r_n;
+	r_sy  += gsw.r_sy;
+	r_n0  += gsw.r_n0;
+}
+
+}; // End Get Suff Death Worker
+//--------------------------------------------------
+//get sufficient stats for pair of bottom children nl(left) and nr(right) in tree x
+// Death get suff
+void getsuffDeath(tree& x, tree::tree_cp nl, tree::tree_cp nr, xinfo& xi, dinfo& di, double* phi, sinfo& sl, sinfo& sr)
+{
+	GetSuffDeathWorker gsw(x,nl,nr,xi,di,phi);
+	parallelReduce(0, di.n, gsw);
+
+	sl.n   = gsw.l_n;
+	sl.sy  = gsw.l_sy;
+	sl.n0  = gsw.l_n0;
+
+	sr.n   = gsw.r_n;
+	sr.sy  = gsw.r_sy;
+	sr.n0  = gsw.r_n0;
+
 }
 #ifdef MPIBART
 //MPI version of get sufficient stats - this is the master code
@@ -748,7 +978,7 @@ void MPIslavegetsuff(tree& x, xinfo& xi, dinfo& di)
 #endif
 //--------------------------------------------------
 //log of the integrated likelihood
-double lil(double n, double sy, double sy2, double sigma, double tau)
+double lil(double n, double sy, double sigma, double tau)
 {
   double d = 1/(tau*tau) + n;// n is \sum phi_i for het
   
@@ -756,23 +986,91 @@ double lil(double n, double sy, double sy2, double sigma, double tau)
   out += 0.5*sy*sy/d;
   return out;
 }
+
+struct FitWorker : public Worker
+{
+   // source arguments
+  	tree& t; // tree
+	xinfo& xi; // split rules from xinfo
+	dinfo& di; // number of observations from dinfo
+	// internal args
+	double *xx;
+	tree::tree_cp bn;
+	std::vector<double>& fv; // node means
+
+   
+   // constructing the constructor
+   FitWorker(tree& t, 
+   	   		  xinfo& xi, 
+	   		    dinfo& di, 
+	   		 		std::vector<double>& fv) 
+      		 : t(t), xi(xi), di(di), fv(fv){}
+   
+   // declaring function
+    void operator()(std::size_t begin, std::size_t end) {
+
+		for(size_t i=begin;i<end;i++) {
+			xx = di.x + i*di.p;
+			bn = t.bn(xx,xi);
+			fv[i] = bn->getm();
+		}
+   }
+};
+
+// struct FitWorker2 : public Worker
+// {
+//    // source arguments
+//   double* fv; // node means
+// 	dinfo& di; // number of observations from dinfo
+// 	xinfo& xi; // split rules from xinfo
+// 	tree& t; // tree
+
+// 	// internal args
+// 	double *xx;
+// 	tree::tree_cp bn;
+   
+//    // constructing the constructor
+//    FitWorker2(tree& t, 
+//    	   		 	  xinfo& xi, 
+// 	   		 			dinfo& di, 
+// 	   		 			double* fv) 
+//       		 		: t(t), xi(xi), di(di), fv(fv){}
+   
+//    // declaring function
+//     void operator()(std::size_t begin, std::size_t end) {
+
+// 		for(size_t i=begin;i<end;i++) {
+// 			xx = di.x + i*di.p;
+// 			bn = t.bn(xx,xi);
+// 			fv[i] = bn->getm();
+// 		}
+//    }
+// };
+
 //--------------------------------------------------
 //fit
 void fit(tree& t, xinfo& xi, dinfo& di, std::vector<double>& fv)
 {
-	double *xx;
-	tree::tree_cp bn;
-	fv.resize(di.n);
-	for(size_t i=0;i<di.n;i++) {
-		xx = di.x + i*di.p;
-		bn = t.bn(xx,xi);
-		fv[i] = bn->getm();
-	}
+
+  fv.resize(di.n);
+
+  // FitWorker functor (pass inputs)
+  FitWorker fir(t, xi, di, fv);
+  
+  // call parallelFor to do the work
+  parallelFor(0, di.n, fir);
 }
+
 //--------------------------------------------------
 //fit
 void fit(tree& t, xinfo& xi, dinfo& di, double* fv)
 {
+  // // FitWorker functor (pass inputs)
+  // FitWorker2 fir(t, xi, di, fv);
+  
+  // // call parallelFor to do the work
+  // parallelFor(0, di.n, fir);
+
 	double *xx;
 	tree::tree_cp bn;
 	for(size_t i=0;i<di.n;i++) {
@@ -780,6 +1078,7 @@ void fit(tree& t, xinfo& xi, dinfo& di, double* fv)
 		bn = t.bn(xx,xi);
 		fv[i] = bn->getm();
 	}
+
 }
 
 //--------------------------------------------------

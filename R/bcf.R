@@ -1,3 +1,9 @@
+#' @useDynLib bcf2
+#' @import Rcpp RcppArmadillo RcppParallel
+#' @importFrom stats approxfun lm qchisq quantile sd
+"_PACKAGE"
+Rcpp::loadModule(module = "TreeSamples", TRUE)
+
 .ident <- function(...){
 # courtesy https://stackoverflow.com/questions/19966515/how-do-i-test-if-three-variables-are-equal-r
   args <- c(...)
@@ -29,6 +35,25 @@
   return(ret)
 }
 
+.get_chain_tree_files = function(tree_path, chain_id){
+  out <- list("con_trees" = paste0(tree_path,'/',"con_trees.", chain_id, ".txt"), 
+              "mod_trees" = paste0(tree_path,'/',"mod_trees.", chain_id, ".txt"))
+  
+  return(out) 
+}
+
+.get_do_type = function(n_chain_clusters){
+  if(n_chain_clusters>1){
+    cl <- parallel::makeCluster(n_chain_clusters)
+    doParallel::registerDoParallel(cl)
+    `%doType%`  <- foreach::`%dopar%`
+  } else {
+    `%doType%`  <- foreach::`%do%`
+  }
+  
+  return(`%doType%`)
+}
+
 #' Fit Bayesian Causal Forests
 #'
 #' @references Hahn, Murray, and Carvalho(2017). Bayesian regression tree models for causal inference: regularization, confounding, and heterogeneous effects.
@@ -58,8 +83,12 @@
 #' @param z Treatment variable
 #' @param x_control Design matrix for the "prognostic" function mu(x)
 #' @param x_moderate Design matrix for the covariate-dependent treatment effects tau(x)
-#' @param pihat Length n estimates of
+#' @param pihat Length n estimates of propensity score
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
+#' @param random_seed A random seed passed to R's set.seed
+#' @param n_chains  An optional integer of the number of MCMC chains to run
+#' @param n_chain_clusters An optional integer of the number of clusters to run your MCMC chains on
+#' @param n_threads An optional integer of the number of threads to parallelize within chain bcf operations on
 #' @param nburn Number of burn-in MCMC iterations
 #' @param nsim Number of MCMC iterations to save after burn-in
 #' @param nthin Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.
@@ -72,6 +101,7 @@
 #' @param sd_moderate SD(tau(x)) marginally at any covariate value (or its prior median if use_tauscale=TRUE)
 #' @param base_moderate Base for tree prior on tau(x) trees (see details)
 #' @param power_moderate Power for the tree prior on tau(x) trees (see details)
+#' @param save_tree_directory Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory.
 #' @param nu Degrees of freedom in the chisq prior on \eqn{sigma^2}
 #' @param lambda Scale parameter in the chisq prior on \eqn{sigma^2}
 #' @param sigq Calibration quantile for the chisq prior on \eqn{sigma^2}
@@ -167,10 +197,14 @@
 #'}
 #'
 #' @useDynLib bcf2
-#' @import Rcpp
-#' @importFrom stats approxfun lm qchisq quantile sd
+#' @import Rcpp RcppArmadillo RcppParallel
+#' @importFrom stats approxfun lm qchisq quantile sd 
 #' @export
-bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
+bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, 
+                random_seed = sample.int(.Machine$integer.max, 1),
+                n_chains         = 4,
+                n_chain_clusters = 2,
+                n_threads = max(RcppParallel::defaultNumThreads()/2,1),
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
@@ -180,9 +214,12 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 sd_moderate = sd(y),
                 base_moderate = 0.25,
                 power_moderate = 3,
+                save_tree_directory = '..',
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
 ) {
+  library(coda)
+  
   
   if(is.null(w)){
     w <- matrix(1, ncol = 1, nrow = length(y))
@@ -212,14 +249,12 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   if(any(is.na(x_control))) stop("Missing values in x_control")
   if(any(is.na(x_moderate))) stop("Missing values in x_moderate")
   if(any(is.na(pihat))) stop("Missing values in pihat")
-
   if(any(!is.finite(y))) stop("Non-numeric values in y")
   if(any(!is.finite(z))) stop("Non-numeric values in z")
   if(any(!is.finite(w))) stop("Non-numeric values in w")
   if(any(!is.finite(x_control))) stop("Non-numeric values in x_control")
   if(any(!is.finite(x_moderate))) stop("Non-numeric values in x_moderate")
   if(any(!is.finite(pihat))) stop("Non-numeric values in pihat")
-
   if(!all(sort(unique(z)) == c(0,1))) stop("z must be a vector of 0's and 1's, with at least one of each")
 
   if(length(unique(y))<5) warning("y appears to be discrete")
@@ -235,6 +270,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   ###
   x_c = matrix(x_control, ncol=ncol(x_control))
   x_m = matrix(x_moderate, ncol=ncol(x_moderate))
+
   if(include_pi=="both" | include_pi=="control") {
     x_c = cbind(x_control, pihat)
   }
@@ -245,7 +281,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   cutpoint_list_m = lapply(1:ncol(x_m), function(i) .cp_quantile(x_m[,i]))
 
   sdy = sqrt(Hmisc::wtd.var(y, w))
-  muy = weighted.mean(y, w)
+  muy = stats::weighted.mean(y, w)
   yscale = (y-muy)/sdy
 
 
@@ -262,52 +298,427 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
   perm = order(z, decreasing=TRUE)
 
-  cat("Calling bcfoverparRcppClean From R\n")
-  fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], w[perm],
-                        t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), t(x_m[1,,drop=FALSE]),
-                        cutpoint_list_c, cutpoint_list_m,
-                        random_des = matrix(1),
-                        random_var = matrix(1),
-                        random_var_ix = matrix(1),
-                        random_var_df = 3,
-                        nburn, nsim, nthin,
-                        ntree_moderate, ntree_control, lambda, nu,
-                        con_sd = ifelse(abs(2*sdy - sd_control)<1e-6, 2, sd_control/sdy),
-                        mod_sd = ifelse(abs(sdy - sd_moderate)<1e-6, 1, sd_moderate/sdy)/ifelse(use_tauscale,0.674,1), # if HN make sd_moderate the prior median
-                        base_moderate, power_moderate, base_control, power_control,
-                        "tmp", status_interval = update_interval,
-                        use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
-  cat(" bcfoverparRcppClean returned to R\n")
+  con_sd = ifelse(abs(2*sdy - sd_control)<1e-6, 2, sd_control/sdy)
+  mod_sd = ifelse(abs(sdy - sd_moderate)<1e-6, 1, sd_moderate/sdy)/ifelse(use_tauscale,0.674,1) # if HN make sd_moderate the prior median
+
+  RcppParallel::setThreadOptions(numThreads=n_threads)
+  
+  `%doType%` = .get_do_type(n_chain_clusters)
+  
+  chain_out <- foreach::foreach(iChain=1:n_chains) %doType% {
+    
+    this_seed = random_seed + iChain - 1
+    
+    cat("Calling bcfoverparRcppClean From R\n")
+    set.seed(this_seed)
+    
+    tree_files = .get_chain_tree_files(save_tree_directory, iChain)
+    
+    print(tree_files)
+    
+    fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], w[perm],
+                                 t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), 
+                                 cutpoint_list_c, cutpoint_list_m,
+                                 random_des = matrix(1),
+                                 random_var = matrix(1),
+                                 random_var_ix = matrix(1),
+                                 random_var_df = 3,
+                                 nburn, nsim, nthin,
+                                 ntree_moderate, ntree_control, lambda, nu,
+                                 con_sd = con_sd,
+                                 mod_sd = mod_sd, # if HN make sd_moderate the prior median
+                                 base_moderate, power_moderate, base_control, power_control,
+                                 tree_files$con_trees, tree_files$mod_trees, status_interval = update_interval,
+                                 use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
+    
+    cat("bcfoverparRcppClean returned to R\n")
+    
+
+    ac = fitbcf$m_post[,order(perm)]
+
+    Tm = fitbcf$b_post[,order(perm)] * (1.0/ (fitbcf$b1 - fitbcf$b0))
+
+    Tc = ac * (1.0/fitbcf$msd) 
+
+    tau_post = sdy*fitbcf$b_post[,order(perm)]
+
+    mu_post  = muy + sdy*(Tc*fitbcf$msd + Tm*fitbcf$b0)
+    
+    list(sigma = sdy*fitbcf$sigma,
+         yhat = muy + sdy*fitbcf$yhat_post[,order(perm)],
+         sdy = sdy,
+         con_sd = con_sd,
+         mod_sd = mod_sd,
+         muy = muy,
+         mu  = mu_post,
+         tau = tau_post,
+         mu_scale = fitbcf$msd,
+         tau_scale = fitbcf$bsd,
+         b0 = fitbcf$b0,
+         b1 = fitbcf$b1,
+         perm = perm,
+         include_pi = include_pi,
+         random_seed=this_seed
+    )
+    
+  }
 
 
-  #B = drop(fit$post_B)
-  #B0 = fit$b0
-  #EYs = fit$post_yhat
+  all_sigma = c()
+  all_mu_scale = c()
+  all_tau_scale = c()
 
-  #return(List::create(_["m_post"] = m_post, _["b_post"] = b_post, _["b_est_post"] = b_est_post,
-  #                     _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post,
-  #                     _["gamma"] = gamma_post, _["random_var_post"] = random_var_post
+  all_b0 = c()
+  all_b1 = c()
+  
+  all_yhat = c()
+  all_mu   = c()
+  all_tau  = c()
+  
+  chain_list=list()
 
-  m_post = muy + sdy*fitbcf$m_post[,order(perm)]
-  tau_post = sdy*fitbcf$b_post[,order(perm)]
-  #yhat_post = muy + sdy*fitbcf$m_post
-  #yhat_post[,z==1] = yhat_post[,z==1] + fitbcf$b_post
-  #yhat_post = (muy + sdy*fitbcf$m_post)
-  #yhat_post[,z[perm]==1] = yhat_post[,z[perm]==1] + sdy*fitbcf$b_post
-  #yhat_post = yhat_post[,order(perm)]
+  n_iter = length(chain_out[[1]]$sigma)
+  
+  
+  for (iChain in 1:n_chains){
+    sigma        <- chain_out[[iChain]]$sigma
+    mu_scale     <- chain_out[[iChain]]$mu_scale
+    tau_scale    <- chain_out[[iChain]]$tau_scale
+    
+    b0          <- chain_out[[iChain]]$b0
+    b1          <- chain_out[[iChain]]$b1
 
-  list(sigma = sdy*fitbcf$sigma,
-       yhat = muy + sdy*fitbcf$yhat_post[,order(perm)],
-#       mu  = m_post,
-       tau = tau_post,
-       mu_scale = fitbcf$msd*sdy,
-       tau_scale = fitbcf$bsd*sdy,
-       perm = perm
-  )
+    yhat         <- chain_out[[iChain]]$yhat
+    tau          <- chain_out[[iChain]]$tau
+    mu           <- chain_out[[iChain]]$mu
 
+    # -----------------------------    
+    # Support Old Output
+    # -----------------------------
+    all_sigma       = c(all_sigma,     sigma)
+    all_mu_scale    = c(all_mu_scale,  mu_scale)
+    all_tau_scale   = c(all_tau_scale, tau_scale)
+    all_b0 = c(all_b0, b0)
+    all_b1 = c(all_b1, b1)
+
+    all_yhat = rbind(all_yhat, yhat)
+    all_mu   = rbind(all_mu,   mu)
+    all_tau  = rbind(all_tau,  tau)
+
+    # -----------------------------    
+    # Make the MCMC Object
+    # -----------------------------
+
+    scalar_df <- data.frame("sigma"     = sigma,
+                            "tau_bar"   = matrixStats::rowWeightedMeans(tau, w),
+                            "mu_bar"    = matrixStats::rowWeightedMeans(mu, w),
+                            "yhat_bar"  = matrixStats::rowWeightedMeans(yhat, w),
+                            "mu_scale"  = mu_scale, 
+                            # "tau_scale" = tau_scale,
+                            "b0"  = b0, 
+                            "b1"  = b1)
+    
+    # y_df <- as.data.frame(chain$yhat)
+    # colnames(y_df) <- paste0('y',1:ncol(y_df))
+    # 
+    # mu_df <- as.data.frame(chain$mu)
+    # colnames(mu_df) <- paste0('mu',1:ncol(mu_df))
+    # 
+    # tau_df <- as.data.frame(chain$tau)
+    # colnames(tau_df) <- paste0('tau',1:ncol(tau_df))
+    
+    chain_list[[iChain]] <- coda::as.mcmc(scalar_df)
+    # -----------------------------    
+    # Sanity Check Constants Accross Chains
+    # -----------------------------
+    if(chain_out[[iChain]]$sdy        != chain_out[[1]]$sdy)        stop("sdy not consistent between chains for no reason")
+    if(chain_out[[iChain]]$con_sd     != chain_out[[1]]$con_sd)     stop("con_sd not consistent between chains for no reason")
+    if(chain_out[[iChain]]$mod_sd     != chain_out[[1]]$mod_sd)     stop("mod_sd not consistent between chains for no reason")
+    if(chain_out[[iChain]]$muy        != chain_out[[1]]$muy)        stop("muy not consistent between chains for no reason")
+    if(chain_out[[iChain]]$include_pi != chain_out[[1]]$include_pi) stop("include_pi not consistent between chains for no reason")
+    if(any(chain_out[[iChain]]$perm   != chain_out[[1]]$perm))      stop("perm not consistent between chains for no reason")
+  }
+
+  list(sigma = all_sigma,
+       yhat = all_yhat,
+       sdy = chain_out[[1]]$sdy,
+       muy = chain_out[[1]]$muy,
+       mu  = all_mu,
+       tau = all_tau,
+       mu_scale = all_mu_scale,
+       tau_scale = all_tau_scale,
+       b0 = all_b0,
+       b1 = all_b1,
+       perm = perm,
+       include_pi = chain_out[[1]]$include_pi,
+       random_seed = chain_out[[1]]$random_seed,
+       coda_chains = coda::as.mcmc.list(chain_list),
+       raw_chains = chain_out)
 }
 
+#' Print posterior summary stats and MCMC diagnostics for a fitted BCF object
+#' This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
+#' It includes: posterior summary stats, effective sample sizes for key parameters, 
+#' and  Gelman and Rubin's convergence diagnostics for key parameters
+#' @param bcf_out output from a BCF predict run
+#' @examples
+#'\donttest{
+#'
+#' # data generating process
+#' p = 3 #two control variables and one moderator
+#' n = 250
+#' 
+#' set.seed(1)
+#'
+#' x = matrix(rnorm(n*p), nrow=n)
+#'
+#' # create targeted selection
+#' q = -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2]))
+#'
+#' # generate treatment variable
+#' pi = pnorm(q)
+#' z = rbinom(n,1,pi)
+#'
+#' # tau is the true (homogeneous) treatment effect
+#' tau = (0.5*(x[,3] > -3/4) + 0.25*(x[,3] > 0) + 0.25*(x[,3]>3/4))
+#'
+#' # generate the response using q, tau and z
+#' mu = (q + tau*z)
+#'
+#' # set the noise level relative to the expected mean function of Y
+#' sigma = diff(range(q + tau*pi))/8
+#'
+#' # draw the response variable with additive error
+#' y = mu + sigma*rnorm(n)
+#'
+#' # If you didn't know pi, you would estimate it here
+#' pihat = pnorm(q)
+#'
+#' bcf_fit = bcf(y, z, x, x, pihat, nburn=2000, nsim=2000)
+#'
+#' # Get model fit diagnostics
+#' summarise_bcf(bcf_fit)
+#'
+#'}
 #' @export
-verify_install <- function() {
-    cat("BCF2 Installed Correctly\n")
+summarise_bcf <- function(bcf_out, 
+                         params_2_summarise = c('sigma','tau_bar','mu_bar','yhat_bar') ){
+  library(coda)
+
+  chains_2_summarise <- bcf_out$coda_chains[,params_2_summarise]
+
+  message("Summary statistics for each Markov Chain Monte Carlo run")
+  print(summary(chains_2_summarise))
+
+  cat("\n----\n\n")
+
+
+  message("Effective sample size for each parameter")
+  print(effectiveSize(chains_2_summarise))
+  cat("\n----\n\n")
+  
+  
+  if (length(length(chains_2_summarise)) > 1){
+    message("Gelman and Rubin's convergence diagnostic for each parameter")
+    print(gelman.diag(chains_2_summarise))
+    cat("\n----\n\n")
+    
+  }
+  
+}
+
+
+#' Predict from a fitted BCF object
+#' 
+#' This function takes in an existing BCF model fit and uses it to predict estimates for new data.
+#' It is important to note that this function requires that you indicate where the trees from the model fit are saved.
+#' You can do so using the save_tree_directory argument in bcf(). Otherwise, they will be saved in the working directory.
+#' The bcf() function automatically saves those in the same directory as the 
+#' @param bcf_out output from a BCF predict run
+#' @param x_predict_control matrix of covariates for the "prognostic" function mu(x) for predictions (optional)
+#' @param x_predict_moderate matrix of covariates for the covariate-dependent treatment effects tau(x) for predictions (optional)
+#' @param z_pred Treatment variable for predictions (optional except if x_pre is not empty)
+#' @param pi_pred propensity score for prediction
+#' @param save_tree_directory directory where the trees have been saved
+#' @param n_chain_clusters An optional integer of the number of clusters to run your MCMC chains on
+#' @examples
+#'\donttest{
+#'
+#' # data generating process
+#' p = 3 #two control variables and one moderator
+#' n = 250
+#'
+#' x = matrix(rnorm(n*p), nrow=n)
+#'
+#' # create targeted selection
+#' q = -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2]))
+#'
+#' # generate treatment variable
+#' pi = pnorm(q)
+#' z = rbinom(n,1,pi)
+#'
+#' # tau is the true (homogeneous) treatment effect
+#' tau = (0.5*(x[,3] > -3/4) + 0.25*(x[,3] > 0) + 0.25*(x[,3]>3/4))
+#'
+#' # generate the response using q, tau and z
+#' mu = (q + tau*z)
+#'
+#' # set the noise level relative to the expected mean function of Y
+#' sigma = diff(range(q + tau*pi))/8
+#'
+#' # draw the response variable with additive error
+#' y = mu + sigma*rnorm(n)
+#'
+#' # If you didn't know pi, you would estimate it here
+#' pihat = pnorm(q)
+#'
+#' bcf_fit = bcf2::bcf(y               = y,
+#'                     z               = z,
+#'                     x_control       = x,
+#'                     x_moderate      = x,
+#'                     pihat           = pihat,
+#'                     nburn           = n_burn,
+#'                     nsim            = n_sim,
+#'                     n_chains        = 2,
+#'                     update_interval = 1,
+#'                     save_tree_directory = './trees')
+#'
+#' # Predict using new data
+#' 
+#' x_pred = matrix(rnorm(n*p), nrow=n)
+#' 
+#' pred_out = bcf2::predict(bcf_out=bcf_fit,
+#'                         x_predict_control=x_pred,
+#'                         x_predict_moderate=x_pred,
+#'                         pi_pred=pihat,
+#'                         z_pred=z,
+#'                         save_tree_directory = './trees')
+#'
+#'}
+#' @export
+predict <- function(bcf_out, 
+                    x_predict_control,
+                    x_predict_moderate,
+                    pi_pred,
+                    z_pred, 
+                    save_tree_directory,
+                    n_chain_clusters=2) {
+                        
+    if(any(is.na(x_predict_moderate))) stop("Missing values in x_predict_moderate")
+    if(any(is.na(x_predict_control))) stop("Missing values in x_predict_control")
+    if(any(is.na(z_pred))) stop("Missing values in z_pred")
+    if(any(!is.finite(x_predict_moderate))) stop("Non-numeric values in x_pred_moderate")
+    if(any(!is.finite(x_predict_control))) stop("Non-numeric values in x_pred_control")
+    if(any(!is.finite(pi_pred))) stop("Non-numeric values in pi_pred")
+    if(!all(sort(unique(z_pred)) == c(0,1))) stop("z_pred must be a vector of 0's and 1's, with at least one of each")
+
+    if((is.null(x_predict_moderate) & !is.null(x_predict_control)) | (!is.null(x_predict_moderate) & is.null(x_predict_control))) {
+        stop("If you want to predict, you need to add values to both x_pred_control and x_pred_moderate")
+    }
+
+    pi_pred = as.matrix(pi_pred)
+    if(!.ident(length(z_pred),
+                nrow(x_predict_moderate),
+                nrow(x_predict_control),
+                nrow(pi_pred))
+        ) {
+        stop("Data size mismatch. The following should all be equal:
+            length(z_pred): ", length(z_pred), "\n",
+            "nrow(x_pred_moderate): ", nrow(x_predict_moderate), "\n",
+            "nrow(x_pred_control): ", nrow(x_predict_control), "\n",
+            "nrow(pi_pred): ", nrow(pi_pred), "\n"
+        )
+    }
+
+
+    cat("Initializing BCF Prediction\n")
+    x_pm = matrix(x_predict_moderate, ncol=ncol(x_predict_moderate))
+    x_pc = matrix(x_predict_control, ncol=ncol(x_predict_control))
+
+    if(bcf_out$include_pi=="both" | bcf_out$include_pi=="control") {
+        x_pc = cbind(x_predict_control, pi_pred)
+    }
+    if(bcf_out$include_pi=="both" | bcf_out$include_pi=="moderate") {
+        x_pm = cbind(x_predict_moderate, pi_pred)
+    }
+
+
+    cat("Starting Prediction \n")
+
+    n_chains = length(bcf_out$coda_chains)
+    
+    `%doType%` = .get_do_type(n_chain_clusters)
+    
+    chain_out <- foreach::foreach(iChain=1:n_chains) %doType% {
+      
+      tree_files = .get_chain_tree_files(save_tree_directory, iChain)
+
+      cat("Starting to Predict Chain ", iChain, "\n")
+      
+      mods = TreeSamples$new()
+      mods$load(tree_files$mod_trees)
+      Tm = mods$predict(t(x_pm))
+      
+      cons = TreeSamples$new()
+      cons$load(tree_files$con_trees)
+      Tc = cons$predict(t(x_pc))
+      
+      
+      list(Tm = Tm,
+           Tc = Tc)
+    }
+    
+    all_yhat = c()
+    all_mu   = c()
+    all_tau  = c()
+    
+    chain_list=list()
+
+    muy = bcf_out$muy
+      
+    sdy = bcf_out$sdy
+    
+    for (iChain in 1:n_chains){
+      
+      
+        # Extract Chain Specific Information
+    
+        Tm = chain_out[[iChain]]$Tm
+        Tc = chain_out[[iChain]]$Tc
+        
+        this_chain_bcf_out = bcf_out$raw_chains[[iChain]]
+        
+        b1 = this_chain_bcf_out$b1
+        b0 = this_chain_bcf_out$b0
+        mu_scale = this_chain_bcf_out$mu_scale
+        
+
+
+        # Calculate, tau, y, and mu
+
+        
+        mu  = muy + sdy*(Tc*mu_scale + Tm*b0)
+        tau = sdy*(b1 - b0)*Tm
+        yhat = mu + t(t(tau)*z_pred)
+        
+        
+        # Package Output up
+        all_yhat = rbind(all_yhat, yhat)
+        all_mu   = rbind(all_mu,   mu)
+        all_tau  = rbind(all_tau,  tau)
+        
+        
+        
+        scalar_df <- data.frame("tau_bar"   = matrixStats::rowWeightedMeans(tau, w=NULL),
+                                "mu_bar"    = matrixStats::rowWeightedMeans(mu, w=NULL),
+                                "yhat_bar"  = matrixStats::rowWeightedMeans(yhat, w=NULL))
+
+        chain_list[[iChain]] <- coda::as.mcmc(scalar_df)
+    }
+
+
+    list(tau = all_tau,
+         mu = all_mu,
+         yhat = all_yhat,
+         coda_chains = coda::as.mcmc.list(chain_list))
 }

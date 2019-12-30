@@ -13,11 +13,11 @@
 #include "logging.h"
 
 using namespace Rcpp;
-
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wcomment"
-#pragma GCC diagnostic ignored "-Wformat"
-#pragma GCC diagnostic ignored "-Wsign-compare"
+// Rstudios check's suggest not ignoring these
+// #pragma GCC diagnostic ignored "-Wunused-parameter"
+// #pragma GCC diagnostic ignored "-Wcomment"
+// #pragma GCC diagnostic ignored "-Wformat"
+// #pragma GCC diagnostic ignored "-Wsign-compare"
 
 // y = m(x) + b(x)z + e, e~N(0, sigma^2_y
 
@@ -27,7 +27,7 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
-                  NumericVector x_con_, NumericVector x_mod_, NumericVector x_mod_est_,
+                  NumericVector x_con_, NumericVector x_mod_, 
                   List x_con_info_list, List x_mod_info_list, 
                   arma::mat random_des, //needs to come in with n rows no matter what(?)
                   arma::mat random_var, arma::mat random_var_ix, //random_var_ix*random_var = diag(Var(random effects))
@@ -39,7 +39,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
                   double mod_sd, // Var(b(x)) = mod_sd^2 marginally a priori (approx)
                   double con_alpha, double con_beta,
                   double mod_alpha, double mod_beta,
-                  CharacterVector treef_name_,
+                  CharacterVector treef_con_name_, CharacterVector treef_mod_name_,
                   int status_interval=100,
                   bool RJ= false, bool use_mscale=true, bool use_bscale=true, bool b_half_normal=true,
                   double trt_init = 1.0, bool verbose_sigma=false)
@@ -52,8 +52,11 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   if(randeff) Rcout << "Using random effects." << std::endl;
 
-  std::string treef_name = as<std::string>(treef_name_);
-  std::ofstream treef(treef_name.c_str());
+  std::string treef_con_name = as<std::string>(treef_con_name_);
+  std::ofstream treef_con(treef_con_name.c_str());
+
+  std::string treef_mod_name = as<std::string>(treef_mod_name_);
+  std::ofstream treef_mod(treef_mod_name.c_str());
 
   RNGScope scope;
   RNG gen; //this one random number generator is used in all draws
@@ -93,19 +96,20 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   std::vector<double> y; //storage for y
   double miny = INFINITY, maxy = -INFINITY;
   sinfo allys;       //sufficient stats for all of y, use to initialize the bart trees.
+  double allys_y2 = 0;
 
   for(NumericVector::iterator it=y_.begin(); it!=y_.end(); ++it) {
     y.push_back(*it);
     if(*it<miny) miny=*it;
     if(*it>maxy) maxy=*it;
     allys.sy += *it; // sum of y
-    allys.sy2 += (*it)*(*it); // sum of y^2
+    allys_y2 += (*it)*(*it); // sum of y^2
   }
   size_t n = y.size();
   allys.n = n;
 
   double ybar = allys.sy/n; //sample mean
-  double shat = sqrt((allys.sy2-n*ybar*ybar)/(n-1)); //sample standard deviation
+  double shat = sqrt((allys_y2-n*ybar*ybar)/(n-1)); //sample standard deviation
   /*****************************************************************************
   /* Read, format  weights 
   *****************************************************************************/
@@ -231,7 +235,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_con.p = p_con; 
   di_con.x = &x_con[0]; 
   di_con.y = r_con; //the y for each draw will be the residual
-  di_con.w = w;
 
   //--------------------------------------------------
   //dinfo for trt effect function b(x)
@@ -243,27 +246,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_mod.p=p_mod; 
   di_mod.x = &x_mod[0]; 
   di_mod.y = r_mod; //the y for each draw will be the residual
-  di_mod.w = w;
-
-  //--------------------------------------------------
-  //dinfo and design for trt effect function out of sample
-  //x for predictions
-  dinfo di_mod_est; //data information for prediction
-  std::vector<double> x_mod_est;     //stored like x
-  size_t n_mod_est;
-  //  if(x_mod_est_.size()) {
-  for(NumericVector::iterator it=x_mod_est_.begin(); it!=x_mod_est_.end(); ++it) {
-    x_mod_est.push_back(*it);
-  }
-  n_mod_est = x_mod_est.size()/p_mod;
-//  Rcout << "n_mod_est " << n_mod_est << std::endl;
-  if(x_mod_est.size() != n_mod_est*p_mod) stop("error, wrong number of elements in effect estimate data set\n");
-  //if(n_mod_est)
-  di_mod_est.n=n_mod_est; 
-  di_mod_est.p=p_mod; 
-  di_mod_est.x = &x_mod_est[0]; 
-  di_mod_est.y=0; //there are no y's!
-  di_mod_est.w = w;
 
 
   //  }
@@ -320,22 +302,31 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   NumericVector sigma_post(nd);
   NumericVector msd_post(nd);
   NumericVector bsd_post(nd);
+  NumericVector b0_post(nd);
+  NumericVector b1_post(nd);
   NumericMatrix m_post(nd,n);
   NumericMatrix yhat_post(nd,n);
   NumericMatrix b_post(nd,n);
-  NumericMatrix b_est_post(nd,n_mod_est);
   arma::mat gamma_post(nd,gamma.n_elem);
   arma::mat random_var_post(nd,random_var.n_elem);
 
   //  NumericMatrix spred2(nd,dip.n);
 
-  /*
+
+  // The default output precision is of C++ is 5 or 6 dp, depending on compiler.
+  // I don't have much justification for 32, but it seems like a sensible number   
+  int save_tree_precision = 32; 
+
   //save stuff to tree file
-  treef << xi << endl; //cutpoints
-  treef << m << endl;  //number of trees
-  treef << p << endl;  //dimension of x's
-  treef << (int)(nd/thin) << endl;
-  */
+  treef_con << std::setprecision(save_tree_precision) << xi_con << endl; //cutpoints
+  treef_con << ntree_con << endl;  //number of trees
+  treef_con << di_con.p << endl;  //dimension of x's
+  treef_con << (int)(nd/thin) << endl;
+
+  treef_mod << std::setprecision(save_tree_precision) << xi_mod << endl; //cutpoints
+  treef_mod << ntree_mod << endl;  //number of trees
+  treef_mod << di_mod.p << endl;  //dimension of x's
+  treef_mod << (int)(nd/thin) << endl;
 
   //*****************************************************************************
   /* MCMC
@@ -357,20 +348,24 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   logger.setLevel(0);
 
+  bool printTrees = false;
+
   for(size_t iIter=0;iIter<(nd*thin+burn);iIter++) {
     // verbose_itr = iIter>=burn;
     verbose_itr = false;
 
-  if(verbose_sigma){
-      if(iIter%status_interval==0) {
-        Rcout << "iteration: " << iIter << " sigma: "<< sigma << endl;
+    if(verbose_sigma){
+        if(iIter%status_interval==0) {
+            Rcout << "iteration: " << iIter << " sigma: "<< sigma << endl;
+        }
     }
-  }
 
     logger.setLevel(verbose_itr);
 
     logger.log("==============================================");
-    sprintf(logBuff, "MCMC iteration: %d of %d, sigma %f", iIter + 1, nd*thin+burn, sigma);
+    sprintf(logBuff, "MCMC iteration: %d of %d Start", iIter + 1, nd*thin+burn);
+    logger.log(logBuff);
+    sprintf(logBuff, "sigma %f, mscale %f, bscale0 %f, bscale1 %f",sigma, mscale, bscale0, bscale1);
     logger.log(logBuff);
     logger.log("==============================================");
     if (verbose_itr){
@@ -379,8 +374,24 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
       logger.getVectorHead(allfit, logBuff);
       Rcout << "Current Fit : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_con, logBuff);
+      Rcout << "allfit_con  : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_mod, logBuff);
+      Rcout << "allfit_mod  : " <<  logBuff << "\n";
     }
 
+    for (int k=0; k<n; ++k){
+      weight[k] = w[k]*mscale*mscale/(sigma * sigma); // for non-het case, weights need to be divided by sigma square to make it similar to phi
+    }
+
+    for(size_t k=0; k<ntrt; ++k) {
+      weight_het[k] = w[k]*bscale1*bscale1/(sigma*sigma);
+    }
+    for(size_t k=ntrt; k<n; ++k) {
+      weight_het[k] = w[k]*bscale0*bscale0/(sigma*sigma);
+    }
 
     logger.log("=====================================");
     logger.log("- Tree Processing");
@@ -396,7 +407,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.startContext();
 
       logger.log("Attempting to Print Tree Pre Update \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n\n";
       }
@@ -412,7 +423,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
 
       logger.log("Attempting to Print Tree Post first call to fit \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n\n";
       }
@@ -446,10 +457,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       }
 
       
-      for (int k=0; k<n; ++k){
-        weight[k] = w[k]*mscale*mscale/(sigma * sigma); // for non-het case, weights need to be divided by sigma square to make it similar to phi
-      }
-      if(verbose_itr){
+
+      if(verbose_itr && printTrees){
         logger.getVectorHead(weight, logBuff);
         Rcout << "\n weight: " <<  logBuff << "\n\n";
       } 
@@ -468,12 +477,12 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.stopContext();
 
       logger.log("Attempting to Print Tree Post db \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n";
       }
 
-      if (verbose_itr){
+      if (verbose_itr && printTrees){
         logger.log("Printing Current Status of Fit");
 
         logger.getVectorHead(z_, logBuff);
@@ -509,7 +518,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.stopContext();
 
       logger.log("Attempting to Print Tree Post drmu \n");
-      if(verbose_itr){
+      if(verbose_itr  && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n";
       }
@@ -526,7 +535,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
       logger.log("Attempting to Print tree Post second call to fit \n");
 
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n";
 
@@ -534,15 +543,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.stopContext();
     }
 
-
- 
-    //draw trees for b(x)
-    for(size_t k=0; k<ntrt; ++k) {
-      weight_het[k] = w[k]*bscale1*bscale1/(sigma*sigma);
-    }
-    for(size_t k=ntrt; k<n; ++k) {
-      weight_het[k] = w[k]*bscale0*bscale0/(sigma*sigma);
-    }
 
     for(size_t iTreeMod=0;iTreeMod<ntree_mod;iTreeMod++) {
       logger.log("==================================");
@@ -553,7 +553,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
 
       logger.log("Attempting to Print Tree Pre Update \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
@@ -567,7 +567,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
           ftemp);
 
       logger.log("Attempting to Print Tree Post first call to fit");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
@@ -595,12 +595,12 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       logger.stopContext();
 
       logger.log("Attempting to Print Tree  Post bd \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
 
-      if (verbose_itr){
+      if (verbose_itr && printTrees){
         logger.log("Printing Status of Fit");
 
         logger.getVectorHead(z_, logBuff);
@@ -635,7 +635,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
 
       logger.log("Attempting to Print Tree Post drmuhet \n");
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
@@ -656,13 +656,16 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
       logger.log("Attempting to Print Tree Post second call to fit");
 
-      if(verbose_itr){
+      if(verbose_itr && printTrees){
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
       logger.stopContext();
 
     } // end tree lop
+
+    logger.setLevel(verbose_itr);
+
     logger.log("=====================================");
     logger.log("- MCMC iteration Cleanup");
     logger.log("=====================================");
@@ -673,10 +676,10 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       double s2 = sigma*sigma;
       for(size_t k=0; k<n; ++k) {
         double bscale = (k<ntrt) ? bscale1 : bscale0;
-        double w = s2*bscale*bscale/(allfit_mod[k]*allfit_mod[k]);
+        double scale_factor = (w[k]*allfit_mod[k]*allfit_mod[k])/(s2*bscale*bscale);
 
-        if(w!=w) {
-          Rcout << " w " << w << endl;
+        if(scale_factor!=scale_factor) {
+          Rcout << " scale_factor " << scale_factor << endl;
           stop("");
         }
 
@@ -689,11 +692,11 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
           stop("");
         }
         if(k<ntrt) {
-          ww1 += 1/w;
-          rw1 += r/w;
+          ww1 += scale_factor;
+          rw1 += r*scale_factor;
         } else {
-          ww0 += 1/w;
-          rw0 += r/w;
+          ww0 += scale_factor;
+          rw0 += r*scale_factor;
         }
       }
       logger.log("Drawing bscale 1");
@@ -772,9 +775,9 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       double rw = 0.;
       double s2 = sigma*sigma;
       for(size_t k=0; k<n; ++k) {
-        double w = s2*mscale*mscale/(allfit_con[k]*allfit_con[k]);
-        if(w!=w) {
-          Rcout << " w " << w << endl;
+        double scale_factor = (w[k]*allfit_con[k]*allfit_con[k])/(s2*mscale*mscale);
+        if(scale_factor!=scale_factor) {
+          Rcout << " scale_factor " << scale_factor << endl;
           stop("");
         }
 
@@ -785,8 +788,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
           Rcout << "mscale " << k << " r " << r << " mscale " <<mscale<< " b*z " << allfit_mod[k]*z_[k] << " bscale " << bscale0 << " " <<bscale1 << endl;
           stop("");
         }
-        ww += 1/w;
-        rw += r/w;
+        ww += scale_factor;
+        rw += r*scale_factor;
       }
 
       logger.log("Drawing mscale");
@@ -907,8 +910,9 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       }
     }
 
+    // ---------------------------------------------------------
     logger.log("Draw Sigma");
-    //draw sigma
+    // ---------------------------------------------------------
     double rss = 0.0;
     double restemp = 0.0;
     for(size_t k=0;k<n;k++) {
@@ -917,12 +921,18 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
     }
     sigma = sqrt((nu*lambda + rss)/gen.chi_square(nu+n));
     pi_con.sigma = sigma/fabs(mscale);
-    pi_mod.sigma = sigma;
+    pi_mod.sigma = sigma; // Is this another copy paste Error?
 
     if( ((iIter>=burn) & (iIter % thin==0)) )  {
 
-      msd_post(save_ctr) = fabs(mscale)*con_sd;
-      bsd_post(save_ctr) = fabs(bscale1-bscale0)*mod_sd;
+      for(size_t j=0;j<ntree_con;j++) treef_con << std::setprecision(save_tree_precision) << t_con[j] << endl; // save trees
+      for(size_t j=0;j<ntree_mod;j++) treef_mod << std::setprecision(save_tree_precision) << t_mod[j] << endl; // save trees
+
+      msd_post(save_ctr) = mscale;
+      bsd_post(save_ctr) = bscale1-bscale0;
+      b0_post(save_ctr)  = bscale0;
+      b1_post(save_ctr)  = bscale1;
+
 
       gamma_post.row(save_ctr) = (diagmat(random_var_ix*eta)*gamma).t();
       random_var_post.row(save_ctr) = (sqrt( eta % eta % random_var)).t();
@@ -936,13 +946,29 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
         double bscale = (k<ntrt) ? bscale1 : bscale0;
         b_post(save_ctr, k) = (bscale1-bscale0)*allfit_mod[k]/bscale;
       }
-      //if(di_mod_est.n) {
-      for(size_t k=0;k<di_mod_est.n;k++) {
-        b_est_post(save_ctr, k) = (bscale1-bscale0)*fit_i(k, t_mod, xi_mod, di_mod_est);
-      }
       //}
       save_ctr += 1;
     }
+    logger.log("==============================================");
+    sprintf(logBuff, "MCMC iteration: %d of %d End", iIter + 1, nd*thin+burn);
+    logger.log(logBuff);
+    sprintf(logBuff, "sigma %f, mscale %f, bscale0 %f, bscale1 %f",sigma, mscale, bscale0, bscale1);
+    logger.log(logBuff);
+    logger.log("==============================================");
+    if (verbose_itr){
+      logger.getVectorHead(y, logBuff);
+      Rcout << "           y: " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit, logBuff);
+      Rcout << "Current Fit : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_con, logBuff);
+      Rcout << "allfit_con  : " <<  logBuff << "\n";
+
+      logger.getVectorHead(allfit_mod, logBuff);
+      Rcout << "allfit_mod  : " <<  logBuff << "\n";
+    }
+
   } // end MCMC Loop
 
   int time2 = time(&tp);
@@ -958,10 +984,11 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   delete[] r_con;
   delete[] ftemp;
 
-  treef.close();
+  treef_con.close();
+  treef_mod.close();
 
-  return(List::create(_["yhat_post"] = yhat_post, _["b_post"] = b_post, _["b_est_post"] = b_est_post,
-                      _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post,
+  return(List::create(_["yhat_post"] = yhat_post, _["m_post"] = m_post, _["b_post"] = b_post,
+                      _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post, _["b0"] = b0_post, _["b1"] = b1_post, 
                       _["gamma"] = gamma_post, _["random_var_post"] = random_var_post
   ));
 }
