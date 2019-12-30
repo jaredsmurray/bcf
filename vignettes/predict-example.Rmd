@@ -14,13 +14,18 @@ knitr::opts_chunk$set(
 )
 ```
 
-In this vignette, we show our we can use the BCF package to fit a model and use the fitted object to predict estimates for new data.
+In this vignette, we show how to use the `bcf` package to fit a model and use the fitted object to predict estimates for new data.
 
-```{r setup}
+[LVF: suppressed warnings and messages in this block, per JG's recommendation]
+```{r setup, warning=FALSE, message = FALSE}
 library(bcf2)
 library(latex2exp)
 library(ggplot2)
 ```
+
+[LVF: Per our discussion on 12/30/2019, let's delete the text introducing this section and hide the code. Suggested alternative text:
+
+We will fit the model to simulated data, following exactly the same process as in the main vignette.  For that reason, we do not show the data generation steps here.]
 
 ## Simulate data
 
@@ -30,7 +35,7 @@ We draw three random $X$s for each unit and generate each unit's expected outcom
 
 Then we generate the true treatment effect for each unit, $\tau_i$. As noted above, $\tau_i$ is a function of $x^{(3)}_i$. The observed outcome, $y_i$, is a function of $\mu_i$, $\tau_i$, a random error term $\sigma$, and weights $w$ if applicable.
 
-```{r}
+```{r, echo = FALSE}
 set.seed(1)
 
 ## Training data
@@ -75,7 +80,7 @@ z_pred  <- rbinom(50,1, pi_pred)
 
 ## Fitting BCF
 
-We now fit a BCF model. 
+We now fit a BCF model to the simulated data.  This is the same model as we fit in the main vignette. 
 
 ```{r}
 bcf_out <- bcf2::bcf(y               = y,
@@ -93,7 +98,9 @@ bcf_out <- bcf2::bcf(y               = y,
 
 ## Predicting using BCF
 
-We now use our testing Xs for prediction.
+We now use our testing Xs for prediction. [LVF: Should we move the code that generates the testing Xs down to this block?  Otherwise, since we're hiding the data generation code, this line won't make sense.  I'd recommend putting the creating of the x_pred in its own block with some explanatory text about how we're generating the Xs, specifically mentioning that we're including values outside the range of Xs used to fit the original model as a way of gauging out-of-sample error.]
+
+[LVF: Do we need to explain the function arguments at all?]
 
 ```{r}
 pred_out = bcf2::predict(bcf_out=bcf_out,
@@ -106,7 +113,7 @@ pred_out = bcf2::predict(bcf_out=bcf_out,
 
 ## Comparison
 
-Let's compare the results of our training and testing data. We will use $x_3$ as covariate since we know from the data creation phase that this variable is the strongest effect modifier.
+Let's compare the results of our training and testing data. We will show the estimated treatment effects for training and test observations as a function of $x_3$, which is an effect modifier.
 
 ```{r}
 lower <- c(apply(bcf_out$tau, 2, quantile, 0.025), apply(pred_out$tau, 2, quantile, 0.025))
@@ -120,4 +127,4 @@ ggplot(NULL, aes(x = c(x[,3], x_pred[,3]), y = c(colMeans(bcf_out$tau), colMeans
   coord_flip()
 ```
 
-In this plot, we notice that predictions even for Xs that are outside of the range of our training data are within the expected range, and that they have wider credible intervals, as is expected.
+The estimates for testing observations have treatmentent effects well within the range of the treatment effects for training observations, even though the test data set contains more extreme values of $x_3$. It is reassuring that these observations' treatment effects still fall within the expected range, suggesting that this model is not overly vulnerable to out-of-sample prediction error.

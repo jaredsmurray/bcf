@@ -16,7 +16,8 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+[LVF suppressed warnings and messages in this block, following JG's suggestion]
+```{r setup, warning = FALSE, message = FALSE}
 library(bcf2)
 library(ggplot2)
 library(latex2exp)
@@ -26,7 +27,7 @@ library(rpart.plot)
 
 ## Simulate data
 
-First, we simulate some data for testing. This data set has three covariates $X$, which we divide into two control variables -- that is, two covariates related to the outcome, $y$ -- and one effect moderator -- that is, a covariates related to the treatment effect, $\tau$.
+First, we simulate some data for testing. This data set has an outcome variable $y$, a treatment indicator $z$, and three covariates $X$. Of the covariates, two affect the outcome $y$ at both levels of treatment, while the third is an effect moderator.
 
 We draw three random $X$s for each unit and generate each unit's expected outcome without treatment, $\mu_i$, as a function of $x^{(1)}_i$ and $x^{(2)}_i$. Each unit's probability of joining the intervention, $\pi_i$, is also a function of $\mu_i$, so that units with larger responses are more likely to participate in the intervention. We then assign units to treatment ($z_i = 1$) or comparison ($z_i = 0$) as a function of $\pi_i$.
 
@@ -66,7 +67,9 @@ y <- mu + sigma*rnorm(n)/sqrt(weights)
 
 ## Fit BCF model
 
-In this data set we have observed $y_i$, $x_i$, and $\pi_i$ values to which we can fit our BCF model. We can then compare the $\hat{\tau}_i$ estimates from BCF to the true $\tau_i$ from the data-generating process. Note that we are using the `n_chains` argument to `bcf()`, which allows us to run several MCMC chains in parallel and assess whether they have converged to the posterior distribution.
+In this data set we have observed $y_i$, $x_i$, and $\pi_i$ values to which we can fit our BCF model. With BCF, we can distinguish between control variables -- variables that affect the outcome at both levels of treatment -- and moderator variables -- variables that affect the estimated treatment effect.
+
+After fitting the BCF model, we can compare the $\hat{\tau}_i$ estimates from BCF to the true $\tau_i$ from the data-generating process. Note that we are using the `n_chains` argument to `bcf()`, which allows us to run several MCMC chains in parallel and assess whether they have converged to the posterior distribution.
 
 ```{r model}
 bcf_out <- bcf2::bcf(y            = y,
@@ -92,16 +95,16 @@ We use the `summarise_bcf` function to get diagnostics similar to those in Stan 
 bcf2::summarise_bcf(bcf_out)
 ```
 
-Since our "$\hat{R}$" (Gelman and Rubin's convergence factor) are between 0.9 and 1.1, we know that our run successfully achieved convergence. This is reinforced by our multivariate PSRF of 1.7. 
+Since our "$\hat{R}$" (Gelman and Rubin's convergence factor) are between 0.9 and 1.1, we are fairly confident that our run successfully achieved convergence. The multivariate PSRF of 1.7 reinforces our conclusion. [LVF: Is 1.7 actually acceptable for a multivariate PSRF?  And should we spell out PSRF, since readers might not know what it stands for?] 
 
 ## Explore the posterior
 
-Now that we've successfully fit our model, let's expore the output. First, since this is a simulation, let's compare the unit-speciifc treatment effect estimates $\hat{\tau}_i$ to the true unit-specific treatment effects $\tau_i$.
+Now that we've successfully fit our model, let's expore the output. First, since this is a simulation, let's compare the unit-specific treatment effect estimates $\hat{\tau}_i$ to the true unit-specific treatment effects $\tau_i$.
 
 
 ### Estimates vs. true treatment effects
 
-In the plot below, the red line is the identity line and the blue line is a regression line fitted through our points.
+In the plot below, the red line is the identity line and the blue line is a regression line fit through our points.
 
 ```{r}
 ggplot(NULL, aes(x = tau, y = colMeans(bcf_out$tau))) +
@@ -144,13 +147,13 @@ ggplot(tau_ests, aes(x = id, y = Mean)) +
   coord_flip()
 ```
 
-In this example, although we do see variation in the point estimates across units, most uncertainty intervals all overlap, except for pionts at the extremes.
+In this example, although we do see variation in the point estimates across units, most uncertainty intervals all overlap, except for points at the extremes. This overlap indicates that, although there is variation in the treatment effect across units, the difference in treatment effects is not statistically meaningful.
 
 ### Identifying possible subgroups
 
 The BCF model obtains more accurate treatment effect estimates than other approaches in part by allowing flexible relationships with many possible effect modifiers.  These relationships are often of substantive interest; researchers want to know what covariates are associated with higher or lower impacts.  However, the BCF model is difficult to interpret directly: we cannot simply look at the coefficients on the effect modifiers to determine which characteristics drive the impacts.  Instead, we can look for patterns in the unit-specific treatment effects, linking each unit's treatment effect estimate to its covariates.
 
-Specifically, the BCF paper (linked in the `Home` page) recommends fitting a CART model where the response variable is the estimated unit-specific treatment effect from BCF and the predictor variables are the effect modifiers used to fit the BCF model. The resulting tree identifies covariates that best distinguish units with high vs. low impacts, which are strong candidate subgroup variables. 
+Specifically, Hahn, Murray, and Carvalho (linked in the `Home` page) recommend fitting a CART model where the response variable is the estimated unit-specific treatment effect from BCF and the predictor variables are the effect modifiers used to fit the BCF model. The resulting tree identifies covariates that best distinguish units with high vs. low impacts, which are strong candidate subgroup variables. 
 
 ```{r}
 tree <- rpart(colMeans(bcf_out$tau) ~ x, weights = weights)
@@ -160,7 +163,7 @@ rpart.plot(tree)
 
 Our tree identifies $x_3$ as the strongest effect modifier, which is correct, because we specified it as such in the data generation step.
 
-Because the CART fit does not account for the uncertainty in the treatment effect estimates, it is possible that its tree splits do not identify characteristics that create subgroups with meaningfully different impacts. To conduct inference on whether impacts differ meaningfully based on a characteristic, we can use the posterior draws from the fitted BCF model.
+Because the CART fit does not account for the uncertainty in the treatment effect estimates, it is possible that its tree splits do not identify characteristics that create subgroups with meaningfully different impacts. To determine whether impacts differ meaningfully based on a characteristic, we can use the posterior draws from the fitted BCF model.
 
 Here we show just a comparison of the impacts for units in the top quartile of $X_3$ vs. impacts for units in the bottom quartile of $X_3$.
 
