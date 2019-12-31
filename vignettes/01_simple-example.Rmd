@@ -98,8 +98,7 @@ We use the `summarise_bcf` function to obtain posterior summary stats and MCMC d
 bcf2::summarise_bcf(bcf_out)
 ```
 
-Since our "$\hat{R}$" (Gelman and Rubin's convergence factor) are between 0.9 and 1.1, we are fairly confident that our run successfully achieved convergence. 
-The multivariate PSRF of 1.7 reinforces our conclusion. [TODO: LVF: Is 1.7 actually acceptable for a multivariate PSRF?  And should we spell out PSRF, since readers might not know what it stands for?] 
+Since our "$\hat{R}$" (Gelman and Rubin's convergence factor or PSRF) are between 0.9 and 1.1, we are fairly confident that our run successfully achieved convergence. 
 
 ## Explore the posterior
 
