@@ -154,6 +154,45 @@ For that reason, we do not show the data generation steps here.</p>
 <p><img src="02_predict-example_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 <p>The estimates for testing observations have treatmentent effects well within the range of the treatment effects for training observations, even though the test data set contains more extreme values of <span class="math inline">\(x_3\)</span>. It is reassuring that these observations’ treatment effects still fall within the expected range, suggesting that this model is not overly vulnerable to out-of-sample prediction error.</p>
 </div>
+<div id="marginal-effects" class="section level2">
+<h2 class="hasAnchor">
+<a href="#marginal-effects" class="anchor"></a>Marginal effects</h2>
+<p>We can use predict() to compute mean marginal effects, in other words the mean difference in predicted estimates assuming all observations have the same characteristics but one. We provide an example using the extreme cut-offs identified in the CART tree of the main vignette (<span class="math inline">\(x_3 = -1.8\)</span> and <span class="math inline">\(x_3 = 0.48\)</span>).</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>x_low &lt;-<span class="st"> </span>x; x_high &lt;-<span class="st"> </span>x</span>
+<span id="cb6-2"><a href="#cb6-2"></a>x_low[,<span class="dv">3</span>]  &lt;-<span class="st"> </span><span class="fl">-1.8</span> </span>
+<span id="cb6-3"><a href="#cb6-3"></a>x_high[,<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="fl">0.48</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a></span>
+<span id="cb6-5"><a href="#cb6-5"></a>pred_low =<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/predict.html">predict</a></span>(<span class="dt">bcf_out=</span>bcf_out,</span>
+<span id="cb6-6"><a href="#cb6-6"></a>                         <span class="dt">x_predict_control=</span>x_low,</span>
+<span id="cb6-7"><a href="#cb6-7"></a>                         <span class="dt">x_predict_moderate=</span>x_low,</span>
+<span id="cb6-8"><a href="#cb6-8"></a>                         <span class="dt">pi_pred=</span>pi,</span>
+<span id="cb6-9"><a href="#cb6-9"></a>                         <span class="dt">z_pred=</span>z,</span>
+<span id="cb6-10"><a href="#cb6-10"></a>                         <span class="dt">save_tree_directory =</span> <span class="st">'..'</span>)</span>
+<span id="cb6-11"><a href="#cb6-11"></a><span class="co">#&gt; Initializing BCF Prediction</span></span>
+<span id="cb6-12"><a href="#cb6-12"></a><span class="co">#&gt; Starting Prediction</span></span>
+<span id="cb6-13"><a href="#cb6-13"></a></span>
+<span id="cb6-14"><a href="#cb6-14"></a>pred_high =<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/predict.html">predict</a></span>(<span class="dt">bcf_out=</span>bcf_out,</span>
+<span id="cb6-15"><a href="#cb6-15"></a>                          <span class="dt">x_predict_control=</span>x_high,</span>
+<span id="cb6-16"><a href="#cb6-16"></a>                          <span class="dt">x_predict_moderate=</span>x_high,</span>
+<span id="cb6-17"><a href="#cb6-17"></a>                          <span class="dt">pi_pred=</span>pi,</span>
+<span id="cb6-18"><a href="#cb6-18"></a>                          <span class="dt">z_pred=</span>z,</span>
+<span id="cb6-19"><a href="#cb6-19"></a>                          <span class="dt">save_tree_directory =</span> <span class="st">'..'</span>)</span>
+<span id="cb6-20"><a href="#cb6-20"></a><span class="co">#&gt; Initializing BCF Prediction</span></span>
+<span id="cb6-21"><a href="#cb6-21"></a><span class="co">#&gt; Starting Prediction</span></span></code></pre></div>
+<p>Now that we have our predictions, we look at the distributions of average treatment effects for each group.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co"># Computing weighted means to get distribution of posterior average estimates</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a>lowDist &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(pred_low<span class="op">$</span>tau, <span class="dv">1</span>, weighted.mean, weights)</span>
+<span id="cb7-3"><a href="#cb7-3"></a>highDist &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(pred_high<span class="op">$</span>tau, <span class="dv">1</span>, weighted.mean, weights)</span>
+<span id="cb7-4"><a href="#cb7-4"></a></span>
+<span id="cb7-5"><a href="#cb7-5"></a>distDF &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">taus  =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(lowDist, highDist),</span>
+<span id="cb7-6"><a href="#cb7-6"></a>                     <span class="dt">Group =</span> <span class="kw"><a href="https://rdrr.io/r/base/factor.html">factor</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="st">"X3 = -1.8"</span>, <span class="kw"><a href="https://rdrr.io/r/base/length.html">length</a></span>(lowDist)), <span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="st">"X3 = 0.48"</span>, <span class="kw"><a href="https://rdrr.io/r/base/length.html">length</a></span>(highDist)))))</span>
+<span id="cb7-7"><a href="#cb7-7"></a></span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="kw">ggplot</span>(distDF, <span class="kw">aes</span>(taus, <span class="dt">group =</span> Group, <span class="dt">color =</span> Group, <span class="dt">fill =</span> Group)) <span class="op">+</span></span>
+<span id="cb7-9"><a href="#cb7-9"></a><span class="st">  </span><span class="kw">geom_density</span>(<span class="dt">alpha =</span> <span class="fl">0.7</span>) <span class="op">+</span></span>
+<span id="cb7-10"><a href="#cb7-10"></a><span class="st">  </span><span class="kw">xlab</span>(<span class="kw">TeX</span>(<span class="st">"$</span><span class="ch">\\</span><span class="st">tau$"</span>))</span></code></pre></div>
+<p><img src="02_predict-example_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+<p>We see that the marginal mean treatment effects for the two groups barely overlap. We can confirm this by comparing the 95% credible intervals for each distribution.</p>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -165,6 +204,7 @@ For that reason, we do not show the data generation steps here.</p>
 <li><a href="#fitting-bcf">Fitting BCF</a></li>
       <li><a href="#predicting-using-bcf">Predicting using BCF</a></li>
       <li><a href="#comparison">Comparison</a></li>
+      <li><a href="#marginal-effects">Marginal effects</a></li>
       </ul>
 </div>
       </div>
