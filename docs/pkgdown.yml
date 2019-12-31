@@ -2,6 +2,6 @@ pandoc: 2.7.3
 pkgdown: 1.4.1
 pkgdown_sha: ~
 articles:
-  predict-example: predict-example.html
-  simple-example: simple-example.html
+  01_simple-example: 01_simple-example.html
+  02_predict-example: 02_predict-example.html
 

@@ -1,5 +1,4 @@
-con_trees.txt
-mod_trees.txt
+*.txt
 
 *.bak
 # History files
@@ -42,11 +41,8 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 tmp
-<<<<<<< HEAD
-=======
 *.vscode/
 *.pdf
->>>>>>> wbcf
 
 # Prerequisites
 *.d

@@ -90,10 +90,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/predict-example.html">Prediction with BCF</a>
+      <a href="../articles/01_simple-example.html">A Simple Example</a>
     </li>
     <li>
-      <a href="../articles/simple-example.html">A Simple Example</a>
+      <a href="../articles/02_predict-example.html">Prediction with BCF</a>
     </li>
   </ul>
 </li>
@@ -129,18 +129,18 @@
 <a href="#major-changes" class="anchor"></a>Major changes</h2>
 <p>This implementation further extends existing BCF functionality by:</p>
 <ul>
-<li>allowing for heteroskedastic error</li>
+<li>allowing for heteroskedastic errors</li>
 <li>automating multi-chain, multi-core implementations</li>
 <li>providing a suite of convergence diagnostic functions via the <code>coda</code> package</li>
 <li>accelerating some underlying computations, resulting in shorter runtimes</li>
-<li>providing a function to predict estimates based on an existing model using new data</li>
+<li>providing a function to predict treatment effects based on an existing model using new data</li>
 </ul>
 <div id="weights" class="section level3">
 <h3 class="hasAnchor">
 <a href="#weights" class="anchor"></a>Weights</h3>
-<p>The original version of <code>bcf</code> does not allow for weights, which we often use in practical applications to account for heteroskedasticity. Where the original BCF model was specified as:</p>
+<p>The original version of <code>bcf</code> does not allow for weights, which are often used in practical applications to account for heteroskedasticity. Where the original BCF model was specified as:</p>
 <p>y<sub>i</sub> ∼ N(μ(x<sub>i</sub>) + τ(x<sub>i</sub>) z<sub>i</sub>, σ<sup>2</sup>),</p>
-<p>which assumes that all outcomes y<sub>i</sub> have the same variance &amp;sigma.<sup>2</sup>, in the extended version we can relax this assumption to allow for heteroskedasticity in the y<sub>i</sub>:</p>
+<p>which assumes that all outcomes y<sub>i</sub> have the same variance σ<sup>2</sup>, in the extended version we can relax this assumption to allow for heteroskedasticity in the y<sub>i</sub>:</p>
 <p>y<sub>i</sub> ∼ N(μ(x<sub>i</sub>) + τ(x<sub>i</sub>) z<sub>i</sub>, σ<sup>2</sup>/w<sub>i</sub>)</p>
 <p>Incorporating weights impacts several parts of the code, including the computation of:</p>
 <ul>
@@ -150,20 +150,20 @@
 <li>error variance (sigma)</li>
 </ul>
 </div>
-<div id="automating-multichain-processing" class="section level3">
+<div id="automating-multichain-processing-in-parallel" class="section level3">
 <h3 class="hasAnchor">
-<a href="#automating-multichain-processing" class="anchor"></a>Automating multichain processing</h3>
-<p>It is useful in Bayesian analysis to produce different runs of the same model, with different starting values, as a way of assessing convergence; if the different runs produce drastically different posterior distributions, it is a sign that the model has not converged fully. In this version of <code>bcf</code> we have automated multichain processing and incorporated key MCMC diagnostics from the <code>coda</code> package, including effective sample sizes and the Gelman-Rubin statistic (“R hat”). In addition, all runs happen in parallel, on different cores, so as to provide all these extra benefits without much cost to the timing of the runs.</p>
+<a href="#automating-multichain-processing-in-parallel" class="anchor"></a>Automating multichain processing in parallel</h3>
+<p>It is useful in Bayesian analysis to produce different runs of the same model, with different starting values, as a way of assessing convergence; if the different runs produce drastically different posterior distributions, it is a sign that the model has not converged fully. In this version of <code>bcf</code> we have automated multichain processing and incorporated key MCMC diagnostics from the <code>coda</code> package, including effective sample sizes and the Gelman-Rubin statistic (“R hat”). In addition, all runs happen in parallel, on different cores, so as to provide all these extra benefits without increasing runtime much.</p>
 </div>
 <div id="within-chain-parallel-processing" class="section level3">
 <h3 class="hasAnchor">
-<a href="#within-chain-parallel-processing" class="anchor"></a>Within chain parallel processing</h3>
-<p>Finally, our implementation parallelizes some steps of the sampling procedure to maximize efficiency in a multicore environment. Our testing shows that these enhancements have reduced runtimes by around 2x, across a variety of experimental conditions.</p>
+<a href="#within-chain-parallel-processing" class="anchor"></a>Within-chain parallel processing</h3>
+<p>Finally, our implementation parallelizes some steps of the sampling procedure to maximize computational efficiency. Our testing shows that these enhancements have reduced runtimes by around 2x, across a variety of experimental conditions.</p>
 </div>
 <div id="implementing-a-prediction-method" class="section level3">
 <h3 class="hasAnchor">
 <a href="#implementing-a-prediction-method" class="anchor"></a>Implementing a prediction method</h3>
-<p>In this version of the package, we have incorporated code from Jared Murray (one of the original package authors) to predict values of the outcome based on a new set of covariates. Once users have produced a satisfactory <code>bcf</code> run (using training data), they are able to use this run to predict on a new set of (test) data. This is possible even with runs that have multiple chains.</p>
+<p>In this version of the package, we have incorporated code from Jared Murray (one of the original package authors) to predict the treatment effect for a new set of units. Once users have produced a satisfactory <code>bcf</code> run (using training data), they are able to use this fitted bcf object to predict on a new set of (test) data. This is possible even with runs that have multiple chains.</p>
 </div>
 </div>
 </div>
