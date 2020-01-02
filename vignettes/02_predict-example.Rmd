@@ -22,8 +22,7 @@ library(latex2exp)
 library(ggplot2)
 ```
 
-We will fit the model to simulated data, following exactly the same process as in the main vignette.  
-For that reason, we do not show the data generation steps here.
+We will fit the model to simulated data, following exactly the same process as in the main vignette. For that reason, we do not show the data generation steps here.
 
 ```{r, echo = FALSE}
 set.seed(1)
@@ -61,7 +60,7 @@ y <- y_noiseless + sigma*rnorm(n)/sqrt(weights)
 
 ## Fitting BCF
 
-We now fit a BCF model to the simulated data.  This is the same model as we fit in the main vignette. 
+We now fit a BCF model to the simulated data. This is the same model as we fit in the main vignette. 
 
 ```{r}
 bcf_out <- bcf2::bcf(y               = y,
@@ -79,20 +78,20 @@ bcf_out <- bcf2::bcf(y               = y,
 
 ## Predicting using BCF
 
-We now use our testing Xs for prediction. First, we generate a testing dataset.
-we purposefully make sure that we have some values outside of the range of our training dataset to allow us to 
-gage out-of-sample error.
+We now use a separate set of testing Xs for prediction. First, we generate a testing dataset.
+We purposefully make sure that we have some values outside of the range of our training dataset to allow us to 
+gauge out-of-sample error.
 
 ```{r}
 ## Testing data
 n_test = 50
 
-x_pred  <- matrix(rnorm(n_test*p), nrow=n_test)
+x_test  <- matrix(rnorm(n_test*p), nrow=n_test)
 special_x3 <- c(-3.1, -2.9, 2.76, 2.8, 2.85)
-x_pred[ (n_test - length(special_x3) + 1 ):n_test,3] <- special_x3 # including some X3s outside of range
+x_test[ (n_test - length(special_x3) + 1 ):n_test,3] <- special_x3 # including some X3s outside of range
 
-q_pred  <- -1*(x_pred[,1]>(x_pred[,2])) + 1*(x_pred[,1]<(x_pred[,2])) - 0.1
-pi_pred <- pnorm(q_pred)
+mu_pred  <- -1*(x_test[,1]>(x_test[,2])) + 1*(x_test[,1]<(x_test[,2])) - 0.1
+pi_pred <- pnorm(mu_pred)
 z_pred  <- rbinom(n_test,1, pi_pred)
 ```
 
@@ -100,8 +99,8 @@ We now use this data to generate predictions based on our model.
 
 ```{r}
 pred_out = bcf2::predict(bcf_out=bcf_out,
-                         x_predict_control=x_pred,
-                         x_predict_moderate=x_pred,
+                         x_predict_control=x_test,
+                         x_predict_moderate=x_test,
                          pi_pred=pi_pred,
                          z_pred=z_pred,
                          save_tree_directory = '..')
@@ -109,14 +108,14 @@ pred_out = bcf2::predict(bcf_out=bcf_out,
 
 ## Comparison
 
-Let's compare the results of our training and testing data. We will show the estimated treatment effects for training and test observations as a function of $x_3$, which is an effect modifier.
+Let's compare the results for our training and testing data. We will show the estimated treatment effects for training and test observations as a function of $x_3$, which is an effect modifier.
 
 ```{r}
 lower <- c(apply(bcf_out$tau, 2, quantile, 0.025), apply(pred_out$tau, 2, quantile, 0.025))
 upper <- c(apply(bcf_out$tau, 2, quantile, 0.975), apply(pred_out$tau, 2, quantile, 0.975))
 group <- factor(c(rep("training", n), rep("testing", n_test)))
 
-ggplot(NULL, aes(x = c(x[,3], x_pred[,3]), 
+ggplot(NULL, aes(x = c(x[,3], x_test[,3]), 
                  y = c(colMeans(bcf_out$tau), colMeans(pred_out$tau)),
                  alpha = group,
                  color = group)) +
@@ -127,17 +126,22 @@ ggplot(NULL, aes(x = c(x[,3], x_pred[,3]),
   coord_flip()
 ```
 
-The estimates for testing observations have treatmentent effects well within the range of the treatment effects for training observations, even though the test data set contains more extreme values of $x_3$. 
-It is reassuring that these observations' treatment effects still fall within the expected range, suggesting that this model is not overly vulnerable to out-of-sample prediction error.
+The estimates for testing observations have treatment effects well within the range of the treatment effects for training observations, even though the test data set contains more extreme values of $x_3$. 
+It is reassuring that these observations' treatment effect estimates still fall within the expected range, suggesting that this model is not overly vulnerable to out-of-sample prediction error.
 
 ## Marginal effects
 
-We can use predict() to compute mean marginal effects, in other words the mean difference in predicted estimates assuming all observations have the same characteristics but one. We provide an example using the extreme cut-offs identified in the CART tree of the main vignette ($x_3 = -1.8$ and $x_3 = 0.48$).
+We can use predict() to compute mean marginal effects, in other words the effect of a given covariate averaged across the levels of all other covariates (which corresponds to an estimate from a standard parametric regression). We provide an example using subgroups discussed in the main vignette. Specifically, we compare the mean marginal effects for the average value of $x_3$ in the bottom quartile and the average value of $x_3$ in the top quartile.
 
 ```{r}
+# Computing the average X3 values of Q1 and Q4 for prediction
+q1 <- x[,3][x[,3] < quantile(x[,3], 0.25)]
+q4 <- x[,3][x[,3] > quantile(x[,3], 0.75)]
+
+# Creating training datasets with new X3 values
 x_low <- x; x_high <- x
-x_low[,3]  <- -1.8 
-x_high[,3] <- 0.48
+x_low[,3]  <- mean(q1) 
+x_high[,3] <- mean(q4)
 
 pred_low = bcf2::predict(bcf_out=bcf_out,
                          x_predict_control=x_low,
@@ -154,7 +158,7 @@ pred_high = bcf2::predict(bcf_out=bcf_out,
                           save_tree_directory = '..')
 ```
 
-Now that we have our predictions, we look at the distributions of average treatment effects for each group.
+Now that we have our predictions, we look at the posterior distribution of the mean marginal treatment effect for each group.
 
 ```{r}
 # Computing weighted means to get distribution of posterior average estimates
@@ -162,13 +166,17 @@ lowDist <- apply(pred_low$tau, 1, weighted.mean, weights)
 highDist <- apply(pred_high$tau, 1, weighted.mean, weights)
 
 distDF <- data.frame(taus  = c(lowDist, highDist),
-                     Group = factor(c(rep("X3 = -1.8", length(lowDist)), rep("X3 = 0.48", length(highDist)))))
+                     Group = factor(c(rep(paste0("X3 = ", round(mean(q1), 1)), length(lowDist)), rep(paste0("X3 = ", round(mean(q4), 1)), length(highDist)))))
 
 ggplot(distDF, aes(taus, group = Group, color = Group, fill = Group)) +
   geom_density(alpha = 0.7) +
   xlab(TeX("$\\tau$"))
 ```
 
-We see that the marginal mean treatment effects for the two groups barely overlap. We can confirm this by comparing the 95% credible intervals for each distribution.
+We see that the posterior distributions of the mean marginal treatment effect for the two groups barely overlap. We can confirm this by computing the probability that the mean marginal treatment effect for the top units ($x_3 = $`r round(mean(q4), 1)`) is greater than the mean marginal treatment effect for the bottom units (($x_3 = $`r round(mean(q1), 1)`)). 
 
+```{r}
+mean(highDist > lowDist)
+```
 
+We found that there is a 100% probability that the mean marginal treatment effect for top-quartile units is greater than that for bottom-quartile units.

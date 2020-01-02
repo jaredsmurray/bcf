@@ -4,7 +4,7 @@ This page provides more details on the latest updates to bcf.
 
 ## Major changes
 
-This implementation further extends existing BCF functionality by:
+This implementation further extends existing `bcf` functionality by:
 
 - allowing for heteroskedastic errors
 - automating multi-chain, multi-core implementations
@@ -39,4 +39,4 @@ Finally, our implementation parallelizes some steps of the sampling procedure to
 
 ### Implementing a prediction method
 
-In this version of the package, we have incorporated code from Jared Murray (one of the original package authors) to predict the treatment effect for a new set of units. Once users have produced a satisfactory `bcf` run (using training data), they are able to use this fitted bcf object to predict on a new set of (test) data. This is possible even with runs that have multiple chains.
+In this version of the package, we have incorporated code from Jared Murray (one of the original package authors) to predict the treatment effect for a new set of units. Once users have produced a satisfactory `bcf` run (using training data), they are able to use this fitted `bcf` object to predict on a new set of (test) data. This is possible even with runs that have multiple chains.

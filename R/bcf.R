@@ -458,8 +458,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
 #' Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
 #' This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
-#' It includes, posterior summary stats; effective sample sizes for key parameters; 
-#' and  Gelman and Rubin's convergence diagnostics.
+#' It includes, for key parameters, posterior summary stats, effective sample sizes, 
+#' and Gelman and Rubin's convergence diagnostics.
 #' @param bcf_out output from a BCF predict run
 #' @examples
 #'\donttest{
