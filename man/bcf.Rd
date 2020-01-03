@@ -6,14 +6,14 @@
 \usage{
 bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL,
   random_seed = sample.int(.Machine$integer.max, 1), n_chains = 4,
-  n_chain_clusters = 2,
-  n_threads = max(RcppParallel::defaultNumThreads()/2, 1), nburn, nsim,
-  nthin = 1, update_interval = 100, ntree_control = 200,
-  sd_control = 2 * sd(y), base_control = 0.95, power_control = 2,
-  ntree_moderate = 50, sd_moderate = sd(y), base_moderate = 0.25,
-  power_moderate = 3, save_tree_directory = "..", nu = 3,
-  lambda = NULL, sigq = 0.9, sighat = NULL, include_pi = "control",
-  use_muscale = TRUE, use_tauscale = TRUE, verbose = FALSE)
+  n_cores = 2, n_threads = max(RcppParallel::defaultNumThreads()/2, 1),
+  nburn = 200, nsim = 200, nthin = 1, update_interval = 100,
+  ntree_control = 200, sd_control = 2 * sd(y), base_control = 0.95,
+  power_control = 2, ntree_moderate = 50, sd_moderate = sd(y),
+  base_moderate = 0.25, power_moderate = 3,
+  save_tree_directory = "..", nu = 3, lambda = NULL, sigq = 0.9,
+  sighat = NULL, include_pi = "control", use_muscale = TRUE,
+  use_tauscale = TRUE, verbose = FALSE)
 }
 \arguments{
 \item{y}{Response variable}
@@ -32,13 +32,13 @@ bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL,
 
 \item{n_chains}{An optional integer of the number of MCMC chains to run}
 
-\item{n_chain_clusters}{An optional integer of the number of clusters to run your MCMC chains on}
+\item{n_cores}{An optional integer of the number of cores to run your MCMC chains on}
 
 \item{n_threads}{An optional integer of the number of threads to parallelize within chain bcf operations on}
 
 \item{nburn}{Number of burn-in MCMC iterations}
 
-\item{nsim}{Number of MCMC iterations to save after burn-in}
+\item{nsim}{Number of MCMC iterations to save after burn-in.}
 
 \item{nthin}{Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.}
 

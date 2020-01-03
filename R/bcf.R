@@ -42,9 +42,9 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
   return(out) 
 }
 
-.get_do_type = function(n_chain_clusters){
-  if(n_chain_clusters>1){
-    cl <- parallel::makeCluster(n_chain_clusters)
+.get_do_type = function(n_cores){
+  if(n_cores>1){
+    cl <- parallel::makeCluster(n_cores)
     doParallel::registerDoParallel(cl)
     `%doType%`  <- foreach::`%dopar%`
   } else {
@@ -87,10 +87,10 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
 #' @param random_seed A random seed passed to R's set.seed
 #' @param n_chains  An optional integer of the number of MCMC chains to run
-#' @param n_chain_clusters An optional integer of the number of clusters to run your MCMC chains on
+#' @param n_cores An optional integer of the number of cores to run your MCMC chains on
 #' @param n_threads An optional integer of the number of threads to parallelize within chain bcf operations on
 #' @param nburn Number of burn-in MCMC iterations
-#' @param nsim Number of MCMC iterations to save after burn-in
+#' @param nsim Number of MCMC iterations to save after burn-in.
 #' @param nthin Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.
 #' @param update_interval Print status every update_interval MCMC iterations
 #' @param ntree_control Number of trees in mu(x)
@@ -202,10 +202,10 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @export
 bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, 
                 random_seed = sample.int(.Machine$integer.max, 1),
-                n_chains         = 4,
-                n_chain_clusters = 2,
+                n_chains = 4,
+                n_cores  = 2,
                 n_threads = max(RcppParallel::defaultNumThreads()/2,1),
-                nburn, nsim, nthin = 1, update_interval = 100,
+                nburn = 200, nsim = 200, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
                 base_control = 0.95,
@@ -303,7 +303,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
   RcppParallel::setThreadOptions(numThreads=n_threads)
   
-  `%doType%` = .get_do_type(n_chain_clusters)
+  `%doType%` = .get_do_type(n_cores)
   
   chain_out <- foreach::foreach(iChain=1:n_chains) %doType% {
     
@@ -497,11 +497,11 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 #' bcf_fit = bcf(y, z, x, x, pihat, nburn=2000, nsim=2000)
 #'
 #' # Get model fit diagnostics
-#' summarise_bcf(bcf_fit)
+#' summary(bcf_fit)
 #'
 #'}
 #' @export
-summarise_bcf <- function(bcf_out, 
+summary_bcf <- function(bcf_out, 
                          params_2_summarise = c('sigma','tau_bar','mu_bar','yhat_bar') ){
   library(coda)
 
@@ -540,7 +540,7 @@ summarise_bcf <- function(bcf_out,
 #' @param z_pred Treatment variable for predictions (optional except if x_pre is not empty)
 #' @param pi_pred propensity score for prediction
 #' @param save_tree_directory directory where the trees have been saved
-#' @param n_chain_clusters An optional integer of the number of clusters to run your MCMC chains on
+#' @param n_cores An optional integer of the number of cores to run your MCMC chains on
 #' @examples
 #'\donttest{
 #'
@@ -596,13 +596,13 @@ summarise_bcf <- function(bcf_out,
 #'
 #'}
 #' @export
-predict <- function(bcf_out, 
+predict_bcf <- function(bcf_out, 
                     x_predict_control,
                     x_predict_moderate,
                     pi_pred,
                     z_pred, 
                     save_tree_directory,
-                    n_chain_clusters=2) {
+                    n_cores=2) {
                         
     if(any(is.na(x_predict_moderate))) stop("Missing values in x_predict_moderate")
     if(any(is.na(x_predict_control))) stop("Missing values in x_predict_control")
@@ -647,7 +647,7 @@ predict <- function(bcf_out,
 
     n_chains = length(bcf_out$coda_chains)
     
-    `%doType%` = .get_do_type(n_chain_clusters)
+    `%doType%` = .get_do_type(n_cores)
     
     chain_out <- foreach::foreach(iChain=1:n_chains) %doType% {
       

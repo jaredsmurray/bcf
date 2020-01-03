@@ -22,7 +22,7 @@ library(latex2exp)
 library(ggplot2)
 ```
 
-We will fit the model to simulated data, following exactly the same process as in the main vignette. For that reason, we do not show the data generation steps here.
+To fit the model to simulated data, we follow the same process as in the "Simple Example" vignette. For that reason, we do not show the data generation steps here.
 
 ```{r, echo = FALSE}
 set.seed(1)
@@ -60,7 +60,7 @@ y <- y_noiseless + sigma*rnorm(n)/sqrt(weights)
 
 ## Fitting BCF
 
-We now fit a BCF model to the simulated data. This is the same model as we fit in the main vignette. 
+We now fit a BCF model to the simulated data. This is the same model as we fit in the "Simple Example" vignette. 
 
 ```{r}
 bcf_out <- bcf2::bcf(y               = y,
@@ -78,9 +78,8 @@ bcf_out <- bcf2::bcf(y               = y,
 
 ## Predicting using BCF
 
-We now use a separate set of testing Xs for prediction. First, we generate a testing dataset.
-We purposefully make sure that we have some values outside of the range of our training dataset to allow us to 
-gauge out-of-sample error.
+We now use a separate set of test values for prediction. First, we generate a testing dataset.
+We make sure to include some values outside the range of our training dataset, to allow us to gauge out-of-sample error.
 
 ```{r}
 ## Testing data
@@ -95,15 +94,15 @@ pi_pred <- pnorm(mu_pred)
 z_pred  <- rbinom(n_test,1, pi_pred)
 ```
 
-We now use this data to generate predictions based on our model.
+We now use these data to generate predictions based on our model.
 
 ```{r}
-pred_out = bcf2::predict(bcf_out=bcf_out,
-                         x_predict_control=x_test,
-                         x_predict_moderate=x_test,
-                         pi_pred=pi_pred,
-                         z_pred=z_pred,
-                         save_tree_directory = '..')
+pred_out = bcf2::predict_bcf(bcf_out=bcf_out,
+                             x_predict_control=x_test,
+                             x_predict_moderate=x_test,
+                             pi_pred=pi_pred,
+                             z_pred=z_pred,
+                             save_tree_directory = '..')
 ```
 
 ## Comparison
@@ -131,7 +130,7 @@ It is reassuring that these observations' treatment effect estimates still fall 
 
 ## Marginal effects
 
-We can use predict() to compute mean marginal effects, in other words the effect of a given covariate averaged across the levels of all other covariates (which corresponds to an estimate from a standard parametric regression). We provide an example using subgroups discussed in the main vignette. Specifically, we compare the mean marginal effects for the average value of $x_3$ in the bottom quartile and the average value of $x_3$ in the top quartile.
+We can use predict() to compute mean marginal effects, in other words the effect of a given covariate averaged across the levels of all other covariates (which corresponds to an estimate from a standard parametric regression). We provide an example using subgroups discussed in the "Simple Example" vignette. Specifically, we compare the mean marginal effects for the average value of $x_3$ in the bottom quartile and the average value of $x_3$ in the top quartile.
 
 ```{r}
 # Computing the average X3 values of Q1 and Q4 for prediction
@@ -143,19 +142,19 @@ x_low <- x; x_high <- x
 x_low[,3]  <- mean(q1) 
 x_high[,3] <- mean(q4)
 
-pred_low = bcf2::predict(bcf_out=bcf_out,
-                         x_predict_control=x_low,
-                         x_predict_moderate=x_low,
-                         pi_pred=pi,
-                         z_pred=z,
-                         save_tree_directory = '..')
+pred_low = bcf2::predict_bcf(bcf_out=bcf_out,
+                             x_predict_control=x_low,
+                             x_predict_moderate=x_low,
+                             pi_pred=pi,
+                             z_pred=z,
+                             save_tree_directory = '..')
 
-pred_high = bcf2::predict(bcf_out=bcf_out,
-                          x_predict_control=x_high,
-                          x_predict_moderate=x_high,
-                          pi_pred=pi,
-                          z_pred=z,
-                          save_tree_directory = '..')
+pred_high = bcf2::predict_bcf(bcf_out=bcf_out,
+                              x_predict_control=x_high,
+                              x_predict_moderate=x_high,
+                              pi_pred=pi,
+                              z_pred=z,
+                              save_tree_directory = '..')
 ```
 
 Now that we have our predictions, we look at the posterior distribution of the mean marginal treatment effect for each group.
@@ -179,4 +178,4 @@ We see that the posterior distributions of the mean marginal treatment effect fo
 mean(highDist > lowDist)
 ```
 
-We found that there is a 100% probability that the mean marginal treatment effect for top-quartile units is greater than that for bottom-quartile units.
+We found that there is a 100 percent probability that the mean marginal treatment effect for top-quartile units is greater than that for bottom-quartile units.
