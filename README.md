@@ -10,7 +10,7 @@ BCF performs remarkably well in simulation and has led the pack at recent rigoro
 
 ## Getting Started
 
-If you are just getting started with BCF, we recommend beginning with the tutorial vignettes on the "Articles" page of this website.
+If you are just getting started with `bcf`, we recommend beginning with the tutorial vignettes on the "Articles" page of this website.
 
 ## Installation
 

@@ -460,7 +460,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   return(fitObj)
 }
 
-#' Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
+#' Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 #' This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 #' It includes, for key parameters, posterior summary stats, effective sample sizes, 
 #' and Gelman and Rubin's convergence diagnostics.
@@ -532,7 +532,7 @@ summary.bcf <- function(bcfObj,
 }
 
 
-#' Predict from a fitted BCF object
+#' Takes a fitted bcf object produced by bcf() and produces predictions for a new set of covariate values
 #' 
 #' This function takes in an existing BCF model fit and uses it to predict estimates for new data.
 #' It is important to note that this function requires that you indicate where the trees from the model fit are saved.

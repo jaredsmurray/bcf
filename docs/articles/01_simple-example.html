@@ -113,16 +113,16 @@
 <span id="cb2-11"><a href="#cb2-11"></a><span class="co"># create targeted selection, whereby a unit's likelihood of joining the intervention (pi) </span></span>
 <span id="cb2-12"><a href="#cb2-12"></a><span class="co"># is related to its expected outcome (mu)</span></span>
 <span id="cb2-13"><a href="#cb2-13"></a>mu &lt;-<span class="st"> </span><span class="dv">-1</span><span class="op">*</span>(x[,<span class="dv">1</span>]<span class="op">&gt;</span>(x[,<span class="dv">2</span>])) <span class="op">+</span><span class="st"> </span><span class="dv">1</span><span class="op">*</span>(x[,<span class="dv">1</span>]<span class="op">&lt;</span>(x[,<span class="dv">2</span>])) <span class="fl">-0.1</span></span>
-<span id="cb2-14"><a href="#cb2-14"></a></span>
-<span id="cb2-15"><a href="#cb2-15"></a><span class="co"># generate treatment variable</span></span>
-<span id="cb2-16"><a href="#cb2-16"></a>pi &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">pnorm</a></span>(mu)</span>
+<span id="cb2-14"><a href="#cb2-14"></a>pi &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">pnorm</a></span>(mu)</span>
+<span id="cb2-15"><a href="#cb2-15"></a></span>
+<span id="cb2-16"><a href="#cb2-16"></a><span class="co"># generate treatment variable</span></span>
 <span id="cb2-17"><a href="#cb2-17"></a>z &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span>(n,<span class="dv">1</span>,pi)</span>
 <span id="cb2-18"><a href="#cb2-18"></a></span>
 <span id="cb2-19"><a href="#cb2-19"></a><span class="co"># tau is the true treatment effect; it varies across units as a function of</span></span>
 <span id="cb2-20"><a href="#cb2-20"></a><span class="co"># X3, the effect moderator</span></span>
 <span id="cb2-21"><a href="#cb2-21"></a>tau &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">/</span>(<span class="dv">1</span> <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(<span class="op">-</span>x[,<span class="dv">3</span>]))</span>
 <span id="cb2-22"><a href="#cb2-22"></a></span>
-<span id="cb2-23"><a href="#cb2-23"></a><span class="co"># generate the response using q, tau and z</span></span>
+<span id="cb2-23"><a href="#cb2-23"></a><span class="co"># generate the expected response using mu, tau and z</span></span>
 <span id="cb2-24"><a href="#cb2-24"></a>y_noiseless &lt;-<span class="st"> </span>mu <span class="op">+</span><span class="st"> </span>tau<span class="op">*</span>z</span>
 <span id="cb2-25"><a href="#cb2-25"></a></span>
 <span id="cb2-26"><a href="#cb2-26"></a><span class="co"># set the noise level relative to the expected mean function of Y</span></span>
@@ -209,7 +209,6 @@
 <div id="estimates-versus-true-treatment-effects" class="section level3">
 <h3 class="hasAnchor">
 <a href="#estimates-versus-true-treatment-effects" class="anchor"></a>Estimates versus true treatment effects</h3>
-<p>Now that we have confidence in BCF’s estimates of unit-specific treatment effects, we examine the results more closely. First, we look at how well our estimates of <span class="math inline">\(\tau\)</span> recover the true effects.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>tau_ests &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">Mean  =</span> <span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(bcf_out<span class="op">$</span>tau),</span>
 <span id="cb5-2"><a href="#cb5-2"></a>                       <span class="dt">Low95 =</span> <span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(bcf_out<span class="op">$</span>tau, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x, <span class="fl">0.025</span>)),</span>
 <span id="cb5-3"><a href="#cb5-3"></a>                       <span class="dt">Up95  =</span> <span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(bcf_out<span class="op">$</span>tau, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x, <span class="fl">0.975</span>)))</span>
@@ -234,7 +233,7 @@
 <span id="cb6-5"><a href="#cb6-5"></a>coverage &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span>(<span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://rdrr.io/r/base/length.html">length</a></span>(tau), isCovered)</span>
 <span id="cb6-6"><a href="#cb6-6"></a>perCoverage &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/unlist.html">unlist</a></span>(coverage))<span class="op">/</span><span class="kw"><a href="https://rdrr.io/r/base/length.html">length</a></span>(tau)</span></code></pre></div>
 <p>We find that our estimates have 100 percent coverage at the 95 percent level, suggesting that our uncertainty estimates are slightly conservative in this example.</p>
-<p>In this example, although we do see variation in the point estimates across units, most uncertainty intervals overlap, except for points at the extremes. This overlap indicates that, although there is variation in the treatment effect across units, the difference in treatment effects is not statistically meaningful.</p>
+<p>In this example, although we do see variation in the point estimates across units, most uncertainty intervals overlap, except for points at the extremes. This overlap indicates that, although there is variation in the treatment effect across units, the difference in treatment effects is not statistically meaningful at the unit level.</p>
 </div>
 <div id="identifying-possible-subgroups" class="section level3">
 <h3 class="hasAnchor">

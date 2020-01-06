@@ -22,7 +22,7 @@ library(latex2exp)
 library(ggplot2)
 ```
 
-To fit the model to simulated data, we follow the same process as in the "Simple Example" vignette. For that reason, we do not show the data generation steps here.
+To fit the model to simulated data, we follow the same process as in the "Simple Example" vignette. For that reason, we do not show the data generation and model fitting steps here.
 
 ```{r, echo = FALSE}
 set.seed(1)
@@ -56,13 +56,8 @@ sigma <- diff(range(mu + tau*pi))/8
 
 # draw the response variable with additive error
 y <- y_noiseless + sigma*rnorm(n)/sqrt(weights)
-```
 
-## Fitting BCF
-
-We now fit a BCF model to the simulated data. This is the same model as we fit in the "Simple Example" vignette. 
-
-```{r}
+# Fitting the model
 bcf_out <- bcf2::bcf(y               = y,
                      z               = z,
                      x_control       = x,
@@ -78,7 +73,7 @@ bcf_out <- bcf2::bcf(y               = y,
 
 ## Predicting using BCF
 
-We now use a separate set of test values for prediction. First, we generate a testing dataset.
+We now use a separate set of covariate values for prediction. First, we generate a testing dataset.
 We make sure to include some values outside the range of our training dataset, to allow us to gauge out-of-sample error.
 
 ```{r}
@@ -86,7 +81,7 @@ We make sure to include some values outside the range of our training dataset, t
 n_test = 50
 
 x_test  <- matrix(rnorm(n_test*p), nrow=n_test)
-special_x3 <- c(-3.1, -2.9, 2.76, 2.8, 2.85)
+special_x3 <- c(-4, -3.7, 3.3, 3.5, 3.7)
 x_test[ (n_test - length(special_x3) + 1 ):n_test,3] <- special_x3 # including some X3s outside of range
 
 mu_pred  <- -1*(x_test[,1]>(x_test[,2])) + 1*(x_test[,1]<(x_test[,2])) - 0.1
@@ -130,17 +125,17 @@ It is reassuring that these observations' treatment effect estimates still fall 
 
 ## Marginal effects
 
-We can use predict() to compute mean marginal effects, in other words the effect of a given covariate averaged across the levels of all other covariates (which corresponds to an estimate from a standard parametric regression). We provide an example using subgroups discussed in the "Simple Example" vignette. Specifically, we compare the mean marginal effects for the average value of $x_3$ in the bottom quartile and the average value of $x_3$ in the top quartile.
+We can use `predict()` to compute mean marginal effects, in other words the effect of a given covariate averaged across the levels of all other covariates (which corresponds to an estimate from a standard parametric regression). We provide an example using subgroups discussed in the "Simple Example" vignette. Specifically, we compare the mean marginal effects for the average value of $x_3$ in the bottom quartile and the average value of $x_3$ in the top quartile.
 
 ```{r}
-# Computing the average X3 values of Q1 and Q4 for prediction
-q1 <- x[,3][x[,3] < quantile(x[,3], 0.25)]
-q4 <- x[,3][x[,3] > quantile(x[,3], 0.75)]
+# Computing the average X3 values in Q1 and Q4 for prediction
+q1Bar <- mean(x[,3][x[,3] < quantile(x[,3], 0.25)])
+q4Bar <- mean(x[,3][x[,3] > quantile(x[,3], 0.75)])
 
 # Creating training datasets with new X3 values
 x_low <- x; x_high <- x
-x_low[,3]  <- mean(q1) 
-x_high[,3] <- mean(q4)
+x_low[,3]  <- q1Bar 
+x_high[,3] <- q4Bar
 
 pred_low = predict(bcfObj=bcf_out,
                    x_predict_control=x_low,
@@ -165,14 +160,14 @@ lowDist <- apply(pred_low$tau, 1, weighted.mean, weights)
 highDist <- apply(pred_high$tau, 1, weighted.mean, weights)
 
 distDF <- data.frame(taus  = c(lowDist, highDist),
-                     Group = factor(c(rep(paste0("X3 = ", round(mean(q1), 1)), length(lowDist)), rep(paste0("X3 = ", round(mean(q4), 1)), length(highDist)))))
+                     Group = factor(c(rep(paste0("X3 = ", round(q1Bar, 1)), length(lowDist)), rep(paste0("X3 = ", round(q4Bar, 1)), length(highDist)))))
 
 ggplot(distDF, aes(taus, group = Group, color = Group, fill = Group)) +
   geom_density(alpha = 0.7) +
   xlab(TeX("$\\tau$"))
 ```
 
-We see that the posterior distributions of the mean marginal treatment effect for the two groups barely overlap. We can confirm this by computing the probability that the mean marginal treatment effect for the top units ($x_3 = $`r round(mean(q4), 1)`) is greater than the mean marginal treatment effect for the bottom units (($x_3 = $`r round(mean(q1), 1)`)).
+We see that the posterior distributions of the mean marginal treatment effect for the two groups barely overlap. We can confirm this by computing the probability that the mean marginal treatment effect for the top units ($x_3 =$ `r round(q4Bar, 1)`) is greater than the mean marginal treatment effect for the bottom units (($x_3 =$ `r round(q1Bar, 1)`)).
 
 ```{r}
 mean(highDist > lowDist)

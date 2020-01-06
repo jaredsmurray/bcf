@@ -48,16 +48,16 @@ weights <- abs(rnorm(n))
 # create targeted selection, whereby a unit's likelihood of joining the intervention (pi) 
 # is related to its expected outcome (mu)
 mu <- -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2])) -0.1
+pi <- pnorm(mu)
 
 # generate treatment variable
-pi <- pnorm(mu)
 z <- rbinom(n,1,pi)
 
 # tau is the true treatment effect; it varies across units as a function of
 # X3, the effect moderator
 tau <- 1/(1 + exp(-x[,3]))
 
-# generate the response using q, tau and z
+# generate the expected response using mu, tau and z
 y_noiseless <- mu + tau*z
 
 # set the noise level relative to the expected mean function of Y
@@ -108,9 +108,6 @@ Now that we've successfully fit our model, let's explore the output. First, sinc
 
 ### Estimates versus true treatment effects
 
-Now that we have confidence in BCF's estimates of unit-specific treatment effects, we examine the results more closely.
-First, we look at how well our estimates of $\tau$ recover the true effects.
-
 ```{r}
 tau_ests <- data.frame(Mean  = colMeans(bcf_out$tau),
                        Low95 = apply(bcf_out$tau, 2, function(x) quantile(x, 0.025)),
@@ -143,7 +140,7 @@ perCoverage <- sum(unlist(coverage))/length(tau)
 We find that our estimates have `r perCoverage*100` percent coverage at the 95 percent level, suggesting that our uncertainty estimates are slightly conservative in this example.
 
 In this example, although we do see variation in the point estimates across units, most uncertainty intervals overlap, except for points at the extremes. 
-This overlap indicates that, although there is variation in the treatment effect across units, the difference in treatment effects is not statistically meaningful.
+This overlap indicates that, although there is variation in the treatment effect across units, the difference in treatment effects is not statistically meaningful at the unit level.
 
 ### Identifying possible subgroups
 
