@@ -96,7 +96,7 @@ bcf_out <- bcf2::bcf(y            = y,
 We use the `summary.bcf` function to obtain posterior summary statistics and MCMC diagnostics. We use those diagnostics to assess convergence of our run.
 
 ```{r diagnostics}
-bcf2::summary_bcf(bcf_out)
+summary(bcf_out)
 ```
 
 Since our "$\hat{R}s$" (Gelman and Rubin's convergence factor or Potential Scale Reduction Factor) are between 0.9 and 1.1, we are confident that our run successfully achieved convergence. 

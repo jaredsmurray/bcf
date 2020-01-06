@@ -112,7 +112,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param use_muscale Use a half-Cauchy hyperprior on the scale of mu.
 #' @param use_tauscale Use a half-Normal prior on the scale of tau.
 #' @param verbose logical, whether to print log of MCMC iterations, defaults to FALSE.
-#' @return A list with elements
+#' @return A fitted bcf object that is a list with elements
 #' \item{tau}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
 #' \item{mu}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
 #' \item{sigma}{Length \code{nsim} vector of posterior samples of sigma}
@@ -439,28 +439,32 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     if(any(chain_out[[iChain]]$perm   != chain_out[[1]]$perm))      stop("perm not consistent between chains for no reason")
   }
 
-  list(sigma = all_sigma,
-       yhat = all_yhat,
-       sdy = chain_out[[1]]$sdy,
-       muy = chain_out[[1]]$muy,
-       mu  = all_mu,
-       tau = all_tau,
-       mu_scale = all_mu_scale,
-       tau_scale = all_tau_scale,
-       b0 = all_b0,
-       b1 = all_b1,
-       perm = perm,
-       include_pi = chain_out[[1]]$include_pi,
-       random_seed = chain_out[[1]]$random_seed,
-       coda_chains = coda::as.mcmc.list(chain_list),
-       raw_chains = chain_out)
+  fitObj <- list(sigma = all_sigma,
+                 yhat = all_yhat,
+                 sdy = chain_out[[1]]$sdy,
+                 muy = chain_out[[1]]$muy,
+                 mu  = all_mu,
+                 tau = all_tau,
+                 mu_scale = all_mu_scale,
+                 tau_scale = all_tau_scale,
+                 b0 = all_b0,
+                 b1 = all_b1,
+                 perm = perm,
+                 include_pi = chain_out[[1]]$include_pi,
+                 random_seed = chain_out[[1]]$random_seed,
+                 coda_chains = coda::as.mcmc.list(chain_list),
+                 raw_chains = chain_out)
+  
+  attr(fitObj, "class") <- "bcf"
+  
+  return(fitObj)
 }
 
 #' Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
 #' This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 #' It includes, for key parameters, posterior summary stats, effective sample sizes, 
 #' and Gelman and Rubin's convergence diagnostics.
-#' @param bcf_out output from a BCF predict run
+#' @param bcfObj output from a BCF predict run
 #' @examples
 #'\donttest{
 #'
@@ -501,11 +505,11 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 #'
 #'}
 #' @export
-summary_bcf <- function(bcf_out, 
-                         params_2_summarise = c('sigma','tau_bar','mu_bar','yhat_bar') ){
+summary.bcf <- function(bcfObj, 
+                        params_2_summarise = c('sigma','tau_bar','mu_bar','yhat_bar') ){
   library(coda)
 
-  chains_2_summarise <- bcf_out$coda_chains[,params_2_summarise]
+  chains_2_summarise <- bcfObj$coda_chains[,params_2_summarise]
 
   message("Summary statistics for each Markov Chain Monte Carlo run")
   print(summary(chains_2_summarise))
@@ -534,7 +538,7 @@ summary_bcf <- function(bcf_out,
 #' It is important to note that this function requires that you indicate where the trees from the model fit are saved.
 #' You can do so using the save_tree_directory argument in bcf(). Otherwise, they will be saved in the working directory.
 #' The bcf() function automatically saves those in the same directory as the 
-#' @param bcf_out output from a BCF predict run
+#' @param bcfObj output from a BCF predict run
 #' @param x_predict_control matrix of covariates for the "prognostic" function mu(x) for predictions (optional)
 #' @param x_predict_moderate matrix of covariates for the covariate-dependent treatment effects tau(x) for predictions (optional)
 #' @param z_pred Treatment variable for predictions (optional except if x_pre is not empty)
@@ -596,13 +600,13 @@ summary_bcf <- function(bcf_out,
 #'
 #'}
 #' @export
-predict_bcf <- function(bcf_out, 
-                    x_predict_control,
-                    x_predict_moderate,
-                    pi_pred,
-                    z_pred, 
-                    save_tree_directory,
-                    n_cores=2) {
+predict.bcf <- function(bcfObj, 
+                        x_predict_control,
+                        x_predict_moderate,
+                        pi_pred,
+                        z_pred, 
+                        save_tree_directory,
+                        n_cores=2) {
                         
     if(any(is.na(x_predict_moderate))) stop("Missing values in x_predict_moderate")
     if(any(is.na(x_predict_control))) stop("Missing values in x_predict_control")
@@ -645,7 +649,7 @@ predict_bcf <- function(bcf_out,
 
     cat("Starting Prediction \n")
 
-    n_chains = length(bcf_out$coda_chains)
+    n_chains = length(bcfObj$coda_chains)
     
     `%doType%` = .get_do_type(n_cores)
     
@@ -674,9 +678,9 @@ predict_bcf <- function(bcf_out,
     
     chain_list=list()
 
-    muy = bcf_out$muy
+    muy = bcfObj$muy
       
-    sdy = bcf_out$sdy
+    sdy = bcfObj$sdy
     
     for (iChain in 1:n_chains){
       
@@ -686,7 +690,7 @@ predict_bcf <- function(bcf_out,
         Tm = chain_out[[iChain]]$Tm
         Tc = chain_out[[iChain]]$Tc
         
-        this_chain_bcf_out = bcf_out$raw_chains[[iChain]]
+        this_chain_bcf_out = bcfObj$raw_chains[[iChain]]
         
         b1 = this_chain_bcf_out$b1
         b0 = this_chain_bcf_out$b0

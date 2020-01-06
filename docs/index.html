@@ -86,18 +86,18 @@
 <div id="why-bcf" class="section level2">
 <h2 class="hasAnchor">
 <a href="#why-bcf" class="anchor"></a>Why BCF?</h2>
-<p>BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, <a href="https://projecteuclid.org/euclid.aoas/1273584455">Chipman, George, and McCulloch 2010</a>). Specifically, it builds on the application of BART to causal inference (<a href="https://www.tandfonline.com/doi/abs/10.1198/jcgs.2010.08162">Hill 2011</a>). BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, does not overfit to the training data. BCF further extends BART’s flexibility by specifying different models for relationships between (a) covariates and the outcome and (b) covariates and the treatment effect.</p>
+<p>BCF is a cutting-edge causal inference methodology that builds on Bayesian Additive Regression Trees (BART, <a href="https://projecteuclid.org/euclid.aoas/1273584455">Chipman, George, and McCulloch 2010</a>). Specifically, it applies BART to causal inference (<a href="https://www.tandfonline.com/doi/abs/10.1198/jcgs.2010.08162">Hill 2011</a>). BART and BCF both combine Bayesian regularization with regression trees to provide a highly flexible response surface that, thanks to the Bayesian regularizing priors, does not overfit to the training data. BCF extends BART’s flexibility by specifying different models for relationships between (1) covariates and the outcome and (2) covariates and the treatment effect.</p>
 <p>BCF performs remarkably well in simulation and has led the pack at recent rigorous causal inference competitions, such as those held at the Atlantic Causal Inference Conference (see, for example, <a href="https://projecteuclid.org/euclid.ss/1555056030">Dorie et al. 2019</a>).</p>
 </div>
 <div id="getting-started" class="section level2">
 <h2 class="hasAnchor">
 <a href="#getting-started" class="anchor"></a>Getting Started</h2>
-<p>If you are just getting started with BCF, we recommend starting with the tutorial vignettes on the “Articles” page of this website.</p>
+<p>If you are just getting started with BCF, we recommend beginning with the tutorial vignettes on the “Articles” page of this website.</p>
 </div>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
-<p>This package requires compilation, so make sure you have Rtools properly installed – details <a href="https://cran.r-project.org/bin/windows/Rtools/">here</a>.</p>
+<p>This package requires compilation, so make sure you have Rtools properly installed – see <a href="https://cran.r-project.org/bin/windows/Rtools/">this site</a> for details.</p>
 <p>Install the latest release from CRAN:</p>
 <pre class="{r}"><code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages("bcf")</a></code></pre>
 <p>Install the latest development version from GitHub:</p>

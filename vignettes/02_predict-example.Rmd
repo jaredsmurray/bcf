@@ -97,12 +97,12 @@ z_pred  <- rbinom(n_test,1, pi_pred)
 We now use these data to generate predictions based on our model.
 
 ```{r}
-pred_out = bcf2::predict_bcf(bcf_out=bcf_out,
-                             x_predict_control=x_test,
-                             x_predict_moderate=x_test,
-                             pi_pred=pi_pred,
-                             z_pred=z_pred,
-                             save_tree_directory = '..')
+pred_out = predict(bcfObj=bcf_out,
+                   x_predict_control=x_test,
+                   x_predict_moderate=x_test,
+                   pi_pred=pi_pred,
+                   z_pred=z_pred,
+                   save_tree_directory = '..')
 ```
 
 ## Comparison
@@ -142,19 +142,19 @@ x_low <- x; x_high <- x
 x_low[,3]  <- mean(q1) 
 x_high[,3] <- mean(q4)
 
-pred_low = bcf2::predict_bcf(bcf_out=bcf_out,
-                             x_predict_control=x_low,
-                             x_predict_moderate=x_low,
-                             pi_pred=pi,
-                             z_pred=z,
-                             save_tree_directory = '..')
+pred_low = predict(bcfObj=bcf_out,
+                   x_predict_control=x_low,
+                   x_predict_moderate=x_low,
+                   pi_pred=pi,
+                   z_pred=z,
+                   save_tree_directory = '..')
 
-pred_high = bcf2::predict_bcf(bcf_out=bcf_out,
-                              x_predict_control=x_high,
-                              x_predict_moderate=x_high,
-                              pi_pred=pi,
-                              z_pred=z,
-                              save_tree_directory = '..')
+pred_high = predict(bcfObj=bcf_out,
+                    x_predict_control=x_high,
+                    x_predict_moderate=x_high,
+                    pi_pred=pi,
+                    z_pred=z,
+                    save_tree_directory = '..')
 ```
 
 Now that we have our predictions, we look at the posterior distribution of the mean marginal treatment effect for each group.
@@ -172,7 +172,7 @@ ggplot(distDF, aes(taus, group = Group, color = Group, fill = Group)) +
   xlab(TeX("$\\tau$"))
 ```
 
-We see that the posterior distributions of the mean marginal treatment effect for the two groups barely overlap. We can confirm this by computing the probability that the mean marginal treatment effect for the top units ($x_3 = $`r round(mean(q4), 1)`) is greater than the mean marginal treatment effect for the bottom units (($x_3 = $`r round(mean(q1), 1)`)). 
+We see that the posterior distributions of the mean marginal treatment effect for the two groups barely overlap. We can confirm this by computing the probability that the mean marginal treatment effect for the top units ($x_3 = $`r round(mean(q4), 1)`) is greater than the mean marginal treatment effect for the bottom units (($x_3 = $`r round(mean(q1), 1)`)).
 
 ```{r}
 mean(highDist > lowDist)

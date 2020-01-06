@@ -81,7 +81,7 @@ or "both" are HIGHLY recommended with observational data.}
 \item{verbose}{logical, whether to print log of MCMC iterations, defaults to FALSE.}
 }
 \value{
-A list with elements
+A fitted bcf object that is a list with elements
 \item{tau}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
 \item{mu}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
 \item{sigma}{Length \code{nsim} vector of posterior samples of sigma}

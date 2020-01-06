@@ -92,11 +92,11 @@
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(bcf2)</span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(latex2exp)</span>
 <span id="cb1-3"><a href="#cb1-3"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(ggplot2)</span></code></pre></div>
-<p>We will fit the model to simulated data, following exactly the same process as in the main vignette. For that reason, we do not show the data generation steps here.</p>
+<p>To fit the model to simulated data, we follow the same process as in the “Simple Example” vignette. For that reason, we do not show the data generation steps here.</p>
 <div id="fitting-bcf" class="section level2">
 <h2 class="hasAnchor">
 <a href="#fitting-bcf" class="anchor"></a>Fitting BCF</h2>
-<p>We now fit a BCF model to the simulated data. This is the same model as we fit in the main vignette.</p>
+<p>We now fit a BCF model to the simulated data. This is the same model as we fit in the “Simple Example” vignette.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>bcf_out &lt;-<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/bcf.html">bcf</a></span>(<span class="dt">y               =</span> y,</span>
 <span id="cb2-2"><a href="#cb2-2"></a>                     <span class="dt">z               =</span> z,</span>
 <span id="cb2-3"><a href="#cb2-3"></a>                     <span class="dt">x_control       =</span> x,</span>
@@ -111,7 +111,7 @@
 <div id="predicting-using-bcf" class="section level2">
 <h2 class="hasAnchor">
 <a href="#predicting-using-bcf" class="anchor"></a>Predicting using BCF</h2>
-<p>We now use a separate set of testing Xs for prediction. First, we generate a testing dataset. We purposefully make sure that we have some values outside of the range of our training dataset to allow us to gauge out-of-sample error.</p>
+<p>We now use a separate set of test values for prediction. First, we generate a testing dataset. We make sure to include some values outside the range of our training dataset, to allow us to gauge out-of-sample error.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co">## Testing data</span></span>
 <span id="cb3-2"><a href="#cb3-2"></a>n_test =<span class="st"> </span><span class="dv">50</span></span>
 <span id="cb3-3"><a href="#cb3-3"></a></span>
@@ -122,13 +122,13 @@
 <span id="cb3-8"><a href="#cb3-8"></a>mu_pred  &lt;-<span class="st"> </span><span class="dv">-1</span><span class="op">*</span>(x_test[,<span class="dv">1</span>]<span class="op">&gt;</span>(x_test[,<span class="dv">2</span>])) <span class="op">+</span><span class="st"> </span><span class="dv">1</span><span class="op">*</span>(x_test[,<span class="dv">1</span>]<span class="op">&lt;</span>(x_test[,<span class="dv">2</span>])) <span class="op">-</span><span class="st"> </span><span class="fl">0.1</span></span>
 <span id="cb3-9"><a href="#cb3-9"></a>pi_pred &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Normal.html">pnorm</a></span>(mu_pred)</span>
 <span id="cb3-10"><a href="#cb3-10"></a>z_pred  &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span>(n_test,<span class="dv">1</span>, pi_pred)</span></code></pre></div>
-<p>We now use this data to generate predictions based on our model.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>pred_out =<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/predict.html">predict</a></span>(<span class="dt">bcf_out=</span>bcf_out,</span>
-<span id="cb4-2"><a href="#cb4-2"></a>                         <span class="dt">x_predict_control=</span>x_test,</span>
-<span id="cb4-3"><a href="#cb4-3"></a>                         <span class="dt">x_predict_moderate=</span>x_test,</span>
-<span id="cb4-4"><a href="#cb4-4"></a>                         <span class="dt">pi_pred=</span>pi_pred,</span>
-<span id="cb4-5"><a href="#cb4-5"></a>                         <span class="dt">z_pred=</span>z_pred,</span>
-<span id="cb4-6"><a href="#cb4-6"></a>                         <span class="dt">save_tree_directory =</span> <span class="st">'..'</span>)</span>
+<p>We now use these data to generate predictions based on our model.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>pred_out =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span>(<span class="dt">bcfObj=</span>bcf_out,</span>
+<span id="cb4-2"><a href="#cb4-2"></a>                   <span class="dt">x_predict_control=</span>x_test,</span>
+<span id="cb4-3"><a href="#cb4-3"></a>                   <span class="dt">x_predict_moderate=</span>x_test,</span>
+<span id="cb4-4"><a href="#cb4-4"></a>                   <span class="dt">pi_pred=</span>pi_pred,</span>
+<span id="cb4-5"><a href="#cb4-5"></a>                   <span class="dt">z_pred=</span>z_pred,</span>
+<span id="cb4-6"><a href="#cb4-6"></a>                   <span class="dt">save_tree_directory =</span> <span class="st">'..'</span>)</span>
 <span id="cb4-7"><a href="#cb4-7"></a><span class="co">#&gt; Initializing BCF Prediction</span></span>
 <span id="cb4-8"><a href="#cb4-8"></a><span class="co">#&gt; Starting Prediction</span></span></code></pre></div>
 </div>
@@ -156,7 +156,7 @@
 <div id="marginal-effects" class="section level2">
 <h2 class="hasAnchor">
 <a href="#marginal-effects" class="anchor"></a>Marginal effects</h2>
-<p>We can use predict() to compute mean marginal effects, in other words the effect of a given covariate averaged across the levels of all other covariates (which corresponds to an estimate from a standard parametric regression). We provide an example using subgroups discussed in the main vignette. Specifically, we compare the mean marginal effects for the average value of <span class="math inline">\(x_3\)</span> in the bottom quartile and the average value of <span class="math inline">\(x_3\)</span> in the top quartile.</p>
+<p>We can use predict() to compute mean marginal effects, in other words the effect of a given covariate averaged across the levels of all other covariates (which corresponds to an estimate from a standard parametric regression). We provide an example using subgroups discussed in the “Simple Example” vignette. Specifically, we compare the mean marginal effects for the average value of <span class="math inline">\(x_3\)</span> in the bottom quartile and the average value of <span class="math inline">\(x_3\)</span> in the top quartile.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co"># Computing the average X3 values of Q1 and Q4 for prediction</span></span>
 <span id="cb6-2"><a href="#cb6-2"></a>q1 &lt;-<span class="st"> </span>x[,<span class="dv">3</span>][x[,<span class="dv">3</span>] <span class="op">&lt;</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x[,<span class="dv">3</span>], <span class="fl">0.25</span>)]</span>
 <span id="cb6-3"><a href="#cb6-3"></a>q4 &lt;-<span class="st"> </span>x[,<span class="dv">3</span>][x[,<span class="dv">3</span>] <span class="op">&gt;</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x[,<span class="dv">3</span>], <span class="fl">0.75</span>)]</span>
@@ -166,21 +166,21 @@
 <span id="cb6-7"><a href="#cb6-7"></a>x_low[,<span class="dv">3</span>]  &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/mean.html">mean</a></span>(q1) </span>
 <span id="cb6-8"><a href="#cb6-8"></a>x_high[,<span class="dv">3</span>] &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/mean.html">mean</a></span>(q4)</span>
 <span id="cb6-9"><a href="#cb6-9"></a></span>
-<span id="cb6-10"><a href="#cb6-10"></a>pred_low =<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/predict.html">predict</a></span>(<span class="dt">bcf_out=</span>bcf_out,</span>
-<span id="cb6-11"><a href="#cb6-11"></a>                         <span class="dt">x_predict_control=</span>x_low,</span>
-<span id="cb6-12"><a href="#cb6-12"></a>                         <span class="dt">x_predict_moderate=</span>x_low,</span>
-<span id="cb6-13"><a href="#cb6-13"></a>                         <span class="dt">pi_pred=</span>pi,</span>
-<span id="cb6-14"><a href="#cb6-14"></a>                         <span class="dt">z_pred=</span>z,</span>
-<span id="cb6-15"><a href="#cb6-15"></a>                         <span class="dt">save_tree_directory =</span> <span class="st">'..'</span>)</span>
+<span id="cb6-10"><a href="#cb6-10"></a>pred_low =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span>(<span class="dt">bcfObj=</span>bcf_out,</span>
+<span id="cb6-11"><a href="#cb6-11"></a>                   <span class="dt">x_predict_control=</span>x_low,</span>
+<span id="cb6-12"><a href="#cb6-12"></a>                   <span class="dt">x_predict_moderate=</span>x_low,</span>
+<span id="cb6-13"><a href="#cb6-13"></a>                   <span class="dt">pi_pred=</span>pi,</span>
+<span id="cb6-14"><a href="#cb6-14"></a>                   <span class="dt">z_pred=</span>z,</span>
+<span id="cb6-15"><a href="#cb6-15"></a>                   <span class="dt">save_tree_directory =</span> <span class="st">'..'</span>)</span>
 <span id="cb6-16"><a href="#cb6-16"></a><span class="co">#&gt; Initializing BCF Prediction</span></span>
 <span id="cb6-17"><a href="#cb6-17"></a><span class="co">#&gt; Starting Prediction</span></span>
 <span id="cb6-18"><a href="#cb6-18"></a></span>
-<span id="cb6-19"><a href="#cb6-19"></a>pred_high =<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/predict.html">predict</a></span>(<span class="dt">bcf_out=</span>bcf_out,</span>
-<span id="cb6-20"><a href="#cb6-20"></a>                          <span class="dt">x_predict_control=</span>x_high,</span>
-<span id="cb6-21"><a href="#cb6-21"></a>                          <span class="dt">x_predict_moderate=</span>x_high,</span>
-<span id="cb6-22"><a href="#cb6-22"></a>                          <span class="dt">pi_pred=</span>pi,</span>
-<span id="cb6-23"><a href="#cb6-23"></a>                          <span class="dt">z_pred=</span>z,</span>
-<span id="cb6-24"><a href="#cb6-24"></a>                          <span class="dt">save_tree_directory =</span> <span class="st">'..'</span>)</span>
+<span id="cb6-19"><a href="#cb6-19"></a>pred_high =<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span>(<span class="dt">bcfObj=</span>bcf_out,</span>
+<span id="cb6-20"><a href="#cb6-20"></a>                    <span class="dt">x_predict_control=</span>x_high,</span>
+<span id="cb6-21"><a href="#cb6-21"></a>                    <span class="dt">x_predict_moderate=</span>x_high,</span>
+<span id="cb6-22"><a href="#cb6-22"></a>                    <span class="dt">pi_pred=</span>pi,</span>
+<span id="cb6-23"><a href="#cb6-23"></a>                    <span class="dt">z_pred=</span>z,</span>
+<span id="cb6-24"><a href="#cb6-24"></a>                    <span class="dt">save_tree_directory =</span> <span class="st">'..'</span>)</span>
 <span id="cb6-25"><a href="#cb6-25"></a><span class="co">#&gt; Initializing BCF Prediction</span></span>
 <span id="cb6-26"><a href="#cb6-26"></a><span class="co">#&gt; Starting Prediction</span></span></code></pre></div>
 <p>Now that we have our predictions, we look at the posterior distribution of the mean marginal treatment effect for each group.</p>
@@ -198,7 +198,7 @@
 <p>We see that the posterior distributions of the mean marginal treatment effect for the two groups barely overlap. We can confirm this by computing the probability that the mean marginal treatment effect for the top units ($x_3 = <span class="math inline">\(1.3) is greater than the mean marginal treatment effect for the bottom units ((\)</span>x_3 = $-1.3)).</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw"><a href="https://rdrr.io/r/base/mean.html">mean</a></span>(highDist <span class="op">&gt;</span><span class="st"> </span>lowDist)</span>
 <span id="cb8-2"><a href="#cb8-2"></a><span class="co">#&gt; [1] 1</span></span></code></pre></div>
-<p>We found that there is a 100% probability that the mean marginal treatment effect for top-quartile units is greater than that for bottom-quartile units.</p>
+<p>We found that there is a 100 percent probability that the mean marginal treatment effect for top-quartile units is greater than that for bottom-quartile units.</p>
 </div>
   </div>
 

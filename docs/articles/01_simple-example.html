@@ -97,9 +97,9 @@
 <div id="simulate-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#simulate-data" class="anchor"></a>Simulate data</h2>
-<p>First, we simulate some data for testing. This data set has an outcome variable <span class="math inline">\(y\)</span>, a treatment indicator <span class="math inline">\(z\)</span>, and three covariates <span class="math inline">\(X\)</span>. Of the covariates, two affect the outcome <span class="math inline">\(y\)</span> at both levels of treatment, while the third is an effect moderator.</p>
-<p>We draw three random <span class="math inline">\(X\)</span>s for each unit and generate each unit’s expected outcome without treatment, <span class="math inline">\(\mu_i\)</span>, as a function of <span class="math inline">\(x^{(1)}_i\)</span> and <span class="math inline">\(x^{(2)}_i\)</span>. Each unit’s probability of joining the intervention, <span class="math inline">\(\pi_i\)</span>, is also a function of <span class="math inline">\(\mu_i\)</span>, so that units with larger responses are more likely to participate in the intervention. We then assign units to treatment (<span class="math inline">\(z_i = 1\)</span>) or comparison (<span class="math inline">\(z_i = 0\)</span>) as a function of <span class="math inline">\(\pi_i\)</span>.</p>
-<p>Then we generate the true treatment effect for each unit, <span class="math inline">\(\tau_i\)</span>. As noted above, <span class="math inline">\(\tau_i\)</span> is a function of <span class="math inline">\(x^{(3)}_i\)</span>. The observed outcome, <span class="math inline">\(y_i\)</span>, is a function of <span class="math inline">\(\mu_i\)</span>, <span class="math inline">\(\tau_i\)</span>, a random error term with variance <span class="math inline">\(\sigma^{2}\)</span>, and weights <span class="math inline">\(w\)</span> if applicable.</p>
+<p>First, we simulate some data for testing. This data set has an outcome variable <span class="math inline">\(y\)</span>, a treatment indicator <span class="math inline">\(z\)</span>, and three covariates <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span> and <span class="math inline">\(x_3\)</span>. Of the covariates, two affect the outcome <span class="math inline">\(y\)</span> at both levels of treatment, while the third is an effect moderator.</p>
+<p>We draw three random <span class="math inline">\(x\)</span>s for each unit and generate each unit’s expected outcome without treatment, <span class="math inline">\(\mu\)</span>, as a function of <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>. Each unit’s probability of joining the intervention, <span class="math inline">\(\pi\)</span>, is also a function of <span class="math inline">\(\mu\)</span>, so that units with larger responses are more likely to participate in the intervention. We then assign units to treatment (<span class="math inline">\(z = 1\)</span>) or comparison (<span class="math inline">\(z = 0\)</span>) status as a function of <span class="math inline">\(\pi\)</span>.</p>
+<p>Then we generate the true treatment effect for each unit, <span class="math inline">\(\tau\)</span>. As noted above, <span class="math inline">\(\tau\)</span> is a function of <span class="math inline">\(x_3\)</span>. The observed outcome, <span class="math inline">\(y\)</span>, is a function of <span class="math inline">\(\mu\)</span>, <span class="math inline">\(\tau\)</span>, a random error term with variance <span class="math inline">\(\sigma^{2}\)</span>, and weights <span class="math inline">\(w\)</span> if applicable.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="dv">1</span>)</span>
 <span id="cb2-2"><a href="#cb2-2"></a></span>
 <span id="cb2-3"><a href="#cb2-3"></a>p &lt;-<span class="st"> </span><span class="dv">3</span> <span class="co"># two control variables and one effect moderator</span></span>
@@ -134,9 +134,9 @@
 <div id="fit-bcf-model" class="section level2">
 <h2 class="hasAnchor">
 <a href="#fit-bcf-model" class="anchor"></a>Fit BCF model</h2>
-<p>In this data set we have observed <span class="math inline">\(y_i\)</span>, <span class="math inline">\(x_i\)</span>, and <span class="math inline">\(\pi_i\)</span> values to which we can fit our BCF model. With BCF, we can distinguish between control variables – variables that affect the outcome at both levels of treatment – and moderator variables – variables that affect the estimated treatment effect.</p>
+<p>In this data set we have observed <span class="math inline">\(y\)</span>, <span class="math inline">\(x\)</span>, and <span class="math inline">\(\pi\)</span> values to which we can fit our BCF model. With BCF, we can distinguish between control variables – which affect the outcome at both levels of treatment – and moderator variables – which affect the estimated treatment effect.</p>
 <p>Note that we are using the <code>n_chains</code> argument to <code><a href="../reference/bcf.html">bcf()</a></code>, which allows us to run several MCMC chains in parallel and assess whether they have converged to the posterior distribution.</p>
-<p>After fitting the BCF model, we can compare the <span class="math inline">\(\hat{\tau}_i\)</span> estimates from BCF to the true <span class="math inline">\(\tau_i\)</span> from the data-generating process.</p>
+<p>After fitting the BCF model, we can compare the <span class="math inline">\(\hat{\tau}\)</span> estimates from BCF to the true <span class="math inline">\(\tau\)</span> from the data-generating process.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>bcf_out &lt;-<span class="st"> </span>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/bcf.html">bcf</a></span>(<span class="dt">y            =</span> y,</span>
 <span id="cb3-2"><a href="#cb3-2"></a>                 <span class="dt">z                =</span> z,</span>
 <span id="cb3-3"><a href="#cb3-3"></a>                 <span class="dt">x_control        =</span> x,</span>
@@ -146,15 +146,15 @@
 <span id="cb3-7"><a href="#cb3-7"></a>                 <span class="dt">nsim             =</span> n_sim,</span>
 <span id="cb3-8"><a href="#cb3-8"></a>                 <span class="dt">w                =</span> weights,</span>
 <span id="cb3-9"><a href="#cb3-9"></a>                 <span class="dt">n_chains         =</span> <span class="dv">4</span>,</span>
-<span id="cb3-10"><a href="#cb3-10"></a>                 <span class="dt">n_chain_clusters =</span> <span class="dv">2</span>,</span>
+<span id="cb3-10"><a href="#cb3-10"></a>                 <span class="dt">n_cores          =</span> <span class="dv">2</span>,</span>
 <span id="cb3-11"><a href="#cb3-11"></a>                 <span class="dt">random_seed      =</span> <span class="dv">1</span>,</span>
 <span id="cb3-12"><a href="#cb3-12"></a>                 <span class="dt">update_interval  =</span> <span class="dv">1</span>)</span></code></pre></div>
 </div>
 <div id="check-mcmc-diagnostics" class="section level2">
 <h2 class="hasAnchor">
 <a href="#check-mcmc-diagnostics" class="anchor"></a>Check MCMC diagnostics</h2>
-<p>We use the <code>summarise_bcf</code> function to obtain posterior summary statistics and MCMC diagnostics. We use those diagnostics to assess convergence of our run.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>bcf2<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/bcf2/man/summarise_bcf.html">summarise_bcf</a></span>(bcf_out)</span>
+<p>We use the <code>summary.bcf</code> function to obtain posterior summary statistics and MCMC diagnostics. We use those diagnostics to assess convergence of our run.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(bcf_out)</span>
 <span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt; Summary statistics for each Markov Chain Monte Carlo run</span></span>
 <span id="cb4-3"><a href="#cb4-3"></a><span class="co">#&gt; </span></span>
 <span id="cb4-4"><a href="#cb4-4"></a><span class="co">#&gt; Iterations = 1:1000</span></span>
@@ -200,16 +200,16 @@
 <span id="cb4-44"><a href="#cb4-44"></a><span class="co">#&gt; 1.02</span></span>
 <span id="cb4-45"><a href="#cb4-45"></a><span class="co">#&gt; </span></span>
 <span id="cb4-46"><a href="#cb4-46"></a><span class="co">#&gt; ----</span></span></code></pre></div>
-<p>Since our “<span class="math inline">\(\hat{R}\)</span>” (Gelman and Rubin’s convergence factor or Potential Scale Reduction Factor) are between 0.9 and 1.1, we are confident that our run successfully achieved convergence.</p>
+<p>Since our “<span class="math inline">\(\hat{R}s\)</span>” (Gelman and Rubin’s convergence factor or Potential Scale Reduction Factor) are between 0.9 and 1.1, we are confident that our run successfully achieved convergence.</p>
 </div>
 <div id="explore-the-posterior" class="section level2">
 <h2 class="hasAnchor">
 <a href="#explore-the-posterior" class="anchor"></a>Explore the posterior</h2>
-<p>Now that we’ve successfully fit our model, let’s expore the output. First, since this is a simulation, let’s compare the unit-specific treatment effect estimates <span class="math inline">\(\hat{\tau}_i\)</span> to the true unit-specific treatment effects <span class="math inline">\(\tau_i\)</span>.</p>
-<div id="estimates-vs--true-treatment-effects" class="section level3">
+<p>Now that we’ve successfully fit our model, let’s explore the output. First, since this is a simulation, let’s compare the unit-specific treatment effect estimates <span class="math inline">\(\hat{\tau}\)</span> to the true unit-specific treatment effects <span class="math inline">\(\tau\)</span>.</p>
+<div id="estimates-versus-true-treatment-effects" class="section level3">
 <h3 class="hasAnchor">
-<a href="#estimates-vs--true-treatment-effects" class="anchor"></a>Estimates vs. true treatment effects</h3>
-<p>Now that we have confidence in BCF’s estimates of unit-specific treatment effects, we examine the results more closely. First, we look at how well our estimates of <span class="math inline">\(\tau\)</span> recover the “truth.”</p>
+<a href="#estimates-versus-true-treatment-effects" class="anchor"></a>Estimates versus true treatment effects</h3>
+<p>Now that we have confidence in BCF’s estimates of unit-specific treatment effects, we examine the results more closely. First, we look at how well our estimates of <span class="math inline">\(\tau\)</span> recover the true effects.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>tau_ests &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span>(<span class="dt">Mean  =</span> <span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(bcf_out<span class="op">$</span>tau),</span>
 <span id="cb5-2"><a href="#cb5-2"></a>                       <span class="dt">Low95 =</span> <span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(bcf_out<span class="op">$</span>tau, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x, <span class="fl">0.025</span>)),</span>
 <span id="cb5-3"><a href="#cb5-3"></a>                       <span class="dt">Up95  =</span> <span class="kw"><a href="https://rdrr.io/r/base/apply.html">apply</a></span>(bcf_out<span class="op">$</span>tau, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x, <span class="fl">0.975</span>)))</span>
@@ -234,19 +234,19 @@
 <span id="cb6-5"><a href="#cb6-5"></a>coverage &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span>(<span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://rdrr.io/r/base/length.html">length</a></span>(tau), isCovered)</span>
 <span id="cb6-6"><a href="#cb6-6"></a>perCoverage &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/unlist.html">unlist</a></span>(coverage))<span class="op">/</span><span class="kw"><a href="https://rdrr.io/r/base/length.html">length</a></span>(tau)</span></code></pre></div>
 <p>We find that our estimates have 100 percent coverage at the 95 percent level, suggesting that our uncertainty estimates are slightly conservative in this example.</p>
-<p>In this example, although we do see variation in the point estimates across units, most uncertainty intervals all overlap, except for points at the extremes. This overlap indicates that, although there is variation in the treatment effect across units, the difference in treatment effects is not statistically meaningful.</p>
+<p>In this example, although we do see variation in the point estimates across units, most uncertainty intervals overlap, except for points at the extremes. This overlap indicates that, although there is variation in the treatment effect across units, the difference in treatment effects is not statistically meaningful.</p>
 </div>
 <div id="identifying-possible-subgroups" class="section level3">
 <h3 class="hasAnchor">
 <a href="#identifying-possible-subgroups" class="anchor"></a>Identifying possible subgroups</h3>
-<p>The BCF model obtains more accurate treatment effect estimates than other approaches in part by allowing flexible relationships with many possible effect modifiers. These relationships are often of substantive interest; researchers want to know what covariates are associated with higher or lower impacts. However, the BCF model is difficult to interpret directly: we cannot simply look at coefficients on the effect modifiers to determine which characteristics drive the impacts. Instead, we can look for patterns in the unit-specific treatment effects, linking each unit’s treatment effect estimate to its covariates.</p>
-<p>Specifically, <a href="https://arxiv.org/pdf/1706.09523.pdf">Hahn, Murray, and Carvalho</a> recommend fitting a CART model where the response variable is the estimated unit-specific treatment effect from BCF and the predictor variables are the effect modifiers used to fit the BCF model. The resulting tree identifies covariates that best distinguish units with high vs. low impacts, which are strong candidate subgroup variables.</p>
+<p>The BCF model obtains more accurate treatment effect estimates than other approaches partly by allowing flexible relationships with many possible effect modifiers. These relationships are often of substantive interest; researchers want to know which covariates are associated with higher or lower impacts. However, the BCF model is difficult to interpret directly: we cannot simply look at coefficients on the effect modifiers to determine which characteristics drive the impacts. Instead, we can look for patterns in the unit-specific treatment effects, linking each unit’s treatment effect estimate to its covariates.</p>
+<p>Specifically, <a href="https://arxiv.org/pdf/1706.09523.pdf">Hahn, Murray, and Carvalho</a> recommend fitting a CART model where the response variable is the estimated unit-specific treatment effect from BCF and the predictor variables are the effect modifiers used to fit the BCF model. The resulting tree identifies covariates that best distinguish units with high versus low impacts, which are strong candidate subgroup variables.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>tree &lt;-<span class="st"> </span><span class="kw">rpart</span>(<span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colMeans</a></span>(bcf_out<span class="op">$</span>tau) <span class="op">~</span><span class="st"> </span>x, <span class="dt">weights =</span> weights)</span>
 <span id="cb7-2"><a href="#cb7-2"></a><span class="kw">rpart.plot</span>(tree)</span></code></pre></div>
 <p><img src="01_simple-example_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
 <p>Our tree identifies <span class="math inline">\(x_3\)</span> as the strongest effect modifier, which is correct, because we specified it as such in the data generation step.</p>
 <p>Because the CART fit does not account for the uncertainty in the treatment effect estimates, it is possible that its tree splits do not identify characteristics that create subgroups with meaningfully different impacts. To determine whether impacts differ meaningfully based on a characteristic, we can use the posterior draws from the fitted BCF model.</p>
-<p>Here we show a comparison of the average treatment effect for units in the top quartile of <span class="math inline">\(X_3\)</span> vs. the average treatment effect for units in the bottom quartile of <span class="math inline">\(X_3\)</span>.</p>
+<p>Here we show a comparison of the average treatment effect for units in the top quartile of <span class="math inline">\(x_3\)</span> versus the average treatment effect for units in the bottom quartile of <span class="math inline">\(x_3\)</span>.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>q1 &lt;-<span class="st"> </span>x[,<span class="dv">3</span>] <span class="op">&lt;</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x[,<span class="dv">3</span>], <span class="fl">0.25</span>)</span>
 <span id="cb8-2"><a href="#cb8-2"></a>q4 &lt;-<span class="st"> </span>x[,<span class="dv">3</span>] <span class="op">&gt;</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span>(x[,<span class="dv">3</span>], <span class="fl">0.75</span>)</span>
 <span id="cb8-3"><a href="#cb8-3"></a></span>
@@ -265,10 +265,10 @@
 <span id="cb8-16"><a href="#cb8-16"></a><span class="st">  </span><span class="kw">xlab</span>(<span class="st">"average subgroup treatment effect"</span>)</span></code></pre></div>
 <p><img src="01_simple-example_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
 <p>The posterior distributions for the average treatment effect of the top- and bottom-quartile units do not overlap.</p>
-<p>We would therefore conclude that <span class="math inline">\(X_3\)</span> is an important subgroup variable. We can confirm this by computing the probability that the average treatment effect for the top-quartile units (q4) is greater than the average treatment effect for the bottom-quartile units (q1).</p>
+<p>We would therefore conclude that <span class="math inline">\(x_3\)</span> is an important subgroup variable. We can confirm this by computing the probability that the average treatment effect for the top-quartile units (q4) is greater than the average treatment effect for the bottom-quartile units (q1).</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw"><a href="https://rdrr.io/r/base/mean.html">mean</a></span>(wq4Taus <span class="op">&gt;</span><span class="st"> </span>wq1Taus)</span>
 <span id="cb9-2"><a href="#cb9-2"></a><span class="co">#&gt; [1] 1</span></span></code></pre></div>
-<p>We found that there is a 100% probability that the average treatment effect for top-quartile units (q4) is greater than that for bottom-quartile units (q1).</p>
+<p>We found that there is a 100 percent probability that the average treatment effect for top-quartile units (q4) is greater than that for bottom-quartile units (q1).</p>
 </div>
 </div>
   </div>
