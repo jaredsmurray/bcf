@@ -1,4 +1,5 @@
 rm src/*.o
+rm src/*.so
 rm src/*.dll
 Rscript.exe -e 'Rcpp::compileAttributes()'
 Rscript.exe -e 'pkgbuild::compile_dll()'
