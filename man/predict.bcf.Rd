@@ -59,27 +59,27 @@ y = mu + sigma*rnorm(n)
 # If you didn't know pi, you would estimate it here
 pihat = pnorm(q)
 
-bcf_fit = bcf2::bcf(y               = y,
-                    z               = z,
-                    x_control       = x,
-                    x_moderate      = x,
-                    pihat           = pihat,
-                    nburn           = n_burn,
-                    nsim            = n_sim,
-                    n_chains        = 2,
-                    update_interval = 1,
-                    save_tree_directory = './trees')
+bcf_fit = bcf(y               = y,
+              z               = z,
+              x_control       = x,
+              x_moderate      = x,
+              pihat           = pihat,
+              nburn           = n_burn,
+              nsim            = n_sim,
+              n_chains        = 2,
+              update_interval = 1,
+              save_tree_directory = './trees')
 
 # Predict using new data
 
 x_pred = matrix(rnorm(n*p), nrow=n)
 
-pred_out = bcf2::predict(bcf_out=bcf_fit,
-                        x_predict_control=x_pred,
-                        x_predict_moderate=x_pred,
-                        pi_pred=pihat,
-                        z_pred=z,
-                        save_tree_directory = './trees')
+pred_out = predict(bcf_out=bcf_fit,
+                   x_predict_control=x_pred,
+                   x_predict_moderate=x_pred,
+                   pi_pred=pihat,
+                   z_pred=z,
+                   save_tree_directory = './trees')
 
 }
 }

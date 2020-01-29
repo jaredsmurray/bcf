@@ -88,3 +88,6 @@ inst/doc
 inst/doc
 
 trees/*
+
+src-i386/
+src-x64/

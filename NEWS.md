@@ -1,4 +1,4 @@
-# bcf 2.0.0 (bcf2)
+# bcf 2.0.0
 
 This page provides more details on the latest updates to `bcf`.
 

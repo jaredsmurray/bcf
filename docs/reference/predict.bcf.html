@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Predict from a fitted BCF object — predict.bcf • bcf2</title>
+<title>Takes a fitted bcf object produced by bcf() and produces predictions for a new set of covariate values — predict.bcf • bcf</title>
 
 
 <!-- jquery -->
@@ -35,7 +35,7 @@
 
 
 
-<meta property="og:title" content="Predict from a fitted BCF object — predict.bcf" />
+<meta property="og:title" content="Takes a fitted bcf object produced by bcf() and produces predictions for a new set of covariate values — predict.bcf" />
 <meta property="og:description" content="This function takes in an existing BCF model fit and uses it to predict estimates for new data.
 It is important to note that this function requires that you indicate where the trees from the model fit are saved.
 You can do so using the save_tree_directory argument in bcf(). Otherwise, they will be saved in the working directory.
@@ -71,7 +71,7 @@ The bcf() function automatically saves those in the same directory as the" />
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">bcf2</a>
+        <a class="navbar-link" href="../index.html">bcf</a>
         <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
@@ -121,7 +121,7 @@ The bcf() function automatically saves those in the same directory as the" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Predict from a fitted BCF object</h1>
+    <h1>Takes a fitted bcf object produced by bcf() and produces predictions for a new set of covariate values</h1>
     
     <div class="hidden name"><code>predict.bcf.Rd</code></div>
     </div>
@@ -202,26 +202,26 @@ The bcf() function automatically saves those in the same directory as the</p>
 <span class='co'># If you didn't know pi, you would estimate it here</span>
 <span class='no'>pihat</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>pnorm</a></span>(<span class='no'>q</span>)
 
-<span class='no'>bcf_fit</span> <span class='kw'>=</span> <span class='kw pkg'>bcf2</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/bcf2/man/bcf.html'>bcf</a></span>(<span class='kw'>y</span>               <span class='kw'>=</span> <span class='no'>y</span>,
-                    <span class='kw'>z</span>               <span class='kw'>=</span> <span class='no'>z</span>,
-                    <span class='kw'>x_control</span>       <span class='kw'>=</span> <span class='no'>x</span>,
-                    <span class='kw'>x_moderate</span>      <span class='kw'>=</span> <span class='no'>x</span>,
-                    <span class='kw'>pihat</span>           <span class='kw'>=</span> <span class='no'>pihat</span>,
-                    <span class='kw'>nburn</span>           <span class='kw'>=</span> <span class='no'>n_burn</span>,
-                    <span class='kw'>nsim</span>            <span class='kw'>=</span> <span class='no'>n_sim</span>,
-                    <span class='kw'>n_chains</span>        <span class='kw'>=</span> <span class='fl'>2</span>,
-                    <span class='kw'>update_interval</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-                    <span class='kw'>save_tree_directory</span> <span class='kw'>=</span> <span class='st'>'./trees'</span>)</div><div class='output co'>#&gt; <span class='error'>Error in bcf2::bcf(y = y, z = z, x_control = x, x_moderate = x, pihat = pihat,     nburn = n_burn, nsim = n_sim, n_chains = 2, update_interval = 1,     save_tree_directory = "./trees"): object 'n_burn' not found</span></div><div class='input'>
+<span class='no'>bcf_fit</span> <span class='kw'>=</span> <span class='fu'>bcf</span>(<span class='kw'>y</span>               <span class='kw'>=</span> <span class='no'>y</span>,
+              <span class='kw'>z</span>               <span class='kw'>=</span> <span class='no'>z</span>,
+              <span class='kw'>x_control</span>       <span class='kw'>=</span> <span class='no'>x</span>,
+              <span class='kw'>x_moderate</span>      <span class='kw'>=</span> <span class='no'>x</span>,
+              <span class='kw'>pihat</span>           <span class='kw'>=</span> <span class='no'>pihat</span>,
+              <span class='kw'>nburn</span>           <span class='kw'>=</span> <span class='no'>n_burn</span>,
+              <span class='kw'>nsim</span>            <span class='kw'>=</span> <span class='no'>n_sim</span>,
+              <span class='kw'>n_chains</span>        <span class='kw'>=</span> <span class='fl'>2</span>,
+              <span class='kw'>update_interval</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+              <span class='kw'>save_tree_directory</span> <span class='kw'>=</span> <span class='st'>'./trees'</span>)</div><div class='output co'>#&gt; <span class='error'>Error in bcf(y = y, z = z, x_control = x, x_moderate = x, pihat = pihat,     nburn = n_burn, nsim = n_sim, n_chains = 2, update_interval = 1,     save_tree_directory = "./trees"): object 'n_burn' not found</span></div><div class='input'>
 <span class='co'># Predict using new data</span>
 
 <span class='no'>x_pred</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>rnorm</a></span>(<span class='no'>n</span>*<span class='no'>p</span>), <span class='kw'>nrow</span><span class='kw'>=</span><span class='no'>n</span>)
 
-<span class='no'>pred_out</span> <span class='kw'>=</span> <span class='kw pkg'>bcf2</span><span class='kw ns'>::</span><span class='fu'>predict</span>(<span class='kw'>bcf_out</span><span class='kw'>=</span><span class='no'>bcf_fit</span>,
-                        <span class='kw'>x_predict_control</span><span class='kw'>=</span><span class='no'>x_pred</span>,
-                        <span class='kw'>x_predict_moderate</span><span class='kw'>=</span><span class='no'>x_pred</span>,
-                        <span class='kw'>pi_pred</span><span class='kw'>=</span><span class='no'>pihat</span>,
-                        <span class='kw'>z_pred</span><span class='kw'>=</span><span class='no'>z</span>,
-                        <span class='kw'>save_tree_directory</span> <span class='kw'>=</span> <span class='st'>'./trees'</span>)</div><div class='output co'>#&gt; <span class='error'>Error: 'predict' is not an exported object from 'namespace:bcf2'</span></div><div class='input'>
+<span class='no'>pred_out</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span>(<span class='kw'>bcf_out</span><span class='kw'>=</span><span class='no'>bcf_fit</span>,
+                   <span class='kw'>x_predict_control</span><span class='kw'>=</span><span class='no'>x_pred</span>,
+                   <span class='kw'>x_predict_moderate</span><span class='kw'>=</span><span class='no'>x_pred</span>,
+                   <span class='kw'>pi_pred</span><span class='kw'>=</span><span class='no'>pihat</span>,
+                   <span class='kw'>z_pred</span><span class='kw'>=</span><span class='no'>z</span>,
+                   <span class='kw'>save_tree_directory</span> <span class='kw'>=</span> <span class='st'>'./trees'</span>)</div><div class='output co'>#&gt; <span class='error'>Error in predict(bcf_out = bcf_fit, x_predict_control = x_pred, x_predict_moderate = x_pred,     pi_pred = pihat, z_pred = z, save_tree_directory = "./trees"): object 'bcf_fit' not found</span></div><div class='input'>
 # }
 </div></pre>
   </div>

@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // bcfoverparRcppClean
 List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_, NumericVector x_con_, NumericVector x_mod_, List x_con_info_list, List x_mod_info_list, arma::mat random_des, arma::mat random_var, arma::mat random_var_ix, double random_var_df, int burn, int nd, int thin, int ntree_mod, int ntree_con, double lambda, double nu, double con_sd, double mod_sd, double con_alpha, double con_beta, double mod_alpha, double mod_beta, CharacterVector treef_con_name_, CharacterVector treef_mod_name_, int status_interval, bool RJ, bool use_mscale, bool use_bscale, bool b_half_normal, bool prior_sample, double trt_init, bool verbose_sigma);
-RcppExport SEXP _bcf2_bcfoverparRcppClean(SEXP y_SEXP, SEXP z_SEXP, SEXP w_SEXP, SEXP x_con_SEXP, SEXP x_mod_SEXP, SEXP x_con_info_listSEXP, SEXP x_mod_info_listSEXP, SEXP random_desSEXP, SEXP random_varSEXP, SEXP random_var_ixSEXP, SEXP random_var_dfSEXP, SEXP burnSEXP, SEXP ndSEXP, SEXP thinSEXP, SEXP ntree_modSEXP, SEXP ntree_conSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP con_sdSEXP, SEXP mod_sdSEXP, SEXP con_alphaSEXP, SEXP con_betaSEXP, SEXP mod_alphaSEXP, SEXP mod_betaSEXP, SEXP treef_con_name_SEXP, SEXP treef_mod_name_SEXP, SEXP status_intervalSEXP, SEXP RJSEXP, SEXP use_mscaleSEXP, SEXP use_bscaleSEXP, SEXP b_half_normalSEXP, SEXP prior_sampleSEXP, SEXP trt_initSEXP, SEXP verbose_sigmaSEXP) {
+RcppExport SEXP _bcf_bcfoverparRcppClean(SEXP y_SEXP, SEXP z_SEXP, SEXP w_SEXP, SEXP x_con_SEXP, SEXP x_mod_SEXP, SEXP x_con_info_listSEXP, SEXP x_mod_info_listSEXP, SEXP random_desSEXP, SEXP random_varSEXP, SEXP random_var_ixSEXP, SEXP random_var_dfSEXP, SEXP burnSEXP, SEXP ndSEXP, SEXP thinSEXP, SEXP ntree_modSEXP, SEXP ntree_conSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP con_sdSEXP, SEXP mod_sdSEXP, SEXP con_alphaSEXP, SEXP con_betaSEXP, SEXP mod_alphaSEXP, SEXP mod_betaSEXP, SEXP treef_con_name_SEXP, SEXP treef_mod_name_SEXP, SEXP status_intervalSEXP, SEXP RJSEXP, SEXP use_mscaleSEXP, SEXP use_bscaleSEXP, SEXP b_half_normalSEXP, SEXP prior_sampleSEXP, SEXP trt_initSEXP, SEXP verbose_sigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -54,12 +54,12 @@ END_RCPP
 RcppExport SEXP _rcpp_module_boot_TreeSamples();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_bcf2_bcfoverparRcppClean", (DL_FUNC) &_bcf2_bcfoverparRcppClean, 34},
+    {"_bcf_bcfoverparRcppClean", (DL_FUNC) &_bcf_bcfoverparRcppClean, 34},
     {"_rcpp_module_boot_TreeSamples", (DL_FUNC) &_rcpp_module_boot_TreeSamples, 0},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_bcf2(DllInfo *dll) {
+RcppExport void R_init_bcf(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }
