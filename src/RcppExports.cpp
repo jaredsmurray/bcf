@@ -43,6 +43,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type use_mscale(use_mscaleSEXP);
     Rcpp::traits::input_parameter< bool >::type use_bscale(use_bscaleSEXP);
     Rcpp::traits::input_parameter< bool >::type b_half_normal(b_half_normalSEXP);
+    Rcpp::traits::input_parameter< bool >::type prior_sample(prior_sampleSEXP);
     Rcpp::traits::input_parameter< double >::type trt_init(trt_initSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose_sigma(verbose_sigmaSEXP);
     rcpp_result_gen = Rcpp::wrap(bcfoverparRcppClean(y_, z_, w_, x_con_, x_mod_, x_con_info_list, x_mod_info_list, random_des, random_var, random_var_ix, random_var_df, burn, nd, thin, ntree_mod, ntree_con, lambda, nu, con_sd, mod_sd, con_alpha, con_beta, mod_alpha, mod_beta, treef_con_name_, treef_mod_name_, status_interval, RJ, use_mscale, use_bscale, b_half_normal, trt_init, verbose_sigma));

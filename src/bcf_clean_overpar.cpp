@@ -182,7 +182,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   *****************************************************************************/
   //--------------------------------------------------
   //trees
-  //make trt_init a parameter later
   std::vector<tree> t_mod(ntree_mod);
   for(size_t i=0;i<ntree_mod;i++) t_mod[i].setm(trt_init/(double)ntree_mod);
 
@@ -191,7 +190,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   //--------------------------------------------------
   //prior parameters
-  // PX scale parameter for b: b(x) = bscale*b_0(x), bscale ~ N(0,1/bscale_prec)
+  // PX scale parameter for b: 
   double bscale_prec = 2;
   double bscale0 = -0.5;
   double bscale1 = 0.5;
