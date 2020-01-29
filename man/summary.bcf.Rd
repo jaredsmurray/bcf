@@ -2,7 +2,7 @@
 % Please edit documentation in R/bcf.R
 \name{summary.bcf}
 \alias{summary.bcf}
-\title{Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
+\title{Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes, for key parameters, posterior summary stats, effective sample sizes, 
 and Gelman and Rubin's convergence diagnostics.}
@@ -14,7 +14,7 @@ and Gelman and Rubin's convergence diagnostics.}
 \item{bcfObj}{output from a BCF predict run}
 }
 \description{
-Print posterior summary stats and MCMC diagnostics for a fitted BCF object.
+Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes, for key parameters, posterior summary stats, effective sample sizes, 
 and Gelman and Rubin's convergence diagnostics.

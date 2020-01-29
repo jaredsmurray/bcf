@@ -2,7 +2,7 @@
 % Please edit documentation in R/bcf.R
 \name{predict.bcf}
 \alias{predict.bcf}
-\title{Predict from a fitted BCF object}
+\title{Takes a fitted bcf object produced by bcf() and produces predictions for a new set of covariate values}
 \usage{
 \method{predict}{bcf}(bcfObj, x_predict_control, x_predict_moderate,
   pi_pred, z_pred, save_tree_directory, n_cores = 2)

@@ -41,7 +41,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
                   double mod_alpha, double mod_beta,
                   CharacterVector treef_con_name_, CharacterVector treef_mod_name_,
                   int status_interval=100,
-                  bool RJ= false, bool use_mscale=true, bool use_bscale=true, bool b_half_normal=true,
+                  bool RJ= false, bool use_mscale=true, bool use_bscale=true, bool b_half_normal=true, bool prior_sample=false,
                   double trt_init = 1.0, bool verbose_sigma=false)
 {
 
@@ -339,6 +339,9 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   size_t save_ctr = 0;
   bool verbose_itr = false; 
 
+  if(prior_sample) {
+    for(int k=0; k<n; k++) y[k] = gen.normal(allfit[k], sigma);
+  }
   // double* allfit_mod = new double[n]; //sum of fit of all trees
 
 
