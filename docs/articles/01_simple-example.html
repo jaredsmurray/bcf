@@ -135,9 +135,9 @@
 <h2 class="hasAnchor">
 <a href="#fit-bcf-model" class="anchor"></a>Fit BCF model</h2>
 <p>In this data set we have observed <span class="math inline">\(y\)</span>, <span class="math inline">\(x\)</span>, and <span class="math inline">\(\pi\)</span> values to which we can fit our BCF model. With BCF, we can distinguish between control variables – which affect the outcome at both levels of treatment – and moderator variables – which affect the estimated treatment effect.</p>
-<p>Note that we are using the <code>n_chains</code> argument to <code>bcf()</code>, which allows us to run several MCMC chains in parallel and assess whether they have converged to the posterior distribution.</p>
+<p>Note that we are using the <code>n_chains</code> argument to <code><a href="../reference/bcf.html">bcf()</a></code>, which allows us to run several MCMC chains in parallel and assess whether they have converged to the posterior distribution.</p>
 <p>After fitting the BCF model, we can compare the <span class="math inline">\(\hat{\tau}\)</span> estimates from BCF to the true <span class="math inline">\(\tau\)</span> from the data-generating process.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>bcf_out &lt;-<span class="st"> </span><span class="kw">bcf</span>(<span class="dt">y            =</span> y,</span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>bcf_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/bcf.html">bcf</a></span>(<span class="dt">y            =</span> y,</span>
 <span id="cb3-2"><a href="#cb3-2"></a>               <span class="dt">z                =</span> z,</span>
 <span id="cb3-3"><a href="#cb3-3"></a>               <span class="dt">x_control        =</span> x,</span>
 <span id="cb3-4"><a href="#cb3-4"></a>               <span class="dt">x_moderate       =</span> x,</span>

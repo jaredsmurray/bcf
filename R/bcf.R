@@ -1,7 +1,5 @@
-#' @useDynLib bcf
 #' @import Rcpp RcppArmadillo RcppParallel
 #' @importFrom stats approxfun lm qchisq quantile sd
-"_PACKAGE"
 Rcpp::loadModule(module = "TreeSamples", TRUE)
 
 .ident <- function(...){

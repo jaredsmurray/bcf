@@ -23,7 +23,6 @@ Date/Publication: 2018-09-19 22:20:02 UTC
 Imports: Rcpp, RcppArmadillo, RcppParallel, coda, Hmisc, parallel, doParallel, foreach, matrixStats
 Suggests: 
     testthat,
-    bcf,
     spelling,
     knitr,
     rmarkdown

@@ -189,7 +189,7 @@ and Gelman and Rubin's convergence diagnostics.</p>
 <span class='co'># If you didn't know pi, you would estimate it here</span>
 <span class='no'>pihat</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/stats/Normal.html'>pnorm</a></span>(<span class='no'>q</span>)
 
-<span class='no'>bcf_fit</span> <span class='kw'>=</span> <span class='fu'>bcf</span>(<span class='no'>y</span>, <span class='no'>z</span>, <span class='no'>x</span>, <span class='no'>x</span>, <span class='no'>pihat</span>, <span class='kw'>nburn</span><span class='kw'>=</span><span class='fl'>2000</span>, <span class='kw'>nsim</span><span class='kw'>=</span><span class='fl'>2000</span>)
+<span class='no'>bcf_fit</span> <span class='kw'>=</span> <span class='fu'><a href='bcf.html'>bcf</a></span>(<span class='no'>y</span>, <span class='no'>z</span>, <span class='no'>x</span>, <span class='no'>x</span>, <span class='no'>pihat</span>, <span class='kw'>nburn</span><span class='kw'>=</span><span class='fl'>2000</span>, <span class='kw'>nsim</span><span class='kw'>=</span><span class='fl'>2000</span>)
 
 <span class='co'># Get model fit diagnostics</span>
 <span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span>(<span class='no'>bcf_fit</span>)</div><div class='output co'>#&gt; <span class='message'>Summary statistics for each Markov Chain Monte Carlo run</span></div><div class='output co'>#&gt; 
