@@ -459,9 +459,12 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 }
 
 #' Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
-#' This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
+#' This function is built using the coda package (*see note) and meant to mimic output from rstan::print.stanfit().
 #' It includes, for key parameters, posterior summary stats, effective sample sizes, 
-#' and Gelman and Rubin's convergence diagnostics.
+#' and Gelman and Rubin's convergence diagnostics. 
+#' * We strongly suggest updating the coda package to our suggested Github version, which uses the Stan effective
+#' size computation. We found the native coda effective size computation to be overly optimistic when used with 
+#' multiple chains and are in discussions with the coda package authors to change it on CRAN.
 #' @param bcfObj output from a BCF predict run
 #' @examples
 #'\donttest{
