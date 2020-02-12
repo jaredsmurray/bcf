@@ -5,7 +5,10 @@
 \title{Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes, for key parameters, posterior summary stats, effective sample sizes, 
-and Gelman and Rubin's convergence diagnostics.}
+and Gelman and Rubin's convergence diagnostics.We strongly suggest updating the coda package to our 
+suggested Github version, which uses the Stan effective size computation. 
+We found the native coda effective size computation to be overly optimistic when used with 
+multiple chains and are in discussions with the coda package authors to change it on CRAN.}
 \usage{
 \method{summary}{bcf}(bcfObj, params_2_summarise = c("sigma", "tau_bar",
   "mu_bar", "yhat_bar"))
@@ -17,7 +20,10 @@ and Gelman and Rubin's convergence diagnostics.}
 Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes, for key parameters, posterior summary stats, effective sample sizes, 
-and Gelman and Rubin's convergence diagnostics.
+and Gelman and Rubin's convergence diagnostics.We strongly suggest updating the coda package to our 
+suggested Github version, which uses the Stan effective size computation. 
+We found the native coda effective size computation to be overly optimistic when used with 
+multiple chains and are in discussions with the coda package authors to change it on CRAN.
 }
 \examples{
 \donttest{
