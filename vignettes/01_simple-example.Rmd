@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 
 ```{r setup, warning = FALSE, message = FALSE}
-library(bcf2)
+library(bcf)
 library(ggplot2)
 library(latex2exp)
 library(rpart)
@@ -46,7 +46,8 @@ x <- matrix(rnorm(n*(p-1)), nrow=n)
 x <- cbind(x, x[,2] + rnorm(n))
 weights <- abs(rnorm(n))
 
-# create targeted selection, whereby a practice's likelihood of joining the intervention (pi) is related to their expected outcome (mu)
+# create targeted selection, whereby a practice's likelihood of joining the intervention (pi) 
+# is related to their expected outcome (mu)
 mu <- -1*(x[,1]>(x[,2])) + 1*(x[,1]<(x[,2])) - 0.1
 
 # generate treatment variable
@@ -76,18 +77,18 @@ Note that we are using the `n_chains` argument to `bcf()`, which allows us to ru
 
 After fitting the BCF model, we can compare the $\hat{\tau}$ estimates from BCF to the true $\tau$ from the data-generating process. 
 ```{r model}
-bcf_out <- bcf2::bcf(y            = y,
-                 z                = z,
-                 x_control        = x,
-                 x_moderate       = x,
-                 pihat            = pi,
-                 nburn            = n_burn,
-                 nsim             = n_sim,
-                 w                = weights,
-                 n_chains         = 4,
-                 n_cores          = 2,
-                 random_seed      = 1,
-                 update_interval  = 1)
+bcf_out <- bcf(y                = y,
+               z                = z,
+               x_control        = x,
+               x_moderate       = x,
+               pihat            = pi,
+               nburn            = n_burn,
+               nsim             = n_sim,
+               w                = weights,
+               n_chains         = 4,
+               n_cores          = 2,
+               random_seed      = 1,
+               update_interval  = 1)
 
 ```
 
@@ -108,6 +109,8 @@ Now that we've successfully fit our model, let's explore the output. First, sinc
 
 ### Estimates versus true treatment effects
 
+We plot the true and estimated $\tau$ versus $x_3$, since $x_3$ is one of our primary effect moderators (see the data creation step above).
+
 ```{r}
 tau_ests <- data.frame(Mean  = colMeans(bcf_out$tau),
                        Low95 = apply(bcf_out$tau, 2, function(x) quantile(x, 0.025)),
@@ -117,7 +120,7 @@ ggplot(NULL, aes(x = x[,3])) +
   geom_pointrange(aes(y = tau_ests$Mean, ymin = tau_ests$Low95, ymax = tau_ests$Up95), color = "forestgreen", alpha = 0.5) +
   geom_smooth(aes(y = tau), se = FALSE) +
   xlab(TeX("$x_3$")) +
-  ylab(TeX("$\\tau$")) +
+  ylab(TeX("$\\hat{\\tau}$")) +
   xlim(-4, 6) +
   geom_segment(aes(x = 3, xend = 4, y = 0.2, yend = 0.2), color = "blue", alpha = 0.9) +
   geom_text(aes(x = 4.5, y = 0.2, label = "Truth"), color = "black") +
@@ -135,6 +138,7 @@ isCovered <- function(i){
 
 coverage <- lapply(1:length(tau), isCovered)
 perCoverage <- sum(unlist(coverage))/length(tau)
+perCoverage
 ```
 
 We find that our estimates have `r perCoverage*100` percent coverage at the 95 percent level, suggesting that our uncertainty estimates are slightly conservative in this example.
@@ -168,7 +172,7 @@ Here we show a comparison of the average treatment effect for units in the top q
 
 ```{r}
 q1 <- x[,3] < quantile(x[,3], 0.25)
-q4 <- x[,3] > quantile(x[,3], 0.75)
+q4 <- x[,3] >= quantile(x[,3], 0.75)
 
 q1Taus <- bcf_out$tau[,q1]
 q4Taus <- bcf_out$tau[,q4]
@@ -177,7 +181,7 @@ wq1Taus <- apply(q1Taus, 1, weighted.mean, weights[q1])
 wq4Taus <- apply(q4Taus, 1, weighted.mean, weights[q4])
 
 groupTaus <- data.frame(taus     = c(wq1Taus, wq4Taus),
-                        subgroup = c(rep("q1", 4*n_sim), rep("q4", 4*n_sim)))
+                        subgroup = c(rep("q1", nrow(bcf_out$tau)), rep("q4", 4*n_sim)))
 
 ggplot(groupTaus, aes(taus, fill = subgroup, color = subgroup)) +
   geom_density(alpha = 0.5) +
