@@ -2,8 +2,8 @@ set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
 n <- 1000
-n_burn <- 1000
-n_sim <- 1000
+n_burn <- 100
+n_sim <- 100
 
 x <- matrix(rnorm(n*p), nrow=n)
 
@@ -32,7 +32,7 @@ y <- y_noiseless + sigma*rnorm(n)
 
 weights <- 1000.0*rep(1, n)
 
-bcf_out <- bcf2::bcf(y            = y,
+bcf_out <- bcf::bcf(y            = y,
                  z                = z,
                  x_control        = x,
                  x_moderate       = x,
@@ -40,51 +40,7 @@ bcf_out <- bcf2::bcf(y            = y,
                  nburn            = n_burn,
                  nsim             = n_sim,
                  w                = weights,
-                 n_chains         = 4,
-                 n_chain_clusters = 2,
-                 random_seed      = 1,
-                 update_interval  = 1)
+                 n_chains         = 4)
 
 # saveRDS(bcf_out, file = "examples/my_data.rds")
-
-cat("BCF Run Complete \n")
-
-bcf2::summarise_bcf(bcf_out)
-
-# coda::traceplot(bcf_out$chains)
-
-
-mean_square_error <- function (x,y){
-  mean((x-y)^2)
-}
-
-assess_closeness <- function(x,y, title){
-  cat("Assessing Cloesness of ", title, "\n")
-  # print("Correlation")
-  # print(cor(x,y))
-  
-  mse = mean_square_error(x,y)
-  
-  print("MSE")
-  print(mse)
-  
-  print("Error")
-  print(sqrt(mse)/abs(mean(x)))
-  
-  # plot(x, y, col = z + 1, main=title)
-  # abline(a=0, b=1)
-}
-
-mu_correct = bcf_out$yhat - t(t(bcf_out$tau)*z)
-
-print("Y Mean")
-print(mean(y))
-
-print("Tau Mean")
-print(mean(tau))
-
-print("mu Mean")
-print(mean(mu))
-
-assess_closeness(bcf_out$mu,mu_correct,'mu_compare')
 
