@@ -201,8 +201,8 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, 
                 random_seed = sample.int(.Machine$integer.max, 1),
                 n_chains = 4,
-                n_cores  = 2,
-                n_threads = max(RcppParallel::defaultNumThreads()/2,1),
+                n_cores  = n_chains,
+                n_threads = max((RcppParallel::defaultNumThreads()-2)/n_cores,1), #max number of threads, minus a arbitrary holdback, over the number of cores
                 nburn = 200, nsim = 200, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
