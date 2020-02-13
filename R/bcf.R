@@ -330,7 +330,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                                  use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
     
     cat("bcfoverparRcppClean returned to R\n")
-    
+    closeAllConnections()
 
     ac = fitbcf$m_post[,order(perm)]
 
@@ -519,7 +519,7 @@ summary.bcf <- function(bcfObj,
 
 
   message("Effective sample size for each parameter")
-  print(effectiveSize(chains_2_summarise))
+  print(effectiveSize(chains_2_summarise, crosschain = TRUE))
   cat("\n----\n\n")
   
   
