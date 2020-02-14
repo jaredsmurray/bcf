@@ -9,10 +9,10 @@
 <title>Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes, for key parameters, posterior summary stats, effective sample sizes, 
-and Gelman and Rubin's convergence diagnostics.We strongly suggest updating the coda package to our 
-suggested Github version, which uses the Stan effective size computation. 
-We found the native coda effective size computation to be overly optimistic when used with 
-multiple chains and are in discussions with the coda package authors to change it on CRAN. — summary.bcf • bcf</title>
+and Gelman and Rubin's convergence diagnostics. We strongly suggest updating the coda package to our 
+Github version, which uses the Stan effective size computation. 
+We found the native coda effective size computation to be overly optimistic in some situations
+and are in discussions with the coda package authors to change it on CRAN. — summary.bcf • bcf</title>
 
 
 <!-- jquery -->
@@ -44,17 +44,17 @@ multiple chains and are in discussions with the coda package authors to change i
 <meta property="og:title" content="Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes, for key parameters, posterior summary stats, effective sample sizes, 
-and Gelman and Rubin's convergence diagnostics.We strongly suggest updating the coda package to our 
-suggested Github version, which uses the Stan effective size computation. 
-We found the native coda effective size computation to be overly optimistic when used with 
-multiple chains and are in discussions with the coda package authors to change it on CRAN. — summary.bcf" />
+and Gelman and Rubin's convergence diagnostics. We strongly suggest updating the coda package to our 
+Github version, which uses the Stan effective size computation. 
+We found the native coda effective size computation to be overly optimistic in some situations
+and are in discussions with the coda package authors to change it on CRAN. — summary.bcf" />
 <meta property="og:description" content="Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes, for key parameters, posterior summary stats, effective sample sizes, 
-and Gelman and Rubin's convergence diagnostics.We strongly suggest updating the coda package to our 
-suggested Github version, which uses the Stan effective size computation. 
-We found the native coda effective size computation to be overly optimistic when used with 
-multiple chains and are in discussions with the coda package authors to change it on CRAN." />
+and Gelman and Rubin's convergence diagnostics. We strongly suggest updating the coda package to our 
+Github version, which uses the Stan effective size computation. 
+We found the native coda effective size computation to be overly optimistic in some situations
+and are in discussions with the coda package authors to change it on CRAN." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -139,10 +139,10 @@ multiple chains and are in discussions with the coda package authors to change i
     <h1>Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes, for key parameters, posterior summary stats, effective sample sizes, 
-and Gelman and Rubin's convergence diagnostics.We strongly suggest updating the coda package to our 
-suggested Github version, which uses the Stan effective size computation. 
-We found the native coda effective size computation to be overly optimistic when used with 
-multiple chains and are in discussions with the coda package authors to change it on CRAN.</h1>
+and Gelman and Rubin's convergence diagnostics. We strongly suggest updating the coda package to our 
+Github version, which uses the Stan effective size computation. 
+We found the native coda effective size computation to be overly optimistic in some situations
+and are in discussions with the coda package authors to change it on CRAN.</h1>
     
     <div class="hidden name"><code>summary.bcf.Rd</code></div>
     </div>
@@ -151,10 +151,10 @@ multiple chains and are in discussions with the coda package authors to change i
     <p>Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 It includes, for key parameters, posterior summary stats, effective sample sizes, 
-and Gelman and Rubin's convergence diagnostics.We strongly suggest updating the coda package to our 
-suggested Github version, which uses the Stan effective size computation. 
-We found the native coda effective size computation to be overly optimistic when used with 
-multiple chains and are in discussions with the coda package authors to change it on CRAN.</p>
+and Gelman and Rubin's convergence diagnostics. We strongly suggest updating the coda package to our 
+Github version, which uses the Stan effective size computation. 
+We found the native coda effective size computation to be overly optimistic in some situations
+and are in discussions with the coda package authors to change it on CRAN.</p>
     </div>
 
     <pre class="usage"><span class='co'># S3 method for bcf</span>
@@ -233,7 +233,7 @@ multiple chains and are in discussions with the coda package authors to change i
 #&gt; 
 #&gt; ----
 #&gt; </div><div class='output co'>#&gt; <span class='message'>Effective sample size for each parameter</span></div><div class='output co'>#&gt;    sigma  tau_bar   mu_bar yhat_bar 
-#&gt; 2240.084 2421.469 2308.988 8379.601 
+#&gt; 1333.626 2297.856 2003.788 8240.660 
 #&gt; 
 #&gt; ----
 #&gt; </div><div class='output co'>#&gt; <span class='message'>Gelman and Rubin's convergence diagnostic for each parameter</span></div><div class='output co'>#&gt; Potential scale reduction factors:
