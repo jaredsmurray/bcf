@@ -133,7 +133,8 @@ For example, consider the subgroups discussed in the "Simple Example" vignette, 
 
 2. We could compare the *adjusted* subgroup average treatment effects, or mean marginal effects, by marginalizing over $x_1$ and $x_2$. This estimate will hold $x_1$ and $x_2$ constant while comparing treatment effects for units in the top and bottom quartiles of $x_3$.
 
-In this example, to speed up the calculation of adjusted effects, we focus on just the first 20 observations in the training dataset.
+Because the computational intensity of the marginal effects calculation depends on the number of unique values of $x_3$ in the sample, we focus on just the first 20 observations in the training dataset, to speed up the calculation.
+
 ```{r}
 # subset x, weights, and tau to the first 20 observations
 x20       <- x[1:20,]
