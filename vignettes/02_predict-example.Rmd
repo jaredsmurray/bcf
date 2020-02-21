@@ -2,7 +2,7 @@
 title: "Prediction using BCF"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{A Simple Example}
+  %\VignetteIndexEntry{Prediction using BCF}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
