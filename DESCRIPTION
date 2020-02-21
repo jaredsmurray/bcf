@@ -20,12 +20,27 @@ RoxygenNote: 7.0.2
 Packaged: 2018-09-19 21:17:11 UTC; jared
 Repository: CRAN
 Date/Publication: 2018-09-19 22:20:02 UTC
-Imports: Rcpp, RcppArmadillo, RcppParallel, coda, Hmisc, parallel, doParallel, foreach, matrixStats
+Imports: 
+    Rcpp,
+    RcppArmadillo,
+    RcppParallel,
+    coda (>= 0.19.3),
+    Hmisc,
+    parallel,
+    doParallel,
+    foreach,
+    matrixStats
 Suggests: 
     testthat,
     spelling,
     knitr,
-    rmarkdown
+    rmarkdown,
+    latex2exp,
+    ggplot2,
+    rpart,
+    rpart.plot
 SystemRequirements: GNU make
 Language: en-US
 VignetteBuilder: knitr
+Remotes: 
+    mathematica-mpr/coda
