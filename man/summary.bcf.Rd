@@ -10,8 +10,10 @@ Github version, which uses the Stan effective size computation.
 We found the native coda effective size computation to be overly optimistic in some situations
 and are in discussions with the coda package authors to change it on CRAN.}
 \usage{
-\method{summary}{bcf}(bcfObj, params_2_summarise = c("sigma", "tau_bar",
-  "mu_bar", "yhat_bar"))
+\method{summary}{bcf}(
+  bcfObj,
+  params_2_summarise = c("sigma", "tau_bar", "mu_bar", "yhat_bar")
+)
 }
 \arguments{
 \item{bcfObj}{output from a BCF predict run}
