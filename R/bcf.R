@@ -155,7 +155,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' plot(tau, tauhat); abline(0,1)
 #'
 #'}
-#'\dontshow{
+#'\donttest{
 #'
 #' # data generating process
 #' p = 3 #two control variables and one moderator
