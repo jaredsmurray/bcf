@@ -216,8 +216,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
 ) {
-  library(coda)
-  
+
   
   if(is.null(w)){
     w <- matrix(1, ncol = 1, nrow = length(y))
@@ -507,7 +506,6 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 #' @export
 summary.bcf <- function(bcfObj, 
                         params_2_summarise = c('sigma','tau_bar','mu_bar','yhat_bar') ){
-  library(coda)
 
   chains_2_summarise <- bcfObj$coda_chains[,params_2_summarise]
 
@@ -518,13 +516,13 @@ summary.bcf <- function(bcfObj,
 
 
   message("Effective sample size for each parameter")
-  print(effectiveSize(chains_2_summarise, crosschain = TRUE))
+  print(coda::effectiveSize(chains_2_summarise, crosschain = TRUE))
   cat("\n----\n\n")
   
   
   if (length(chains_2_summarise) > 1){
     message("Gelman and Rubin's convergence diagnostic for each parameter")
-    print(gelman.diag(chains_2_summarise, autoburnin = FALSE))
+    print(coda::gelman.diag(chains_2_summarise, autoburnin = FALSE))
     cat("\n----\n\n")
     
   }
