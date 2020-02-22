@@ -5,7 +5,8 @@
 \title{Takes a fitted bcf object produced by bcf() and produces predictions for a new set of covariate values}
 \usage{
 \method{predict}{bcf}(
-  bcfObj,
+  object,
+  ...,
   x_predict_control,
   x_predict_moderate,
   pi_pred,
@@ -15,7 +16,9 @@
 )
 }
 \arguments{
-\item{bcfObj}{output from a BCF predict run}
+\item{object}{output from a BCF predict run}
+
+\item{...}{additional arguments affecting the predictions produced.}
 
 \item{x_predict_control}{matrix of covariates for the "prognostic" function mu(x) for predictions (optional)}
 

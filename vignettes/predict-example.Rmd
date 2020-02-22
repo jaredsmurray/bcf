@@ -92,7 +92,7 @@ z_pred  <- rbinom(n_test,1, pi_pred)
 We now predict $y$ and $\tau$ for these new observations based on our fitted model.
 
 ```{r}
-pred_out = predict(bcfObj=bcf_out,
+pred_out = predict(object=bcf_out,
                    x_predict_control=x_test,
                    x_predict_moderate=x_test,
                    pi_pred=pi_pred,
@@ -187,13 +187,13 @@ For each unit $j$ in our dataset, for each value of $x_3$ in the bottom/top quar
 #   xPredQ1[,2] <- x20[j,2]
 #   xPredQ4[,2] <- x20[j,2]
 #   # predict the treatment effect for each simulated unit
-#   tauPredQ1 = predict(bcfObj              = bcf_out,
+#   tauPredQ1 = predict(object              = bcf_out,
 #                      x_predict_control   = xPredQ1,
 #                      x_predict_moderate  = xPredQ1,
 #                      pi_pred             = piPred,
 #                      z_pred              = zPred,
 #                      save_tree_directory = '..')$tau 
-#   tauPredQ4 = predict(bcfObj              = bcf_out,
+#   tauPredQ4 = predict(object              = bcf_out,
 #                      x_predict_control   = xPredQ4,
 #                      x_predict_moderate  = xPredQ4,
 #                      pi_pred             = piPred,
@@ -216,7 +216,7 @@ whichXs   <- expand.grid(whichX1X2, whichX3)
 xPred  <- cbind(x20[whichXs[,1], 1:2], x20[whichXs[,2], 3])
 piPred <- rep(.5, nrow(xPred)) 
 zPred  <- rep_len(0:1, length.out=nrow(xPred))
-tauPred = predict(bcfObj              = bcf_out,
+tauPred = predict(object              = bcf_out,
                   x_predict_control   = xPred,
                   x_predict_moderate  = xPred,
                   pi_pred             = piPred,

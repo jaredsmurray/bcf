@@ -11,12 +11,17 @@ We found the native coda effective size computation to be overly optimistic in s
 and are in discussions with the coda package authors to change it on CRAN.}
 \usage{
 \method{summary}{bcf}(
-  bcfObj,
+  object,
+  ...,
   params_2_summarise = c("sigma", "tau_bar", "mu_bar", "yhat_bar")
 )
 }
 \arguments{
-\item{bcfObj}{output from a BCF predict run}
+\item{object}{output from a BCF predict run.}
+
+\item{...}{additional arguments affecting the summary produced.}
+
+\item{params_2_summarise}{parameters to summarise.}
 }
 \description{
 Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
