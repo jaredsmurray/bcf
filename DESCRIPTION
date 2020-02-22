@@ -29,7 +29,8 @@ Imports:
     parallel,
     doParallel,
     foreach,
-    matrixStats
+    matrixStats,
+    methods
 Suggests: 
     testthat,
     spelling,
