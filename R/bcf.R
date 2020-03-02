@@ -155,7 +155,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' plot(tau, tauhat); abline(0,1)
 #'
 #'}
-#'\dontshow{
+#'\donttest{
 #'
 #' # data generating process
 #' p = 3 #two control variables and one moderator
@@ -216,8 +216,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
 ) {
-  library(coda)
-  
+
   
   if(is.null(w)){
     w <- matrix(1, ncol = 1, nrow = length(y))
@@ -464,7 +463,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 #' Github version, which uses the Stan effective size computation. 
 #' We found the native coda effective size computation to be overly optimistic in some situations
 #' and are in discussions with the coda package authors to change it on CRAN.
-#' @param bcfObj output from a BCF predict run
+#' @param object output from a BCF predict run.
+#' @param ... additional arguments affecting the summary produced.
+#' @param params_2_summarise parameters to summarise.
 #' @examples
 #'\donttest{
 #'
@@ -505,11 +506,11 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 #'
 #'}
 #' @export
-summary.bcf <- function(bcfObj, 
-                        params_2_summarise = c('sigma','tau_bar','mu_bar','yhat_bar') ){
-  library(coda)
+summary.bcf <- function(object,
+                        ..., 
+                        params_2_summarise = c('sigma','tau_bar','mu_bar','yhat_bar')){
 
-  chains_2_summarise <- bcfObj$coda_chains[,params_2_summarise]
+  chains_2_summarise <- object$coda_chains[,params_2_summarise]
 
   message("Summary statistics for each Markov Chain Monte Carlo run")
   print(summary(chains_2_summarise))
@@ -518,13 +519,13 @@ summary.bcf <- function(bcfObj,
 
 
   message("Effective sample size for each parameter")
-  print(effectiveSize(chains_2_summarise, crosschain = TRUE))
+  print(coda::effectiveSize(chains_2_summarise, crosschain = TRUE))
   cat("\n----\n\n")
   
   
   if (length(chains_2_summarise) > 1){
     message("Gelman and Rubin's convergence diagnostic for each parameter")
-    print(gelman.diag(chains_2_summarise, autoburnin = FALSE))
+    print(coda::gelman.diag(chains_2_summarise, autoburnin = FALSE))
     cat("\n----\n\n")
     
   }
@@ -538,7 +539,8 @@ summary.bcf <- function(bcfObj,
 #' It is important to note that this function requires that you indicate where the trees from the model fit are saved.
 #' You can do so using the save_tree_directory argument in bcf(). Otherwise, they will be saved in the working directory.
 #' The bcf() function automatically saves those in the same directory as the 
-#' @param bcfObj output from a BCF predict run
+#' @param object output from a BCF predict run
+#' @param ... additional arguments affecting the predictions produced.
 #' @param x_predict_control matrix of covariates for the "prognostic" function mu(x) for predictions (optional)
 #' @param x_predict_moderate matrix of covariates for the covariate-dependent treatment effects tau(x) for predictions (optional)
 #' @param z_pred Treatment variable for predictions (optional except if x_pre is not empty)
@@ -600,7 +602,8 @@ summary.bcf <- function(bcfObj,
 #'
 #'}
 #' @export
-predict.bcf <- function(bcfObj, 
+predict.bcf <- function(object, 
+                        ..., 
                         x_predict_control,
                         x_predict_moderate,
                         pi_pred,
@@ -649,7 +652,7 @@ predict.bcf <- function(bcfObj,
 
     cat("Starting Prediction \n")
 
-    n_chains = length(bcfObj$coda_chains)
+    n_chains = length(object$coda_chains)
     
     `%doType%` = .get_do_type(n_cores)
     
@@ -678,9 +681,9 @@ predict.bcf <- function(bcfObj,
     
     chain_list=list()
 
-    muy = bcfObj$muy
+    muy = object$muy
       
-    sdy = bcfObj$sdy
+    sdy = object$sdy
     
     for (iChain in 1:n_chains){
       
@@ -690,7 +693,7 @@ predict.bcf <- function(bcfObj,
         Tm = chain_out[[iChain]]$Tm
         Tc = chain_out[[iChain]]$Tc
         
-        this_chain_bcf_out = bcfObj$raw_chains[[iChain]]
+        this_chain_bcf_out = object$raw_chains[[iChain]]
         
         b1 = this_chain_bcf_out$b1
         b0 = this_chain_bcf_out$b0

@@ -1,4 +1,4 @@
 library(testthat)
-library(bcf2)
+library(bcf)
 
-test_check("bcf2")
+#test_check("bcf")

@@ -4,17 +4,39 @@
 \alias{bcf}
 \title{Fit Bayesian Causal Forests}
 \usage{
-bcf(y, z, x_control, x_moderate = x_control, pihat, w = NULL,
-  random_seed = sample.int(.Machine$integer.max, 1), n_chains = 4,
+bcf(
+  y,
+  z,
+  x_control,
+  x_moderate = x_control,
+  pihat,
+  w = NULL,
+  random_seed = sample.int(.Machine$integer.max, 1),
+  n_chains = 4,
   n_cores = n_chains,
   n_threads = max((RcppParallel::defaultNumThreads() - 2)/n_cores, 1),
-  nburn = 200, nsim = 200, nthin = 1, update_interval = 100,
-  ntree_control = 200, sd_control = 2 * sd(y), base_control = 0.95,
-  power_control = 2, ntree_moderate = 50, sd_moderate = sd(y),
-  base_moderate = 0.25, power_moderate = 3,
-  save_tree_directory = "..", nu = 3, lambda = NULL, sigq = 0.9,
-  sighat = NULL, include_pi = "control", use_muscale = TRUE,
-  use_tauscale = TRUE, verbose = FALSE)
+  nburn = 200,
+  nsim = 200,
+  nthin = 1,
+  update_interval = 100,
+  ntree_control = 200,
+  sd_control = 2 * sd(y),
+  base_control = 0.95,
+  power_control = 2,
+  ntree_moderate = 50,
+  sd_moderate = sd(y),
+  base_moderate = 0.25,
+  power_moderate = 3,
+  save_tree_directory = "..",
+  nu = 3,
+  lambda = NULL,
+  sigq = 0.9,
+  sighat = NULL,
+  include_pi = "control",
+  use_muscale = TRUE,
+  use_tauscale = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{y}{Response variable}
@@ -152,7 +174,7 @@ tauhat = colMeans(tau_post)
 plot(tau, tauhat); abline(0,1)
 
 }
-\dontshow{
+\donttest{
 
 # data generating process
 p = 3 #two control variables and one moderator
