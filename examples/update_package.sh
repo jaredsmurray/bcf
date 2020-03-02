@@ -6,6 +6,8 @@ Rscript.exe -e 'pkgbuild::compile_dll()'
 Rscript.exe -e 'devtools::document()'
 R CMD INSTALL --no-multiarch --with-keep.source ../bcf-1
 
+# Rscript.exe -e 'pkgdown::build_site()'
+
 # pkgdown::build_site()
 # devtools::check()
 # rhub::check()

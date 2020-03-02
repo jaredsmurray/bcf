@@ -42,7 +42,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 
 .get_do_type = function(n_cores){
   if(n_cores>1){
-    cl <- parallel::makeCluster(n_cores)
+    cl <<- parallel::makeCluster(n_cores)
     doParallel::registerDoParallel(cl)
     `%doType%`  <- foreach::`%dopar%`
   } else {
@@ -50,6 +50,12 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
   }
   
   return(`%doType%`)
+}
+
+.cleanup_after_par = function(n_cores){
+  if(n_cores>1){
+    parallel::stopCluster(cl)
+  }
 }
 
 #' Fit Bayesian Causal Forests
@@ -453,6 +459,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   
   attr(fitObj, "class") <- "bcf"
   
+  .cleanup_after_par(n_cores)
+  
   return(fitObj)
 }
 
@@ -603,7 +611,6 @@ summary.bcf <- function(object,
 #'}
 #' @export
 predict.bcf <- function(object, 
-                        ..., 
                         x_predict_control,
                         x_predict_moderate,
                         pi_pred,
