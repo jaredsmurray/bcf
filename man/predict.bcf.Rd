@@ -11,7 +11,8 @@
   pi_pred,
   z_pred,
   save_tree_directory,
-  n_cores = 2
+  n_cores = 2,
+  ...
 )
 }
 \arguments{
