@@ -6,7 +6,6 @@
 \usage{
 \method{predict}{bcf}(
   object,
-  ...,
   x_predict_control,
   x_predict_moderate,
   pi_pred,
@@ -17,8 +16,6 @@
 }
 \arguments{
 \item{object}{output from a BCF predict run}
-
-\item{...}{additional arguments affecting the predictions produced.}
 
 \item{x_predict_control}{matrix of covariates for the "prognostic" function mu(x) for predictions (optional)}
 
@@ -31,6 +28,8 @@
 \item{save_tree_directory}{directory where the trees have been saved}
 
 \item{n_cores}{An optional integer of the number of cores to run your MCMC chains on}
+
+\item{...}{additional arguments affecting the predictions produced.}
 }
 \description{
 This function takes in an existing BCF model fit and uses it to predict estimates for new data.

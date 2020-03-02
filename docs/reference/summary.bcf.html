@@ -110,10 +110,10 @@ and are in discussions with the coda package authors to change it on CRAN." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/01_simple-example.html">A Simple Example</a>
+      <a href="../articles/E01_simple-example.html">A Simple Example</a>
     </li>
     <li>
-      <a href="../articles/02_predict-example.html">Prediction using BCF</a>
+      <a href="../articles/E02_predict-example.html">Prediction using BCF</a>
     </li>
   </ul>
 </li>
@@ -158,15 +158,26 @@ and are in discussions with the coda package authors to change it on CRAN.</p>
     </div>
 
     <pre class="usage"><span class='co'># S3 method for bcf</span>
-<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span>(<span class='no'>bcfObj</span>, <span class='kw'>params_2_summarise</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"sigma"</span>, <span class='st'>"tau_bar"</span>,
-  <span class='st'>"mu_bar"</span>, <span class='st'>"yhat_bar"</span>))</pre>
+<span class='fu'><a href='https://rdrr.io/r/base/summary.html'>summary</a></span>(
+  <span class='no'>object</span>,
+  <span class='no'>...</span>,
+  <span class='kw'>params_2_summarise</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"sigma"</span>, <span class='st'>"tau_bar"</span>, <span class='st'>"mu_bar"</span>, <span class='st'>"yhat_bar"</span>)
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>bcfObj</th>
-      <td><p>output from a BCF predict run</p></td>
+      <th>object</th>
+      <td><p>output from a BCF predict run.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>additional arguments affecting the summary produced.</p></td>
+    </tr>
+    <tr>
+      <th>params_2_summarise</th>
+      <td><p>parameters to summarise.</p></td>
     </tr>
     </table>
 

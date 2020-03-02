@@ -95,10 +95,10 @@ The bcf() function automatically saves those in the same directory as the" />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/01_simple-example.html">A Simple Example</a>
+      <a href="../articles/E01_simple-example.html">A Simple Example</a>
     </li>
     <li>
-      <a href="../articles/02_predict-example.html">Prediction using BCF</a>
+      <a href="../articles/E02_predict-example.html">Prediction using BCF</a>
     </li>
   </ul>
 </li>
@@ -134,14 +134,21 @@ The bcf() function automatically saves those in the same directory as the</p>
     </div>
 
     <pre class="usage"><span class='co'># S3 method for bcf</span>
-<span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span>(<span class='no'>bcfObj</span>, <span class='no'>x_predict_control</span>, <span class='no'>x_predict_moderate</span>,
-  <span class='no'>pi_pred</span>, <span class='no'>z_pred</span>, <span class='no'>save_tree_directory</span>, <span class='kw'>n_cores</span> <span class='kw'>=</span> <span class='fl'>2</span>)</pre>
+<span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span>(
+  <span class='no'>object</span>,
+  <span class='no'>x_predict_control</span>,
+  <span class='no'>x_predict_moderate</span>,
+  <span class='no'>pi_pred</span>,
+  <span class='no'>z_pred</span>,
+  <span class='no'>save_tree_directory</span>,
+  <span class='kw'>n_cores</span> <span class='kw'>=</span> <span class='fl'>2</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>bcfObj</th>
+      <th>object</th>
       <td><p>output from a BCF predict run</p></td>
     </tr>
     <tr>
@@ -167,6 +174,10 @@ The bcf() function automatically saves those in the same directory as the</p>
     <tr>
       <th>n_cores</th>
       <td><p>An optional integer of the number of cores to run your MCMC chains on</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>additional arguments affecting the predictions produced.</p></td>
     </tr>
     </table>
 
