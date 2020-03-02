@@ -1,5 +1,5 @@
-#' @import Rcpp RcppArmadillo RcppParallel
 #' @importFrom stats approxfun lm qchisq quantile sd
+#' @importFrom RcppParallel RcppParallelLibs
 Rcpp::loadModule(module = "TreeSamples", TRUE)
 
 .ident <- function(...){
@@ -42,19 +42,24 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 
 .get_do_type = function(n_cores){
   if(n_cores>1){
-    cl <<- parallel::makeCluster(n_cores)
+    cl <- parallel::makeCluster(n_cores)
     doParallel::registerDoParallel(cl)
     `%doType%`  <- foreach::`%dopar%`
   } else {
+    cl <- NULL
     `%doType%`  <- foreach::`%do%`
   }
   
-  return(`%doType%`)
+  do_type_config <- list('doType'  = `%doType%`,
+                         'n_cores' = n_cores,
+                         'cluster' = cl)
+  
+  return(do_type_config)
 }
 
-.cleanup_after_par = function(n_cores){
-  if(n_cores>1){
-    parallel::stopCluster(cl)
+.cleanup_after_par = function(do_type_config){
+  if(do_type_config$n_cores>1){
+    parallel::stopCluster(do_type_config$cluster)
   }
 }
 
@@ -201,8 +206,6 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #'}
 #'
 #' @useDynLib bcf
-#' @import Rcpp RcppArmadillo RcppParallel
-#' @importFrom stats approxfun lm qchisq quantile sd 
 #' @export
 bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, 
                 random_seed = sample.int(.Machine$integer.max, 1),
@@ -306,7 +309,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
   RcppParallel::setThreadOptions(numThreads=n_threads)
   
-  `%doType%` = .get_do_type(n_cores)
+  do_type_config <- .get_do_type(n_cores)
+  `%doType%` <- do_type_config$doType
   
   chain_out <- foreach::foreach(iChain=1:n_chains) %doType% {
     
@@ -459,7 +463,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   
   attr(fitObj, "class") <- "bcf"
   
-  .cleanup_after_par(n_cores)
+  .cleanup_after_par(do_type_config)
   
   return(fitObj)
 }
@@ -616,7 +620,8 @@ predict.bcf <- function(object,
                         pi_pred,
                         z_pred, 
                         save_tree_directory,
-                        n_cores=2) {
+                        n_cores=2,
+                        ...) {
                         
     if(any(is.na(x_predict_moderate))) stop("Missing values in x_predict_moderate")
     if(any(is.na(x_predict_control))) stop("Missing values in x_predict_control")
@@ -649,10 +654,10 @@ predict.bcf <- function(object,
     x_pm = matrix(x_predict_moderate, ncol=ncol(x_predict_moderate))
     x_pc = matrix(x_predict_control, ncol=ncol(x_predict_control))
 
-    if(bcf_out$include_pi=="both" | bcf_out$include_pi=="control") {
+    if(object$include_pi=="both" | object$include_pi=="control") {
         x_pc = cbind(x_predict_control, pi_pred)
     }
-    if(bcf_out$include_pi=="both" | bcf_out$include_pi=="moderate") {
+    if(object$include_pi=="both" | object$include_pi=="moderate") {
         x_pm = cbind(x_predict_moderate, pi_pred)
     }
 
@@ -661,7 +666,8 @@ predict.bcf <- function(object,
 
     n_chains = length(object$coda_chains)
     
-    `%doType%` = .get_do_type(n_cores)
+    do_type_config <- .get_do_type(n_cores)
+    `%doType%` <- do_type_config$doType
     
     chain_out <- foreach::foreach(iChain=1:n_chains) %doType% {
       
@@ -729,6 +735,8 @@ predict.bcf <- function(object,
 
         chain_list[[iChain]] <- coda::as.mcmc(scalar_df)
     }
+
+   .cleanup_after_par(do_type_config)
 
 
     list(tau = all_tau,

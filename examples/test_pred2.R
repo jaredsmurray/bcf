@@ -1,9 +1,9 @@
-library(bcf2)
+library(bcf)
 library(tidyverse)
 set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
-n <- 1000
+n <- 100
 n_burn <- 100
 n_sim <- 150
 
@@ -35,7 +35,7 @@ sigma <- diff(range(mu + tau*pi))/8
 # draw the response variable with additive error
 y <- y_noiseless + sigma*rnorm(n)
 
-out2 <- bcf2::bcf(y               = y,
+out2 <- bcf::bcf(y               = y,
                   z               = z,
                   x_control       = x,
                   x_moderate      = x,
@@ -44,8 +44,7 @@ out2 <- bcf2::bcf(y               = y,
                   nsim            = n_sim,
                   w               = weights,
                   n_chains        = 2,
-                  update_interval = 1,
-                  save_tree_directory = './trees')
+                  update_interval = 1)
 
 cat("BCF run complete\n")
 
@@ -53,12 +52,12 @@ cat("BCF run complete\n")
 
 cat("Starting Prediction \n")
 
-pred_out = bcf2::predict(bcf_out=out2,
-                         x_predict_control=x,
-                         x_predict_moderate=x,
-                         pi_pred=pi,
-                         z_pred=z,
-                         save_tree_directory = './trees')
+pred_out = predict(object=out2,
+                   x_predict_control=x,
+                   x_predict_moderate=x,
+                   pi_pred=pi,
+                   z_pred=z,
+                   save_tree_directory = '..')
 
 
 
