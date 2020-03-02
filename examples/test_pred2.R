@@ -52,12 +52,12 @@ cat("BCF run complete\n")
 
 cat("Starting Prediction \n")
 
-pred_out = predict.bcf(object=out2,
-                         x_predict_control=x,
-                         x_predict_moderate=x,
-                         pi_pred=pi,
-                         z_pred=z,
-                         save_tree_directory = '..')
+pred_out = predict(object=out2,
+                   x_predict_control=x,
+                   x_predict_moderate=x,
+                   pi_pred=pi,
+                   z_pred=z,
+                   save_tree_directory = '..')
 
 
 

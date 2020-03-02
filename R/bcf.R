@@ -654,10 +654,10 @@ predict.bcf <- function(object,
     x_pm = matrix(x_predict_moderate, ncol=ncol(x_predict_moderate))
     x_pc = matrix(x_predict_control, ncol=ncol(x_predict_control))
 
-    if(bcf_out$include_pi=="both" | bcf_out$include_pi=="control") {
+    if(object$include_pi=="both" | object$include_pi=="control") {
         x_pc = cbind(x_predict_control, pi_pred)
     }
-    if(bcf_out$include_pi=="both" | bcf_out$include_pi=="moderate") {
+    if(object$include_pi=="both" | object$include_pi=="moderate") {
         x_pm = cbind(x_predict_moderate, pi_pred)
     }
 

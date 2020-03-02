@@ -1,1 +1,1 @@
-utils::globalVariables(c("bcf_out"))
+utils::globalVariables(c("TreeSamples"))

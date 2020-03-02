@@ -6,3 +6,4 @@
 ^pkgdown$
 ^tmp$
 ^.*\.txt
+cran-comments.md
