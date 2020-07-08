@@ -1,0 +1,7 @@
+pandoc: 2.2.3.2
+pkgdown: 1.4.1
+pkgdown_sha: ~
+articles:
+  E01_simple-example: E01_simple-example.html
+  E02_predict-example: E02_predict-example.html
+

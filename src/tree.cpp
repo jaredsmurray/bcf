@@ -143,6 +143,22 @@ std::istream& operator>>(std::istream& is, xinfo& xi)
 
 //--------------------
 // Find bottom node pointer given x
+
+// struct node_info {
+//    std::size_t id; //node id
+//    std::size_t v;  //variable
+//    std::size_t c;  //cut point
+//    double m;       //mu
+// };
+
+// x is a pointer to a feature vector
+// xi is a Node 
+// if the v'th value of x is less than cut point 
+
+//tree structure
+//    tree_p p; //parent
+//    tree_p l; //left child
+//    tree_p r; //right child
 tree::tree_cp tree::bn(double *x,xinfo& xi)
 {
 	if(l==0) return this; //bottom node
@@ -570,8 +586,10 @@ tree::tree_p tree::getptr(size_t nid)
 //--------------------
 // Print out tree(pc=true) or node(pc=false) information
 // Uses recursion down
-void tree::pr(bool pc) const
-{
+
+
+
+void tree::pr(xinfo& xi) const {
 	size_t d = depth();
 	size_t id = nid();
 
@@ -581,24 +599,62 @@ void tree::pr(bool pc) const
 
 	string pad(2*d,' ');
 	string sp(", ");
-	if(pc && (ntype()=='t'))
+	if(ntype()=='t')
 	  Rcpp::Rcout << "tree size: " << treesize() << endl;
-//	cout << pad << "(id,parent): " << id << sp << pid;
-  Rcpp::Rcout << pad << "id: " << id;
-  Rcpp::Rcout << sp << "(v,c): " << v << sp << c;
-  Rcpp::Rcout << sp << "mu: " << mu;
+
+	// struct node_info {
+	//    std::size_t id; //node id
+	//    std::size_t v;  //variable
+	//    std::size_t c;  //cut point
+	//    double m;       //mu
+	// };
+
+  	Rcpp::Rcout << pad << "id: " << id;
+	Rcpp::Rcout << sp << "var idx: " <<  v;
+	Rcpp::Rcout << sp << "cut idx: " <<  c;
+	if (ntype()=='b'||treesize()==1){
+		Rcpp::Rcout << sp << "th: N/A";
+	}else{
+		Rcpp::Rcout << sp << "th: " <<  xi[v][c];
+	}
+  	Rcpp::Rcout << sp << "mu: " << mu;
 	Rcpp::Rcout << sp << "type: " << ntype();
 	Rcpp::Rcout << sp << "depth: " << depth();
-//	cout << sp << "pointer: " << this << endl;
-//	cout << sp << "left: " << this->l << endl;
-//	cout << sp << "right:" << this->r << endl;
-  Rcpp::Rcout << endl;
 
-	if(pc) {
-		if(l) {
-			l->pr(pc);
-			r->pr(pc);
-		}
+  	Rcpp::Rcout << endl;
+
+	if(l) {
+		l->pr(xi);
+		r->pr(xi);
+	}
+}
+
+void tree::pr() const {
+	size_t d = depth();
+	size_t id = nid();
+
+	size_t pid;
+	if(!p) pid=0; //parent of top node
+	else pid = p->nid();
+
+	string pad(2*d,' ');
+	string sp(", ");
+	if(ntype()=='t')
+	  Rcpp::Rcout << "tree size: " << treesize() << endl;
+
+  	Rcpp::Rcout << pad << "id: " << id;
+	Rcpp::Rcout << sp << "var idx: " <<  v;
+	Rcpp::Rcout << sp << "cut idx: " <<  c;
+	Rcpp::Rcout << sp << "th: Unavailable";
+  	Rcpp::Rcout << sp << "mu: " << mu;
+	Rcpp::Rcout << sp << "type: " << ntype();
+	Rcpp::Rcout << sp << "depth: " << depth();
+
+  	Rcpp::Rcout << endl;
+
+	if(l) {
+		l->pr();
+		r->pr();
 	}
 }
 

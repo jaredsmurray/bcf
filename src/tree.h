@@ -12,7 +12,7 @@
 
 #include "info.h"
 #include "rng.h"
-
+#include "logging.h"
 /*
 Class is a bit confusing because sometimes you
 want to think about an instance as a node and
@@ -53,6 +53,7 @@ public:
    typedef std::vector<tree_p> npv;   //Node Pointer Vector
    typedef std::vector<tree_cp> cnpv; //const Node Pointer Vector
 
+   // C++ Friend Functions. A friend function of a class is defined outside that class' scope but it has the right to access all private and protected members of the class. 
    //------------------------------
    //friends
    friend std::istream& operator>>(std::istream&, tree&);
@@ -91,11 +92,8 @@ public:
    friend bool rjbd(tree& x, xinfo& xi, pinfo& pi, RNG& gen, size_t numslaves);
    friend bool rotp(tree::tree_p tnew, tree& x, xinfo& xi, pinfo& pi, RNG& gen, tree::npv& rnodes, size_t numslaves);
 #else
-   friend bool bd(tree& x, xinfo& xi, dinfo& di, pinfo& pi, RNG& gen);
    //my functions
-   friend bool bd_rj(tree& x, xinfo& xi, dinfo& di, pinfo& pi, RNG& gen);
-   friend bool bdprec(tree& x, xinfo& xi, dinfo& di, pinfo& pi, RNG& gen);
-   friend bool bdhet(tree& x, xinfo& xi, dinfo& di, double* phi, pinfo& pi, RNG& gen);
+   friend bool bd(tree& x, xinfo& xi, dinfo& di, double* phi, pinfo& pi, RNG& gen, Logger logger);
    friend bool rotphet(tree::tree_p tnew, tree& x, xinfo& xi, dinfo& di, double* phi, pinfo& pi, RNG& gen);
    //end my functions
    friend void pertcv(tree& x, xinfo& xi, dinfo& di, pinfo& pi, RNG& gen);
@@ -154,7 +152,9 @@ public:
    size_t treesize() const;     //number of nodes in tree
    size_t nnogs() const;        //number of nog nodes (no grandchildren nodes)
    size_t nbots() const;        //number of bottom nodes
-   void pr(bool pc=true) const; //to screen, pc is "print children"
+   void pr(xinfo& xi) const; //to screen, pc is "print children"
+   void pr() const; //to screen, pc is "print children"
+
    //birth death using nid----------
    bool birth(size_t nid,size_t v, size_t c, double ml, double mr); 
    bool death(size_t nid, double mu); 
@@ -206,7 +206,7 @@ private:
    tree_p l; //left child
    tree_p r; //right child
    //------------------------------
-   //utiity functions
+   //utility functions
    void cp(tree_p n,  tree_cp o); //copy tree o to n
    void birthp(tree_p np,size_t v, size_t c, double ml, double mr); 
    void deathp(tree_p nb, double mu); //kill children of nog node nb 

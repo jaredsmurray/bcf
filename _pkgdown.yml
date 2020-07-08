@@ -1,0 +1,9 @@
+destination: docs
+reference:
+  - title: Functions
+    contents: 
+      - bcf
+      - predict.bcf
+      - summary.bcf
+    exclude:
+      - bcf2-package
