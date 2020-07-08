@@ -246,24 +246,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_mod.x = &x_mod[0]; 
   di_mod.y = r_mod; //the y for each draw will be the residual
 
-
-  //  }
-  //--------------------------------------------------
-  //storage for ouput
-  //in sample fit
-  /*
-  //out of sample fit
-  double* ppredmean=0; //posterior mean for prediction
-  double* fpredtemp=0; //temporary fit vector to compute prediction
-  if(dip.n) {
-  ppredmean = new double[dip.n];
-  fpredtemp = new double[dip.n];
-  for(size_t i=0;i<dip.n;i++) ppredmean[i]=0.0;
-  }
-  //for sigma draw
-  double rss, restemp;
-  */
-
   //--------------------------------------------------
   //setup for random effects
   size_t random_dim = random_des.n_cols;
@@ -414,10 +396,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
         Rcout << "\n\n";
       }
 
-      // This seems to populate fTemp with the appopriate 
-      // mu_i for every observation in di_con
-      // based on the tree defined by t and xi_con
-      // it seems like fTemp is the only guy that is modified
       fit(t_con[iTreeCon], // tree& t
           xi_con, // xinfo& xi
           di_con, // dinfo& di
@@ -429,25 +407,17 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n\n";
       }
-      // I'd expect a residual calculation somewhere here. 
-      // so that's what this probably is?
+
       for(size_t k=0;k<n;k++) {
         if(ftemp[k] != ftemp[k]) {
           Rcout << "control tree " << iTreeCon <<" obs "<< k<<" "<< endl;
           Rcout << t_con[iTreeCon] << endl;
           stop("nan in ftemp");
         }
-        // Whatever these allfits used to be, we're subtracting off
-        // ftempt from them. so assumping allfits started at the real y_hat
-        // would be y_hat without this tree
+
         allfit[k]     = allfit[k]     -mscale*ftemp[k];
         allfit_con[k] = allfit_con[k] -mscale*ftemp[k];
-
-
-        // If the above is correct, then r_con would be tree_y or equavalently Rj
-        // I suspect (but have not confirmed) that because of pointers
-        // updating r_con updates di_con.y, looking at how it's intialized
-        // The name r_con is never used again till it's deleted, so that would make sense
+        
         r_con[k] = (y[k]-allfit[k])/mscale;
 
         if(r_con[k] != r_con[k]) {
@@ -464,9 +434,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
         logger.getVectorHead(weight, logBuff);
         Rcout << "\n weight: " <<  logBuff << "\n\n";
       } 
-      // It seems like with 100% probability, either a 
-      // birth or death will be attempted
-      // but the change can still be rejected or accepted
       logger.log("Starting Birth / Death Processing");
       logger.startContext();
       bd(t_con[iTreeCon], // tree& x
@@ -559,9 +526,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
-
-
-
 
       fit(t_mod[iTreeMod],
           xi_mod,
