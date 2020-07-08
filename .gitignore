@@ -86,8 +86,10 @@ inst/doc
 *txt
 *pdf
 inst/doc
+.DS_Store
 
 trees/*
 
 src-i386/
 src-x64/
+.Rproj.user
