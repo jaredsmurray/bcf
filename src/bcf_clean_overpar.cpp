@@ -358,7 +358,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
     if(verbose_sigma){
         if(iIter%status_interval==0) {
-            Rcout << "iteration: " << iIter << " sigma: "<< sigma << endl;
+            Rcout << "iteration: " << iIter << " sigma/SD(y): "<< sigma << endl;
         }
     }
 
