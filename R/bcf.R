@@ -483,7 +483,14 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 #' Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 #' This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 #' It includes, for key parameters, posterior summary stats, effective sample sizes, 
-#' and Gelman and Rubin's convergence diagnostics. We strongly suggest updating the coda package to our 
+#' and Gelman and Rubin's convergence diagnostics. 
+#' By default, those parameters are: sigma (the error standard deviation when the weights
+#' are all equal), tau_bar (the estimated sample average treatment effect), mu_bar
+#' (the average outcome under control/z=0 across all observations in the sample), and
+#' yhat_bat (the average outcome under the realized treatment assignment across all
+#' observations in the sample).
+#' 
+#' We strongly suggest updating the coda package to our 
 #' Github version, which uses the Stan effective size computation. 
 #' We found the native coda effective size computation to be overly optimistic in some situations
 #' and are in discussions with the coda package authors to change it on CRAN.
@@ -542,13 +549,23 @@ summary.bcf <- function(object,
   cat("\n----\n\n")
 
 
-  message("Effective sample size for each parameter")
-  print(coda::effectiveSize(chains_2_summarise, crosschain = TRUE))
+  message("Effective sample size for summary parameters")
+  
+  ef = function(e) {
+    if(e$message == "unused argument (crosschain = TRUE)") {
+      cat("Reverting to coda's default ESS calculation. See ?summary.bcf for details.\n\n")
+      print(coda::effectiveSize(chains_2_summarise))
+    } else {
+      stop(e)
+    }
+  }
+  tryCatch(print(coda::effectiveSize(chains_2_summarise, crosschain = TRUE)),
+           error = ef) 
   cat("\n----\n\n")
   
   
   if (length(chains_2_summarise) > 1){
-    message("Gelman and Rubin's convergence diagnostic for each parameter")
+    message("Gelman and Rubin's convergence diagnostic for summary parameters")
     print(coda::gelman.diag(chains_2_summarise, autoburnin = FALSE))
     cat("\n----\n\n")
     
