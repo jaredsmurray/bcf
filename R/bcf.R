@@ -272,7 +272,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   if(nsim<0) stop("nsim must be positive")
   if(nthin<0) stop("nthin must be positive")
   if(nthin>nsim+1) stop("nthin must be < nsim")
-  if(nburn<100) warning("A low (<100) value for nburn was supplied")
+  if(nburn<1000) warning("A low (<1000) value for nburn was supplied")
+  if(nsim*nburn<1000) warning("A low (<1000) value for total iterations after burn-in was supplied")
 
   ### TODO range check on parameters
 
