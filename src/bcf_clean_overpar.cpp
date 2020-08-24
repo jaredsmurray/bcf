@@ -302,12 +302,12 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   treef_con << std::setprecision(save_tree_precision) << xi_con << endl; //cutpoints
   treef_con << ntree_con << endl;  //number of trees
   treef_con << di_con.p << endl;  //dimension of x's
-  treef_con << (int)(nd/thin) << endl;
+  treef_con << nd << endl;
 
   treef_mod << std::setprecision(save_tree_precision) << xi_mod << endl; //cutpoints
   treef_mod << ntree_mod << endl;  //number of trees
   treef_mod << di_mod.p << endl;  //dimension of x's
-  treef_mod << (int)(nd/thin) << endl;
+  treef_mod << nd << endl;
 
   //*****************************************************************************
   /* MCMC

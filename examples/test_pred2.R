@@ -44,6 +44,7 @@ out2 <- bcf::bcf(y               = y,
                   nsim            = n_sim,
                   w               = weights,
                   n_chains        = 2,
+                  nthin           = 3,
                   update_interval = 1)
 
 cat("BCF run complete\n")
