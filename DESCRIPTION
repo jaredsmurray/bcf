@@ -41,6 +41,4 @@ Suggests:
 SystemRequirements: GNU make
 Language: en-US
 VignetteBuilder: knitr
-Remotes: 
-    mathematica-mpr/coda
 Encoding: UTF-8
