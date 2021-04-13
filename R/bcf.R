@@ -225,7 +225,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 sd_moderate = sd(y),
                 base_moderate = 0.25,
                 power_moderate = 3,
-                save_tree_directory = '..',
+                save_tree_directory = '.',
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
 ) {
