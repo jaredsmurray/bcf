@@ -34,10 +34,14 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 }
 
 .get_chain_tree_files = function(tree_path, chain_id){
+  if (is.null(tree_path)){
+    out <- list("con_trees" = character(0), 
+                "mod_trees" = character(0))
+  }
   out <- list("con_trees" = paste0(tree_path,'/',"con_trees.", chain_id, ".txt"), 
               "mod_trees" = paste0(tree_path,'/',"mod_trees.", chain_id, ".txt"))
   
-  return(out) 
+  return(out)
 }
 
 .get_do_type = function(n_cores){
