@@ -735,9 +735,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       }
 
 
-      // update delta_mod
-      if(b_half_normal) {
-        logger.log("Updating delta_mod because b_half_normal");
+      // Updated to be consistent with BCF 1.3
+      if(!b_half_normal) {
         double ssq = 0.0;
         tree::npv bnv;
         typedef tree::npv::size_type bvsz;
