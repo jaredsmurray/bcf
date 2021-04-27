@@ -339,6 +339,10 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   size_t save_ctr = 0;
   bool verbose_itr = false; 
 
+  // In BCF 1.3 on CRAN, this is done inside the MCMC Loop
+  // As it is done in this commit https://github.com/jaredsmurray/bcf/commit/c7bb4cbb851b1004e0ad759c1360d43b5cfe1729
+  // I believe that constance added this here before the merge in this commit
+  // https://github.com/mathematica-mpr/bcf-1/commit/9108cde550be83d9cf5bef2ac89e37f2241b5068#diff-6d2dc2eeed05be5f999493994f51f44cf947ecda0b640135b1565262ed8181cf
   if(prior_sample) {
     for(int k=0; k<n; k++) y[k] = gen.normal(allfit[k], sigma);
   }
