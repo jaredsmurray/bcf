@@ -70,7 +70,8 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' command line for citation information in Bibtex format.)
 #'
 #' @details Fits the Bayesian Causal Forest model (Hahn et. al. 2018): For a response
-#' variable y, binary treatment z, and covariates x,
+#' variable y, binary treatment z, and covariates x, we return estimates of mu, tau, and sigma in
+#' the model
 #' \deqn{y_i = \mu(x_i, \pi_i) + \tau(x_i, \pi_i)z_i + \epsilon_i}
 #' where \eqn{\pi_i} is an (optional) estimate of the propensity score \eqn{\Pr(Z_i=1 | X_i=x_i)} and
 #' \eqn{\epsilon_i \sim N(0,\sigma^2)}
@@ -90,7 +91,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' }
 #' @param y Response variable
 #' @param z Treatment variable
-#' @param x_control Design matrix for the "prognostic" function mu(x)
+#' @param x_control Design matrix for the prognostic function mu(x)
 #' @param x_moderate Design matrix for the covariate-dependent treatment effects tau(x)
 #' @param pihat Length n estimates of propensity score
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
@@ -99,7 +100,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param n_cores An optional integer of the number of cores to run your MCMC chains on
 #' @param n_threads An optional integer of the number of threads to parallelize within chain bcf operations on
 #' @param nburn Number of burn-in MCMC iterations
-#' @param nsim Number of MCMC iterations to save after burn-in.
+#' @param nsim Number of MCMC iterations to save after burn-in. The chain will run for nsim*nthin iterations after burn-in
 #' @param nthin Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.
 #' @param update_interval Print status every update_interval MCMC iterations
 #' @param ntree_control Number of trees in mu(x)
@@ -122,8 +123,8 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param use_tauscale Use a half-Normal prior on the scale of tau.
 #' @param verbose logical, whether to print log of MCMC iterations, defaults to FALSE.
 #' @return A fitted bcf object that is a list with elements
-#' \item{tau}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
-#' \item{mu}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
+#' \item{tau}{\code{nsim} by \code{n} matrix of posterior samples of individual-level treatment effect estimates}
+#' \item{mu}{\code{nsim} by \code{n} matrix of posterior samples of prognostic function E(Y|Z=0, x=x) estimates}
 #' \item{sigma}{Length \code{nsim} vector of posterior samples of sigma}
 #' @examples
 #'\donttest{
@@ -197,6 +198,8 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #'
 #' pihat = pnorm(q)
 #'
+#' # nburn and nsim should be much larger, at least a few thousand each
+#' # The low values below are for CRAN.
 #' bcf_fit = bcf(y, z, x, x, pihat, nburn=100, nsim=10)
 #'
 #' # Get posterior of treatment effects
@@ -212,8 +215,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 n_chains = 4,
                 n_cores  = n_chains,
                 n_threads = max((RcppParallel::defaultNumThreads()-2)/n_cores,1), #max number of threads, minus a arbitrary holdback, over the number of cores
-                nburn = 200, nsim = 200, nthin = 1, update_interval = 100,
-                ntree_control = 200,
+                nburn, nsim, nthin = 1, update_interval = 100,
+                ntree_control = 250,
                 sd_control = 2*sd(y),
                 base_control = 0.95,
                 power_control = 2,
@@ -269,7 +272,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   if(nsim<0) stop("nsim must be positive")
   if(nthin<0) stop("nthin must be positive")
   if(nthin>nsim+1) stop("nthin must be < nsim")
-  if(nburn<100) warning("A low (<100) value for nburn was supplied")
+  if(nburn<1000) warning("A low (<1000) value for nburn was supplied")
+  if(nsim*nburn<1000) warning("A low (<1000) value for total iterations after burn-in was supplied")
 
   ### TODO range check on parameters
 
@@ -322,21 +326,29 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     tree_files = .get_chain_tree_files(save_tree_directory, iChain)
     
     print(tree_files)
-    
-    fitbcf = bcfoverparRcppClean(yscale[perm], z[perm], w[perm],
-                                 t(x_c[perm,]), t(x_m[perm,,drop=FALSE]), 
-                                 cutpoint_list_c, cutpoint_list_m,
+
+    fitbcf = bcfoverparRcppClean(y_ = yscale[perm], z_ = z[perm], w_ = w[perm],
+                                 x_con_ = t(x_c[perm,,drop=FALSE]), x_mod_ = t(x_m[perm,,drop=FALSE]), 
+                                 x_con_info_list = cutpoint_list_c, 
+                                 x_mod_info_list = cutpoint_list_m,
                                  random_des = matrix(1),
                                  random_var = matrix(1),
                                  random_var_ix = matrix(1),
                                  random_var_df = 3,
-                                 nburn, nsim, nthin,
-                                 ntree_moderate, ntree_control, lambda, nu,
+                                 burn = nburn, nd = nsim, thin = nthin,
+                                 ntree_mod = ntree_moderate, ntree_con = ntree_control, 
+                                 lambda = lambda, nu = nu,
                                  con_sd = con_sd,
                                  mod_sd = mod_sd, # if HN make sd_moderate the prior median
-                                 base_moderate, power_moderate, base_control, power_control,
-                                 tree_files$con_trees, tree_files$mod_trees, status_interval = update_interval,
-                                 use_mscale = use_muscale, use_bscale = use_tauscale, b_half_normal = TRUE, verbose_sigma=verbose)
+                                 mod_alpha = base_moderate, 
+                                 mod_beta = power_moderate, 
+                                 con_alpha = base_control, 
+                                 con_beta = power_control,
+                                 treef_con_name_ = tree_files$con_trees, 
+                                 treef_mod_name_ = tree_files$mod_trees, 
+                                 status_interval = update_interval,
+                                 use_mscale = use_muscale, use_bscale = use_tauscale, 
+                                 b_half_normal = TRUE, verbose_sigma=verbose)
     
     cat("bcfoverparRcppClean returned to R\n")
 
@@ -471,7 +483,14 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 #' Takes a fitted bcf object produced by bcf() and produces summary stats and MCMC diagnostics.
 #' This function is built using the coda package and meant to mimic output from rstan::print.stanfit().
 #' It includes, for key parameters, posterior summary stats, effective sample sizes, 
-#' and Gelman and Rubin's convergence diagnostics. We strongly suggest updating the coda package to our 
+#' and Gelman and Rubin's convergence diagnostics. 
+#' By default, those parameters are: sigma (the error standard deviation when the weights
+#' are all equal), tau_bar (the estimated sample average treatment effect), mu_bar
+#' (the average outcome under control/z=0 across all observations in the sample), and
+#' yhat_bat (the average outcome under the realized treatment assignment across all
+#' observations in the sample).
+#' 
+#' We strongly suggest updating the coda package to our 
 #' Github version, which uses the Stan effective size computation. 
 #' We found the native coda effective size computation to be overly optimistic in some situations
 #' and are in discussions with the coda package authors to change it on CRAN.
@@ -530,13 +549,23 @@ summary.bcf <- function(object,
   cat("\n----\n\n")
 
 
-  message("Effective sample size for each parameter")
-  print(coda::effectiveSize(chains_2_summarise, crosschain = TRUE))
+  message("Effective sample size for summary parameters")
+  
+  ef = function(e) {
+    if(e$message == "unused argument (crosschain = TRUE)") {
+      cat("Reverting to coda's default ESS calculation. See ?summary.bcf for details.\n\n")
+      print(coda::effectiveSize(chains_2_summarise))
+    } else {
+      stop(e)
+    }
+  }
+  tryCatch(print(coda::effectiveSize(chains_2_summarise, crosschain = TRUE)),
+           error = ef) 
   cat("\n----\n\n")
   
   
   if (length(chains_2_summarise) > 1){
-    message("Gelman and Rubin's convergence diagnostic for each parameter")
+    message("Gelman and Rubin's convergence diagnostic for summary parameters")
     print(coda::gelman.diag(chains_2_summarise, autoburnin = FALSE))
     cat("\n----\n\n")
     
