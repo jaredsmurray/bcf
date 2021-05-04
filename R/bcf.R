@@ -220,7 +220,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 n_cores  = n_chains,
                 n_threads = max((RcppParallel::defaultNumThreads()-2)/n_cores,1), #max number of threads, minus a arbitrary holdback, over the number of cores
                 nburn, nsim, nthin = 1, update_interval = 100,
-                ntree_control = 250,
+                ntree_control = 200,
                 sd_control = 2*sd(y),
                 base_control = 0.95,
                 power_control = 2,
