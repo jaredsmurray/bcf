@@ -34,10 +34,14 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 }
 
 .get_chain_tree_files = function(tree_path, chain_id){
+  if (is.null(tree_path)){
+    out <- list("con_trees" = character(0), 
+                "mod_trees" = character(0))
+  }
   out <- list("con_trees" = paste0(tree_path,'/',"con_trees.", chain_id, ".txt"), 
               "mod_trees" = paste0(tree_path,'/',"mod_trees.", chain_id, ".txt"))
   
-  return(out) 
+  return(out)
 }
 
 .get_do_type = function(n_cores){
@@ -111,7 +115,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param sd_moderate SD(tau(x)) marginally at any covariate value (or its prior median if use_tauscale=TRUE)
 #' @param base_moderate Base for tree prior on tau(x) trees (see details)
 #' @param power_moderate Power for the tree prior on tau(x) trees (see details)
-#' @param save_tree_directory Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory.
+#' @param save_tree_directory Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory. Setting to NULL skips writing of trees.
 #' @param nu Degrees of freedom in the chisq prior on \eqn{sigma^2}
 #' @param lambda Scale parameter in the chisq prior on \eqn{sigma^2}
 #' @param sigq Calibration quantile for the chisq prior on \eqn{sigma^2}
@@ -224,7 +228,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 sd_moderate = sd(y),
                 base_moderate = 0.25,
                 power_moderate = 3,
-                save_tree_directory = '..',
+                save_tree_directory = '.',
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
                 include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
 ) {

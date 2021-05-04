@@ -27,7 +27,7 @@ bcf(
   sd_moderate = sd(y),
   base_moderate = 0.25,
   power_moderate = 3,
-  save_tree_directory = "..",
+  save_tree_directory = ".",
   nu = 3,
   lambda = NULL,
   sigq = 0.9,
@@ -83,7 +83,7 @@ bcf(
 
 \item{power_moderate}{Power for the tree prior on tau(x) trees (see details)}
 
-\item{save_tree_directory}{Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory.}
+\item{save_tree_directory}{Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory. Setting to NULL skips writing of trees.}
 
 \item{nu}{Degrees of freedom in the chisq prior on \eqn{sigma^2}}
 
