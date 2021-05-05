@@ -315,6 +315,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   perm = order(z, decreasing=TRUE)
 
   con_sd = ifelse(abs(2*sdy - sd_control)<1e-6, 2, sd_control/sdy)
+  # do we still need this factor if B is half normal?
   mod_sd = ifelse(abs(sdy - sd_moderate)<1e-6, 1, sd_moderate/sdy)/ifelse(use_tauscale,0.674,1) # if HN make sd_moderate the prior median
 
   RcppParallel::setThreadOptions(numThreads=n_threads)
