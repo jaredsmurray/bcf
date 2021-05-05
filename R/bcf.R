@@ -35,12 +35,14 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 
 .get_chain_tree_files = function(tree_path, chain_id){
   if (is.null(tree_path)){
-    out <- list("con_trees" = character(0), 
-                "mod_trees" = character(0))
+    out <- list(
+                "con_trees" = toString(character(0)), 
+                "mod_trees" = toString(character(0))
+                )
+  } else{
+    out <- list("con_trees" = paste0(tree_path,'/',"con_trees.", chain_id, ".txt"), 
+                "mod_trees" = paste0(tree_path,'/',"mod_trees.", chain_id, ".txt"))
   }
-  out <- list("con_trees" = paste0(tree_path,'/',"con_trees.", chain_id, ".txt"), 
-              "mod_trees" = paste0(tree_path,'/',"mod_trees.", chain_id, ".txt"))
-  
   return(out)
 }
 
@@ -220,7 +222,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 n_cores  = n_chains,
                 n_threads = max((RcppParallel::defaultNumThreads()-2)/n_cores,1), #max number of threads, minus a arbitrary holdback, over the number of cores
                 nburn, nsim, nthin = 1, update_interval = 100,
-                ntree_control = 250,
+                ntree_control = 200,
                 sd_control = 2*sd(y),
                 base_control = 0.95,
                 power_control = 2,
@@ -328,8 +330,6 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     set.seed(this_seed)
     
     tree_files = .get_chain_tree_files(save_tree_directory, iChain)
-    
-    print(tree_files)
 
     fitbcf = bcfoverparRcppClean(y_ = yscale[perm], z_ = z[perm], w_ = w[perm],
                                  x_con_ = t(x_c[perm,,drop=FALSE]), x_mod_ = t(x_m[perm,,drop=FALSE]), 

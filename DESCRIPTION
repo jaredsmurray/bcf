@@ -16,7 +16,7 @@ Description: Causal inference for a binary treatment and continuous outcome usin
 License: GPL-3
 LinkingTo: Rcpp, RcppArmadillo, RcppParallel
 NeedsCompilation: yes
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.1
 Repository: CRAN
 Imports: 
     Rcpp,
