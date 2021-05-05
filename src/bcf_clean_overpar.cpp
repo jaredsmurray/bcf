@@ -59,8 +59,14 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   std::string treef_mod_name = as<std::string>(treef_mod_name_);
   
   if(not treef_con_name.empty()){
+    Rcout << "Saving Trees to"  << std::endl;
+    Rcout << treef_con_name  << std::endl;
+    Rcout << treef_mod_name  << std::endl;
+
     treef_con.open(treef_con_name.c_str());
     treef_mod.open(treef_mod_name.c_str());
+  }else{
+    Rcout << "Not Saving Trees to file"  << std::endl;
   }
   
   RNGScope scope;
