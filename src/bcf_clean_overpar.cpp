@@ -51,13 +51,24 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   }
 
   if(randeff) Rcout << "Using random effects." << std::endl;
-
+  
+  std::ofstream treef_con;
+  std::ofstream treef_mod;
+  
   std::string treef_con_name = as<std::string>(treef_con_name_);
-  std::ofstream treef_con(treef_con_name.c_str());
-
   std::string treef_mod_name = as<std::string>(treef_mod_name_);
-  std::ofstream treef_mod(treef_mod_name.c_str());
+  
+  if(not treef_con_name.empty()){
+    Rcout << "Saving Trees to"  << std::endl;
+    Rcout << treef_con_name  << std::endl;
+    Rcout << treef_mod_name  << std::endl;
 
+    treef_con.open(treef_con_name.c_str());
+    treef_mod.open(treef_mod_name.c_str());
+  }else{
+    Rcout << "Not Saving Trees to file"  << std::endl;
+  }
+  
   RNGScope scope;
   RNG gen; //this one random number generator is used in all draws
 
@@ -246,24 +257,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   di_mod.x = &x_mod[0]; 
   di_mod.y = r_mod; //the y for each draw will be the residual
 
-
-  //  }
-  //--------------------------------------------------
-  //storage for ouput
-  //in sample fit
-  /*
-  //out of sample fit
-  double* ppredmean=0; //posterior mean for prediction
-  double* fpredtemp=0; //temporary fit vector to compute prediction
-  if(dip.n) {
-  ppredmean = new double[dip.n];
-  fpredtemp = new double[dip.n];
-  for(size_t i=0;i<dip.n;i++) ppredmean[i]=0.0;
-  }
-  //for sigma draw
-  double rss, restemp;
-  */
-
   //--------------------------------------------------
   //setup for random effects
   size_t random_dim = random_des.n_cols;
@@ -317,15 +310,17 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   int save_tree_precision = 32; 
 
   //save stuff to tree file
-  treef_con << std::setprecision(save_tree_precision) << xi_con << endl; //cutpoints
-  treef_con << ntree_con << endl;  //number of trees
-  treef_con << di_con.p << endl;  //dimension of x's
-  treef_con << nd << endl;
-
-  treef_mod << std::setprecision(save_tree_precision) << xi_mod << endl; //cutpoints
-  treef_mod << ntree_mod << endl;  //number of trees
-  treef_mod << di_mod.p << endl;  //dimension of x's
-  treef_mod << nd << endl;
+  if(not treef_con_name.empty()){
+    treef_con << std::setprecision(save_tree_precision) << xi_con << endl; //cutpoints
+    treef_con << ntree_con << endl;  //number of trees
+    treef_con << di_con.p << endl;  //dimension of x's
+    treef_con << nd << endl;
+  
+    treef_mod << std::setprecision(save_tree_precision) << xi_mod << endl; //cutpoints
+    treef_mod << ntree_mod << endl;  //number of trees
+    treef_mod << di_mod.p << endl;  //dimension of x's
+    treef_mod << nd << endl;
+  }
 
   //*****************************************************************************
   /* MCMC
@@ -339,6 +334,10 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   size_t save_ctr = 0;
   bool verbose_itr = false; 
 
+  // In BCF 1.3 on CRAN, this is done inside the MCMC Loop
+  // As it is done in this commit https://github.com/jaredsmurray/bcf/commit/c7bb4cbb851b1004e0ad759c1360d43b5cfe1729
+  // I believe that constance added this here before the merge in this commit
+  // https://github.com/mathematica-mpr/bcf-1/commit/9108cde550be83d9cf5bef2ac89e37f2241b5068#diff-6d2dc2eeed05be5f999493994f51f44cf947ecda0b640135b1565262ed8181cf
   if(prior_sample) {
     for(int k=0; k<n; k++) y[k] = gen.normal(allfit[k], sigma);
   }
@@ -358,7 +357,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
     if(verbose_sigma){
         if(iIter%status_interval==0) {
-            Rcout << "iteration: " << iIter << " sigma: "<< sigma << endl;
+            Rcout << "iteration: " << iIter << " sigma/SD(y): "<< sigma << endl;
         }
     }
 
@@ -414,10 +413,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
         Rcout << "\n\n";
       }
 
-      // This seems to populate fTemp with the appopriate 
-      // mu_i for every observation in di_con
-      // based on the tree defined by t and xi_con
-      // it seems like fTemp is the only guy that is modified
       fit(t_con[iTreeCon], // tree& t
           xi_con, // xinfo& xi
           di_con, // dinfo& di
@@ -429,25 +424,17 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
         t_con[iTreeCon].pr(xi_con);
         Rcout << "\n\n";
       }
-      // I'd expect a residual calculation somewhere here. 
-      // so that's what this probably is?
+
       for(size_t k=0;k<n;k++) {
         if(ftemp[k] != ftemp[k]) {
           Rcout << "control tree " << iTreeCon <<" obs "<< k<<" "<< endl;
           Rcout << t_con[iTreeCon] << endl;
           stop("nan in ftemp");
         }
-        // Whatever these allfits used to be, we're subtracting off
-        // ftempt from them. so assumping allfits started at the real y_hat
-        // would be y_hat without this tree
+
         allfit[k]     = allfit[k]     -mscale*ftemp[k];
         allfit_con[k] = allfit_con[k] -mscale*ftemp[k];
-
-
-        // If the above is correct, then r_con would be tree_y or equavalently Rj
-        // I suspect (but have not confirmed) that because of pointers
-        // updating r_con updates di_con.y, looking at how it's intialized
-        // The name r_con is never used again till it's deleted, so that would make sense
+        
         r_con[k] = (y[k]-allfit[k])/mscale;
 
         if(r_con[k] != r_con[k]) {
@@ -464,9 +451,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
         logger.getVectorHead(weight, logBuff);
         Rcout << "\n weight: " <<  logBuff << "\n\n";
       } 
-      // It seems like with 100% probability, either a 
-      // birth or death will be attempted
-      // but the change can still be rejected or accepted
       logger.log("Starting Birth / Death Processing");
       logger.startContext();
       bd(t_con[iTreeCon], // tree& x
@@ -559,9 +543,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
         t_mod[iTreeMod].pr(xi_mod);
         Rcout << "\n";
       }
-
-
-
 
       fit(t_mod[iTreeMod],
           xi_mod,
@@ -735,9 +716,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
       }
 
 
-      // update delta_mod
-      if(b_half_normal) {
-        logger.log("Updating delta_mod because b_half_normal");
+      // Updated to be consistent with BCF 1.3
+      if(!b_half_normal) {
         double ssq = 0.0;
         tree::npv bnv;
         typedef tree::npv::size_type bvsz;
@@ -926,10 +906,11 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
     pi_mod.sigma = sigma; // Is this another copy paste Error?
 
     if( ((iIter>=burn) & (iIter % thin==0)) )  {
-
-      for(size_t j=0;j<ntree_con;j++) treef_con << std::setprecision(save_tree_precision) << t_con[j] << endl; // save trees
-      for(size_t j=0;j<ntree_mod;j++) treef_mod << std::setprecision(save_tree_precision) << t_mod[j] << endl; // save trees
-
+      if(not treef_con_name.empty()){
+        for(size_t j=0;j<ntree_con;j++) treef_con << std::setprecision(save_tree_precision) << t_con[j] << endl; // save trees
+        for(size_t j=0;j<ntree_mod;j++) treef_mod << std::setprecision(save_tree_precision) << t_mod[j] << endl; // save trees
+      }
+      
       msd_post(save_ctr) = mscale;
       bsd_post(save_ctr) = bscale1-bscale0;
       b0_post(save_ctr)  = bscale0;
@@ -985,10 +966,12 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   delete[] r_mod;
   delete[] r_con;
   delete[] ftemp;
-
-  treef_con.close();
-  treef_mod.close();
-
+  
+  if(not treef_con_name.empty()){
+    treef_con.close();
+    treef_mod.close();
+  }
+  
   return(List::create(_["yhat_post"] = yhat_post, _["m_post"] = m_post, _["b_post"] = b_post,
                       _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post, _["b0"] = b0_post, _["b1"] = b1_post, 
                       _["gamma"] = gamma_post, _["random_var_post"] = random_var_post
