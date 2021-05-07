@@ -49,6 +49,8 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 .get_do_type = function(n_cores, log_file){
   if(n_cores>1){
     cl <- parallel::makeCluster(n_cores, outfile=log_file)
+
+    cat(sprintf("Running in parallel, saving BCF logs to %s \n", log_file))
     doParallel::registerDoParallel(cl)
     `%doType%`  <- foreach::`%dopar%`
   } else {
