@@ -46,9 +46,9 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
   return(out)
 }
 
-.get_do_type = function(n_cores){
+.get_do_type = function(n_cores, log_file){
   if(n_cores>1){
-    cl <- parallel::makeCluster(n_cores)
+    cl <- parallel::makeCluster(n_cores, outfile=log_file)
     doParallel::registerDoParallel(cl)
     `%doType%`  <- foreach::`%dopar%`
   } else {
@@ -118,6 +118,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param base_moderate Base for tree prior on tau(x) trees (see details)
 #' @param power_moderate Power for the tree prior on tau(x) trees (see details)
 #' @param save_tree_directory Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory. Setting to NULL skips writing of trees.
+#' @param log_file file where BCF should save its logs when running multiple chains in parallel. This file is not written too when only running one chain. 
 #' @param nu Degrees of freedom in the chisq prior on \eqn{sigma^2}
 #' @param lambda Scale parameter in the chisq prior on \eqn{sigma^2}
 #' @param sigq Calibration quantile for the chisq prior on \eqn{sigma^2}
@@ -127,7 +128,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' or "both" are HIGHLY recommended with observational data.
 #' @param use_muscale Use a half-Cauchy hyperprior on the scale of mu.
 #' @param use_tauscale Use a half-Normal prior on the scale of tau.
-#' @param verbose logical, whether to print log of MCMC iterations, defaults to FALSE.
+#' @param verbose logical, whether to print log of MCMC iterations, defaults to TRUE.
 #' @return A fitted bcf object that is a list with elements
 #' \item{tau}{\code{nsim} by \code{n} matrix of posterior samples of individual-level treatment effect estimates}
 #' \item{mu}{\code{nsim} by \code{n} matrix of posterior samples of prognostic function E(Y|Z=0, x=x) estimates}
@@ -231,8 +232,9 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 base_moderate = 0.25,
                 power_moderate = 3,
                 save_tree_directory = '.',
+                log_file=file.path('.',sprintf('bcf_log_%s.txt',format(Sys.time(), "%Y%m%d_%H%M%S"))),
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
-                include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=FALSE
+                include_pi = "control", use_muscale=TRUE, use_tauscale=TRUE, verbose=TRUE
 ) {
 
   
@@ -319,7 +321,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
   RcppParallel::setThreadOptions(numThreads=n_threads)
   
-  do_type_config <- .get_do_type(n_cores)
+  do_type_config <- .get_do_type(n_cores, log_file)
   `%doType%` <- do_type_config$doType
   
   chain_out <- foreach::foreach(iChain=1:n_chains) %doType% {
