@@ -28,6 +28,8 @@ bcf(
   base_moderate = 0.25,
   power_moderate = 3,
   save_tree_directory = ".",
+  log_file = file.path(".", sprintf("bcf_log_\%s.txt", format(Sys.time(),
+    "\%Y\%m\%d_\%H\%M\%S"))),
   nu = 3,
   lambda = NULL,
   sigq = 0.9,
@@ -35,7 +37,7 @@ bcf(
   include_pi = "control",
   use_muscale = TRUE,
   use_tauscale = TRUE,
-  verbose = FALSE
+  verbose = TRUE
 )
 }
 \arguments{
@@ -85,6 +87,8 @@ bcf(
 
 \item{save_tree_directory}{Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory. Setting to NULL skips writing of trees.}
 
+\item{log_file}{file where BCF should save its logs when running multiple chains in parallel. This file is not written too when only running one chain.}
+
 \item{nu}{Degrees of freedom in the chisq prior on \eqn{sigma^2}}
 
 \item{lambda}{Scale parameter in the chisq prior on \eqn{sigma^2}}
@@ -101,7 +105,7 @@ or "both" are HIGHLY recommended with observational data.}
 
 \item{use_tauscale}{Use a half-Normal prior on the scale of tau.}
 
-\item{verbose}{logical, whether to print log of MCMC iterations, defaults to FALSE.}
+\item{verbose}{logical, whether to print log of MCMC iterations, defaults to TRUE.}
 }
 \value{
 A fitted bcf object that is a list with elements
