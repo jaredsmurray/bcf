@@ -15,8 +15,8 @@ bcf(
   n_chains = 4,
   n_cores = n_chains,
   n_threads = max((RcppParallel::defaultNumThreads() - 2)/n_cores, 1),
-  nburn = 200,
-  nsim = 200,
+  nburn,
+  nsim,
   nthin = 1,
   update_interval = 100,
   ntree_control = 200,
@@ -27,7 +27,9 @@ bcf(
   sd_moderate = sd(y),
   base_moderate = 0.25,
   power_moderate = 3,
-  save_tree_directory = "..",
+  save_tree_directory = ".",
+  log_file = file.path(".", sprintf("bcf_log_\%s.txt", format(Sys.time(),
+    "\%Y\%m\%d_\%H\%M\%S"))),
   nu = 3,
   lambda = NULL,
   sigq = 0.9,
@@ -35,7 +37,7 @@ bcf(
   include_pi = "control",
   use_muscale = TRUE,
   use_tauscale = TRUE,
-  verbose = FALSE
+  verbose = TRUE
 )
 }
 \arguments{
@@ -43,7 +45,7 @@ bcf(
 
 \item{z}{Treatment variable}
 
-\item{x_control}{Design matrix for the "prognostic" function mu(x)}
+\item{x_control}{Design matrix for the prognostic function mu(x)}
 
 \item{x_moderate}{Design matrix for the covariate-dependent treatment effects tau(x)}
 
@@ -61,7 +63,7 @@ bcf(
 
 \item{nburn}{Number of burn-in MCMC iterations}
 
-\item{nsim}{Number of MCMC iterations to save after burn-in.}
+\item{nsim}{Number of MCMC iterations to save after burn-in. The chain will run for nsim*nthin iterations after burn-in}
 
 \item{nthin}{Save every nthin'th MCMC iterate. The total number of MCMC iterations will be nsim*nthin + nburn.}
 
@@ -83,7 +85,9 @@ bcf(
 
 \item{power_moderate}{Power for the tree prior on tau(x) trees (see details)}
 
-\item{save_tree_directory}{Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory.}
+\item{save_tree_directory}{Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory. Setting to NULL skips writing of trees.}
+
+\item{log_file}{file where BCF should save its logs when running multiple chains in parallel. This file is not written too when only running one chain.}
 
 \item{nu}{Degrees of freedom in the chisq prior on \eqn{sigma^2}}
 
@@ -101,12 +105,12 @@ or "both" are HIGHLY recommended with observational data.}
 
 \item{use_tauscale}{Use a half-Normal prior on the scale of tau.}
 
-\item{verbose}{logical, whether to print log of MCMC iterations, defaults to FALSE.}
+\item{verbose}{logical, whether to print log of MCMC iterations, defaults to TRUE.}
 }
 \value{
 A fitted bcf object that is a list with elements
-\item{tau}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
-\item{mu}{\code{nsim} by \code{n} matrix of posterior samples of individual treatment effects}
+\item{tau}{\code{nsim} by \code{n} matrix of posterior samples of individual-level treatment effect estimates}
+\item{mu}{\code{nsim} by \code{n} matrix of posterior samples of prognostic function E(Y|Z=0, x=x) estimates}
 \item{sigma}{Length \code{nsim} vector of posterior samples of sigma}
 }
 \description{
@@ -114,7 +118,8 @@ Fit Bayesian Causal Forests
 }
 \details{
 Fits the Bayesian Causal Forest model (Hahn et. al. 2018): For a response
-variable y, binary treatment z, and covariates x,
+variable y, binary treatment z, and covariates x, we return estimates of mu, tau, and sigma in
+the model
 \deqn{y_i = \mu(x_i, \pi_i) + \tau(x_i, \pi_i)z_i + \epsilon_i}
 where \eqn{\pi_i} is an (optional) estimate of the propensity score \eqn{\Pr(Z_i=1 | X_i=x_i)} and
 \eqn{\epsilon_i \sim N(0,\sigma^2)}
@@ -205,6 +210,8 @@ y = mu + sigma*rnorm(n)
 
 pihat = pnorm(q)
 
+# nburn and nsim should be much larger, at least a few thousand each
+# The low values below are for CRAN.
 bcf_fit = bcf(y, z, x, x, pihat, nburn=100, nsim=10)
 
 # Get posterior of treatment effects

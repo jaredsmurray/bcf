@@ -41,7 +41,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
                   double mod_alpha, double mod_beta,
                   CharacterVector treef_con_name_, CharacterVector treef_mod_name_,
                   int status_interval=100,
-                  bool RJ= false, bool use_mscale=true, bool use_bscale=true, bool b_half_normal=true, bool prior_sample=false,
+                  bool RJ= false, bool use_mscale=true, bool use_bscale=true, bool b_half_normal=true,
                   double trt_init = 1.0, bool verbose_sigma=false)
 {
 
@@ -51,13 +51,24 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   }
 
   if(randeff) Rcout << "Using random effects." << std::endl;
-
+  
+  std::ofstream treef_con;
+  std::ofstream treef_mod;
+  
   std::string treef_con_name = as<std::string>(treef_con_name_);
-  std::ofstream treef_con(treef_con_name.c_str());
-
   std::string treef_mod_name = as<std::string>(treef_mod_name_);
-  std::ofstream treef_mod(treef_mod_name.c_str());
+  
+  if(not treef_con_name.empty()){
+    Rcout << "Saving Trees to"  << std::endl;
+    Rcout << treef_con_name  << std::endl;
+    Rcout << treef_mod_name  << std::endl;
 
+    treef_con.open(treef_con_name.c_str());
+    treef_mod.open(treef_mod_name.c_str());
+  }else{
+    Rcout << "Not Saving Trees to file"  << std::endl;
+  }
+  
   RNGScope scope;
   RNG gen; //this one random number generator is used in all draws
 
@@ -299,15 +310,17 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   int save_tree_precision = 32; 
 
   //save stuff to tree file
-  treef_con << std::setprecision(save_tree_precision) << xi_con << endl; //cutpoints
-  treef_con << ntree_con << endl;  //number of trees
-  treef_con << di_con.p << endl;  //dimension of x's
-  treef_con << nd << endl;
-
-  treef_mod << std::setprecision(save_tree_precision) << xi_mod << endl; //cutpoints
-  treef_mod << ntree_mod << endl;  //number of trees
-  treef_mod << di_mod.p << endl;  //dimension of x's
-  treef_mod << nd << endl;
+  if(not treef_con_name.empty()){
+    treef_con << std::setprecision(save_tree_precision) << xi_con << endl; //cutpoints
+    treef_con << ntree_con << endl;  //number of trees
+    treef_con << di_con.p << endl;  //dimension of x's
+    treef_con << nd << endl;
+  
+    treef_mod << std::setprecision(save_tree_precision) << xi_mod << endl; //cutpoints
+    treef_mod << ntree_mod << endl;  //number of trees
+    treef_mod << di_mod.p << endl;  //dimension of x's
+    treef_mod << nd << endl;
+  }
 
   //*****************************************************************************
   /* MCMC
@@ -320,11 +333,6 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
 
   size_t save_ctr = 0;
   bool verbose_itr = false; 
-
-  if(prior_sample) {
-    for(int k=0; k<n; k++) y[k] = gen.normal(allfit[k], sigma);
-  }
-  // double* allfit_mod = new double[n]; //sum of fit of all trees
 
 
   double* weight      = new double[n];
@@ -698,10 +706,7 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
         allfit_mod[k] = allfit_mod[k]*bscale0/bscale0_old;
       }
 
-
-      // update delta_mod
-      if(b_half_normal) {
-        logger.log("Updating delta_mod because b_half_normal");
+      if(!b_half_normal) {
         double ssq = 0.0;
         tree::npv bnv;
         typedef tree::npv::size_type bvsz;
@@ -890,10 +895,11 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
     pi_mod.sigma = sigma; // Is this another copy paste Error?
 
     if( ((iIter>=burn) & (iIter % thin==0)) )  {
-
-      for(size_t j=0;j<ntree_con;j++) treef_con << std::setprecision(save_tree_precision) << t_con[j] << endl; // save trees
-      for(size_t j=0;j<ntree_mod;j++) treef_mod << std::setprecision(save_tree_precision) << t_mod[j] << endl; // save trees
-
+      if(not treef_con_name.empty()){
+        for(size_t j=0;j<ntree_con;j++) treef_con << std::setprecision(save_tree_precision) << t_con[j] << endl; // save trees
+        for(size_t j=0;j<ntree_mod;j++) treef_mod << std::setprecision(save_tree_precision) << t_mod[j] << endl; // save trees
+      }
+      
       msd_post(save_ctr) = mscale;
       bsd_post(save_ctr) = bscale1-bscale0;
       b0_post(save_ctr)  = bscale0;
@@ -949,10 +955,12 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   delete[] r_mod;
   delete[] r_con;
   delete[] ftemp;
-
-  treef_con.close();
-  treef_mod.close();
-
+  
+  if(not treef_con_name.empty()){
+    treef_con.close();
+    treef_mod.close();
+  }
+  
   return(List::create(_["yhat_post"] = yhat_post, _["m_post"] = m_post, _["b_post"] = b_post,
                       _["sigma"] = sigma_post, _["msd"] = msd_post, _["bsd"] = bsd_post, _["b0"] = b0_post, _["b1"] = b1_post, 
                       _["gamma"] = gamma_post, _["random_var_post"] = random_var_post
