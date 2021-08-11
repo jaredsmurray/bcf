@@ -1,3 +1,6 @@
+library(bcf) # for function "bcf"
+library(dbarts) # for function "bart"
+
 par(mfrow=c(2,3))
 
 # sample size
