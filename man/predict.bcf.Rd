@@ -11,6 +11,8 @@
   pi_pred,
   z_pred,
   save_tree_directory,
+  log_file = file.path(".", sprintf("bcf_log_\%s.txt", format(Sys.time(),
+    "\%Y\%m\%d_\%H\%M\%S"))),
   n_cores = 2,
   ...
 )
@@ -28,6 +30,8 @@
 
 \item{save_tree_directory}{directory where the trees have been saved}
 
+\item{log_file}{File to log progress}
+
 \item{n_cores}{An optional integer of the number of cores to run your MCMC chains on}
 
 \item{...}{additional arguments affecting the predictions produced.}
@@ -39,7 +43,7 @@ You can do so using the save_tree_directory argument in bcf(). Otherwise, they w
 The bcf() function automatically saves those in the same directory as the
 }
 \examples{
-\donttest{
+\dontrun{
 
 # data generating process
 p = 3 #two control variables and one moderator
@@ -69,6 +73,9 @@ y = mu + sigma*rnorm(n)
 # If you didn't know pi, you would estimate it here
 pihat = pnorm(q)
 
+n_burn = 5000
+n_sim = 5000
+
 bcf_fit = bcf(y               = y,
               z               = z,
               x_control       = x,
@@ -77,7 +84,7 @@ bcf_fit = bcf(y               = y,
               nburn           = n_burn,
               nsim            = n_sim,
               n_chains        = 2,
-              update_interval = 1,
+              update_interval = 100,
               save_tree_directory = './trees')
 
 # Predict using new data

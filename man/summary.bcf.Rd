@@ -32,7 +32,7 @@ We found the native coda effective size computation to be overly optimistic in s
 and are in discussions with the coda package authors to change it on CRAN.
 }
 \examples{
-\donttest{
+\dontrun{
 
 # data generating process
 p = 3 #two control variables and one moderator
