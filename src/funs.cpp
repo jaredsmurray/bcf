@@ -14,7 +14,7 @@ using namespace RcppParallel;
 double pn(double x, double m, double v)
 {
 	double dif = x-m;
-	return exp(-.5*dif*dif/v)/sqrt(2*PI*v);
+	return exp(-.5*dif*dif/v)/sqrt(2*M_PI*v);
 }
 //--------------------------------------------------
 // draw from discrete distribution given by p, return index
