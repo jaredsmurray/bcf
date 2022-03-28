@@ -37,7 +37,8 @@ Suggests:
     latex2exp,
     ggplot2,
     rpart,
-    rpart.plot
+    rpart.plot,
+    partykit
 SystemRequirements: GNU make
 Language: en-US
 VignetteBuilder: knitr
