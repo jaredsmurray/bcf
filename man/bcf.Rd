@@ -139,7 +139,7 @@ Some notes:
 }
 }
 \examples{
-\donttest{
+\dontrun{
 
 # data generating process
 p = 3 #two control variables and one moderator
@@ -179,7 +179,7 @@ tauhat = colMeans(tau_post)
 plot(tau, tauhat); abline(0,1)
 
 }
-\donttest{
+\dontrun{
 
 # data generating process
 p = 3 #two control variables and one moderator
