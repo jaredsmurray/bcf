@@ -136,7 +136,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' \item{mu}{\code{nsim} by \code{n} matrix of posterior samples of prognostic function E(Y|Z=0, x=x) estimates}
 #' \item{sigma}{Length \code{nsim} vector of posterior samples of sigma}
 #' @examples
-#'\donttest{
+#'\dontrun{
 #'
 #' # data generating process
 #' p = 3 #two control variables and one moderator
@@ -176,7 +176,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' plot(tau, tauhat); abline(0,1)
 #'
 #'}
-#'\donttest{
+#'\dontrun{
 #'
 #' # data generating process
 #' p = 3 #two control variables and one moderator
