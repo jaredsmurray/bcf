@@ -91,12 +91,14 @@ z_pred  <- rbinom(n_test,1, pi_pred)
 
 We now predict $y$ and estimate treatment effects $\tau$ for these new observations based on our fitted model.
 
+
 ```{r}
 pred_out = predict(object=bcf_out,
                    x_predict_control=x_test,
                    x_predict_moderate=x_test,
                    pi_pred=pi_pred,
                    z_pred=z_pred,
+                   n_cores = 1,
                    save_tree_directory = '..')
 ```
 
@@ -122,3 +124,4 @@ ggplot(tau_ests_preds, aes(x, Mean, color = group)) +
 ```
 
 Note that the credible intervals get wider as the $x_3$ values get closer to the end of the range, as we would hope. 
+
