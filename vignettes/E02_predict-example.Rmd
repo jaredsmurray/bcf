@@ -99,7 +99,7 @@ pred_out = predict(object=bcf_out,
                    pi_pred=pi_pred,
                    z_pred=z_pred,
                    n_cores = 1,
-                   save_tree_directory = '..')
+                   save_tree_directory = '.')
 ```
 
 ## Comparison
