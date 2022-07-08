@@ -7,12 +7,17 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  fig.cap = "", 
+  collapse = TRUE,
+  comment = "#>"
+)
+```
 
 In this vignette, we show how to use the `bcf` package to fit a model and use the fitted object to predict estimates for new data.
 
-
-```r
+```{r setup, warning=FALSE, message = FALSE}
 library(bcf)
 library(latex2exp)
 library(ggplot2)
@@ -20,8 +25,7 @@ library(ggplot2)
 
 We use the same data generating process as in the "Simple Example" vignette:
 
-
-```r
+```{r data, results='hide', warning=FALSE, message=FALSE}
 set.seed(1)
 
 ## Training data
@@ -73,8 +77,7 @@ bcf_out <- bcf(y               = y,
 
 We make predictions at 10 new observations, including some extreme values:
 
-
-```r
+```{r new_observations}
 set.seed(1)
 n_test = 10
 x_test <- matrix(rnorm(n_test*(p-1), 0, 2), nrow=n_test) # sd of 2 makes x_test more dispersed than x
@@ -87,8 +90,7 @@ z_pred  <- rbinom(n_test,1, pi_pred)
 We now predict $y$ and estimate treatment effects $\tau$ for these new observations based on our fitted model.
 
 
-
-```r
+```{r predict}
 pred_out = predict(object=bcf_out,
                    x_predict_control=x_test,
                    x_predict_moderate=x_test,
@@ -96,38 +98,13 @@ pred_out = predict(object=bcf_out,
                    z_pred=z_pred,
                    n_cores = 1,
                    save_tree_directory = '.')
-#> Initializing BCF Prediction
-#> Starting Prediction 
-#> Starting to Predict Chain  1 
-#> Loading...
-#> ntrees 50
-#> p 3
-#> ndraws 1500
-#> done
-#> Loading...
-#> ntrees 200
-#> p 4
-#> ndraws 1500
-#> done
-#> Starting to Predict Chain  2 
-#> Loading...
-#> ntrees 50
-#> p 3
-#> ndraws 1500
-#> done
-#> Loading...
-#> ntrees 200
-#> p 4
-#> ndraws 1500
-#> done
 ```
 
 ## Comparison
 
 Let's compare the results for our training and testing data. We will show the estimated treatment effects for training and test observations as a function of $x_3$, which is an effect modifier.
 
-
-```r
+```{r comparison, warning=FALSE, message=FALSE}
 tau_ests_preds <- data.frame(x     = c(x[,3], x_test[,3]),
                              Mean  = c(colMeans(bcf_out$tau), 
                                        colMeans(pred_out$tau)),
@@ -142,8 +119,6 @@ ggplot(tau_ests_preds, aes(x, Mean, color = group)) +
   xlab(TeX("$x_3$")) +
   ylab(TeX("$\\hat{\\tau}$")) 
 ```
-
-![](figure/comparison-1.png)
 
 Note that the credible intervals get wider as the $x_3$ values get closer to the end of the range, as we would hope. 
 

@@ -9,11 +9,16 @@ vignette: >
 
 In this vignette, we show how to use BCF to estimate treatment effects of a simulated intervention.
 
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  fig.cap = "", 
+  collapse = TRUE,
+  comment = "#>"
+)
+```
 
 
-
-
-```r
+```{r setup, warning = FALSE, message = FALSE}
 library(bcf)
 library(ggplot2)
 library(latex2exp)
@@ -31,8 +36,7 @@ We draw three random $x$s for each unit and generate each unit's expected outcom
 
 Then we generate the true treatment effect for each unit, $\tau$. As noted above, $\tau$ is a function of $x_3$. The observed outcome, $y$, is a function of $\mu$, $\tau$, a random error term with variance $\sigma^{2}$, and weights $w$ if applicable.
 
-
-```r
+```{r data creation}
 set.seed(1)
 
 p <- 3 # two control variables and one effect moderator
@@ -74,8 +78,7 @@ With BCF, we can distinguish between control variables -- which affect the outco
 Note that we are using the `n_chains` argument to `bcf()`, which allows us to run several MCMC chains in parallel and assess whether they have converged to the posterior distribution.
 
 After fitting the BCF model, we can compare the $\hat{\tau}$ estimates from BCF to the true $\tau$ from the data-generating process. 
-
-```r
+```{r model, results='hide', warning=FALSE, message=FALSE}
 bcf_out <- bcf(y                = y,
                z                = z,
                x_control        = x,
@@ -94,56 +97,8 @@ bcf_out <- bcf(y                = y,
 
 We use the `summary.bcf` function to obtain posterior summary statistics and MCMC diagnostics. We use those diagnostics to assess convergence of our run.
 
-
-```r
+```{r diagnostics}
 summary(bcf_out)
-#> Summary statistics for each Markov Chain Monte Carlo run
-#> 
-#> Iterations = 1:1000
-#> Thinning interval = 1 
-#> Number of chains = 4 
-#> Sample size per chain = 1000 
-#> 
-#> 1. Empirical mean and standard deviation for each variable,
-#>    plus standard error of the mean:
-#> 
-#>              Mean       SD  Naive SE Time-series SE
-#> sigma     0.37556 0.008577 0.0001356      0.0001689
-#> tau_bar   0.49308 0.040953 0.0006475      0.0012522
-#> mu_bar   -0.08981 0.023568 0.0003726      0.0005772
-#> yhat_bar  0.19119 0.012922 0.0002043      0.0002069
-#> 
-#> 2. Quantiles for each variable:
-#> 
-#>             2.5%     25%      50%      75%    97.5%
-#> sigma     0.3592  0.3698  0.37533  0.38120  0.39302
-#> tau_bar   0.4131  0.4656  0.49293  0.52112  0.57317
-#> mu_bar   -0.1362 -0.1058 -0.08954 -0.07331 -0.04391
-#> yhat_bar  0.1657  0.1825  0.19128  0.20000  0.21660
-#> 
-#> 
-#> ----
-#> Effective sample size for summary parameters
-#> Reverting to coda's default ESS calculation. See ?summary.bcf for details.
-#> 
-#>    sigma  tau_bar   mu_bar yhat_bar 
-#> 2676.224 1077.885 1696.041 3911.178 
-#> 
-#> ----
-#> Gelman and Rubin's convergence diagnostic for summary parameters
-#> Potential scale reduction factors:
-#> 
-#>          Point est. Upper C.I.
-#> sigma             1       1.00
-#> tau_bar           1       1.01
-#> mu_bar            1       1.01
-#> yhat_bar          1       1.00
-#> 
-#> Multivariate psrf
-#> 
-#> 1
-#> 
-#> ----
 ```
 
 Since our "$\hat{R}s$" (Gelman and Rubin's convergence factor or Potential Scale Reduction Factor) are between 0.9 and 1.1, we don't see any obvious mixing issues. Note that mixing on other parameters (like subgroup average treatment effects defined below, or evaluations of $\tau(x)$ or $\mu(x)$ at particular values of $x$) might be worse than these aggregate summaries. But in our experience good mixing on $\sigma$ tends to indicate good mixing on other quantities of interest. 
@@ -156,8 +111,7 @@ Now that we've successfully fit our model, let's explore the output. First, sinc
 
 We plot the true and estimated $\tau$ versus $x_3$, since $x_3$ is one of our primary effect moderators (see the data creation step above).
 
-
-```r
+```{r estimated_vs_true}
 tau_ests <- data.frame(Mean  = colMeans(bcf_out$tau),
                        Low95 = apply(bcf_out$tau, 2, function(x) quantile(x, 0.025)),
                        Up95  = apply(bcf_out$tau, 2, function(x) quantile(x, 0.975)))
@@ -172,17 +126,11 @@ ggplot(NULL, aes(x = x[,3])) +
   geom_text(aes(x = 4.5, y = 0.2, label = "Truth"), color = "black") +
   geom_segment(aes(x = 3, xend = 4, y = 0.1, yend = 0.1), color = "forestgreen", alpha = 0.7) +
   geom_text(aes(x = 5.2, y = 0.1, label = "Estimate (95% CI)"), color = "black")
-#> `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
-#> Warning: Removed 6 rows containing non-finite values (stat_smooth).
-#> Warning: Removed 6 rows containing missing values (geom_pointrange).
 ```
-
-![](figure/estimated_vs_true-1.png)
 
 BCF recovers the true unit-specific treatment effects with a high degree of accuracy in this simple example, with conservative estimates at extreme values of the covariate. We can also examine coverage of 95% credible intervals:
 
-
-```r
+```{r coverage}
 isCovered <- function(i){
   ifelse(tau_ests$Low95[i] <= tau[i] & tau[i] <= tau_ests$Up95[i], 1, 0)
 }
@@ -190,82 +138,47 @@ isCovered <- function(i){
 coverage <- lapply(1:length(tau), isCovered)
 perCoverage <- sum(unlist(coverage))/length(tau)
 perCoverage
-#> [1] 1
 ```
 
-We find that our estimates have 100 percent coverage of 95 percent credible intervals, suggesting that our uncertainty estimates are slightly conservative in this example.
+We find that our estimates have `r perCoverage*100` percent coverage of 95 percent credible intervals, suggesting that our uncertainty estimates are slightly conservative in this example.
 
 In this example we see variation in the point estimates across units, although most uncertainty intervals overlap (except for points at the extremes). This is typical and shouldn't be taken as a sign that there is no meaningful treatment effect variation overall, or that treatment effect variation isn't correlated with $x_3$. 
 
 First, note that these are pointwise or marginal intervals computed at each observed covariate value. However, there is significant posterior correlation between $\tau(x)$ and $\tau(x')$ when $x$ and $x'$ are close so comparing these marginals can be misleading. For example, let's compare CATEs for two observations that are similar on $x_1$ and $x_2$ but vary by about 1.5 units on $x_3$:
 
-
-```r
+```{r cate_comparison}
 ix = c(635, 614)
 print(x[ix,])
-#>           [,1]      [,2]       [,3]
-#> [1,] -1.572864 -1.353550 -2.1335820
-#> [2,] -1.398754 -1.347236 -0.6600108
 plot(bcf_out$tau[,ix], xlab = paste0("CATE for observation ", ix[1]), 
      ylab = paste0("CATE for observation ", ix[2]))
-```
-
-![](figure/cate_comparison-1.png)
-
-```r
 
 par(mfrow=c(1,2))
 plot(density(bcf_out$tau[,ix[1]]), main="Marginal posterior CATEs")
 lines(density(bcf_out$tau[,ix[2]]), col='blue')
 plot(density(bcf_out$tau[,ix[1]] - bcf_out$tau[,ix[2]]), main="Posterior for \ndifference in CATEs")
 abline(v=tau[ix[1]] - tau[ix[2]], lty=2)
-```
-
-![](figure/cate_comparison-2.png)
-
-```r
 par(mfrow=c(1,1))
 
 library(coda)
 
 # These intervals are a little misleading with the bimodal posterior, but still informative
 HPDinterval(mcmc(bcf_out$tau[,ix[1]] - bcf_out$tau[,ix[2]]), prob=0.5)
-#>           lower        upper
-#> var1 -0.1842529 2.614575e-14
-#> attr(,"Probability")
-#> [1] 0.5
 HPDinterval(mcmc(bcf_out$tau[,ix[1]] - bcf_out$tau[,ix[2]]), prob=0.75)
-#>           lower        upper
-#> var1 -0.2917351 2.614575e-14
-#> attr(,"Probability")
-#> [1] 0.75
 HPDinterval(mcmc(bcf_out$tau[,ix[1]] - bcf_out$tau[,ix[2]]), prob=0.9)
-#>           lower       upper
-#> var1 -0.4149043 0.001022315
-#> attr(,"Probability")
-#> [1] 0.9
 HPDinterval(mcmc(bcf_out$tau[,ix[1]] - bcf_out$tau[,ix[2]]), prob=0.95)
-#>           lower      upper
-#> var1 -0.4709973 0.04536157
-#> attr(,"Probability")
-#> [1] 0.95
 
 # Approx posterior probability that the difference is leq 0:
 mean(bcf_out$tau[,ix[1]] < bcf_out$tau[,ix[2]] + 1e-6)
-#> [1] 0.956
 ```
 
 Examining the posterior distribution over the difference tells a different story than just looking at the marginal posteriors as in the plot above, suggesting stronger evidence for treatment effect variation between these two observations. 
 
 The spike at zero is from posterior draws where these two observations end up in the same leaf nodes for each tree comprising $\tau$ and therefore have equal treatment effects under the model. This shows up even more clearly in a scatterplot of posterior draws:
 
-
-```r
+```{r posterior_difference}
 plot(bcf_out$tau[,ix[1]],bcf_out$tau[,ix[2]], main="Posterior for difference in CATEs", 
      xlab = paste0("CATE for observation ", ix[1]), ylab = paste0("CATE for observation ", ix[2]))
 ```
-
-![](figure/posterior_difference-1.png)
 
 BCF was specifically designed to impose this kind of shrinkage by preferring fewer shallow $\tau$ trees that BART defaults. 
 
@@ -274,8 +187,7 @@ The larger, more fundamental issue is that it's more difficult to estimate condi
 One obvious thing to do in this example is to compare the posterior distributions for observations with $x_3>0$ to those with $x_3\leq 0$ (above/below the population median, according to this data generating process):
 
 
-
-```r
+```{r x3_split}
 lo <- x[,3] <= 0
 hi <- x[,3] > 0
 
@@ -292,16 +204,9 @@ ggplot(groupTaus, aes(taus, fill = subgroup, color = subgroup)) +
   geom_density(alpha = 0.5) +
   ylab("posterior density") +
   xlab("average subgroup treatment effect")
-```
-
-![](figure/x3_split-1.png)
-
-```r
 qplot(whiTaus - wloTaus, geom="density", main="Posterior distribution of difference\n between subgroup ATEs", 
       xlim=c(0, .9), xlab="Difference")+geom_vline(xintercept=0, linetype=2)
 ```
-
-![](figure/x3_split-2.png)
 
 Providing additional strong evidence that treatment effect variation is correlated with $x_3$. Of course, $0$ was an arbitrary cutoff, and we picked $x_3$ because we knew it was important.  [Hahn, Murray, and Carvalho](https://arxiv.org/pdf/1706.09523.pdf)  propose an alternative decision-theoretic approach to discovering cutpoints to define subgroups using CART.
 
@@ -312,54 +217,26 @@ and the predictor variables are the effect modifiers used to fit the BCF model. 
 
 The complexity constraints or penalties on the tree are up to the user, but there is no particular reason to adopt rpart's default complexity penalty.  If the goal is subgroup identification a reasonable way to proceed is to grow the trees up to some depth that gives credible (i.e. relatively simple) definitions of subgroups and prune back based on the size of the difference in estimated subgroup effects across end nodes, or posterior probabilities of a meaningful difference, or other application-specific criteria.
 
-
-```r
+```{r tree_plot}
 xdf = data.frame(x);  colnames(xdf) = c(paste0("x", 1:ncol(x)))
 tree <- rpart(colMeans(bcf_out$tau) ~ ., data=xdf, weights = weights,
               control=rpart.control(maxdepth=3, cp=-1))
 rpart.plot(tree)
 ```
 
-![](figure/tree_plot-1.png)
-
 We seem to capture the most treatment effect variability with the $x_3$ splits, although $x_2$ makes an appearance as well with patterns that line up with our data generating process.
 
 We forced the tree above to be the maximal depth 3 tree by specifying `cp=-1`. Now we consider pruning the tree, which is easiest using the partykit package:
 
-
-```r
+```{r party}
 # party trees are a little easier to prune
 ptree = as.party(tree)
 print(ptree)
-#> 
-#> Model formula:
-#> colMeans(bcf_out$tau) ~ x1 + x2 + x3
-#> 
-#> Fitted party:
-#> [1] root
-#> |   [2] x3 < -0.34703
-#> |   |   [3] x3 < -1.48554
-#> |   |   |   [4] x3 < -2.26608: 0.000 (w = 57.8, err = 0.1)
-#> |   |   |   [5] x3 >= -2.26608: 0.091 (w = 74.2, err = 0.1)
-#> |   |   [6] x3 >= -1.48554
-#> |   |   |   [7] x2 < -0.03596: 0.202 (w = 150.1, err = 0.9)
-#> |   |   |   [8] x2 >= -0.03596: 0.366 (w = 53.8, err = 0.4)
-#> |   [9] x3 >= -0.34703
-#> |   |   [10] x3 < 0.72231
-#> |   |   |   [11] x2 < 0.05547: 0.451 (w = 98.8, err = 0.2)
-#> |   |   |   [12] x2 >= 0.05547: 0.616 (w = 123.3, err = 0.4)
-#> |   |   [13] x3 >= 0.72231
-#> |   |   |   [14] x2 < 0.77641: 0.781 (w = 134.9, err = 0.6)
-#> |   |   |   [15] x2 >= 0.77641: 0.932 (w = 134.8, err = 0.3)
-#> 
-#> Number of inner nodes:    7
-#> Number of terminal nodes: 8
 ```
 
 We can start by getting the posterior distributions for the subgroup ATEs defined by the terminal nodes of the tree, and then looking at the differences between subgroups defined by the last splits of the tree:
 
-
-```r
+```{r subgroup_posterior}
 # Get terminal node for each observation
 subgp = predict(ptree, type='node')
 
@@ -377,35 +254,17 @@ names(subgp_post) = subgp_id
 
 plot(density(subgp_post[['4']] - subgp_post[['5']]), main="4 vs 5") 
 abline(v=0, lty=2)
-```
-
-![](figure/subgroup_posterior-1.png)
-
-```r
 plot(density(subgp_post[['7']] - subgp_post[['8']]), main="8 vs 7") 
 abline(v=0, lty=2)
-```
-
-![](figure/subgroup_posterior-2.png)
-
-```r
 plot(density(subgp_post[['11']] - subgp_post[['12']]), main="11 vs 12") 
 abline(v=0, lty=2)
-```
-
-![](figure/subgroup_posterior-3.png)
-
-```r
 plot(density(subgp_post[['14']] - subgp_post[['15']]), main="14 vs 15") 
 abline(v=0, lty=2)
 ```
 
-![](figure/subgroup_posterior-4.png)
-
 Splits 10 and 13 pretty clearly identify subgroups with different ATEs, but there is more uncertainty considering splits 3 and 6. If we wanted a simpler summary with coarser subgroups we could prune those splits away and re-examine:
 
-
-```r
+```{r prune_subgroups}
 pruned_ptree = nodeprune(ptree, c(3,6))
 subgp = predict(pruned_ptree, type='node')
 subgp_id = sort(unique(subgp))
@@ -419,43 +278,20 @@ names(subgp_post) = subgp_id
 # Note that the node indices here are different than in the code block above
 plot(density(subgp_post[['3']] - subgp_post[['4']]), main="3 vs 4") 
 abline(v=0, lty=2)
-```
-
-![](figure/prune_subgroups-1.png)
-
-```r
 plot(density(subgp_post[['7']] - subgp_post[['8']]), main="7 vs 8") 
 abline(v=0, lty=2)
-```
-
-![](figure/prune_subgroups-2.png)
-
-```r
 plot(density(subgp_post[['10']] - subgp_post[['11']]), main="10 vs 11") 
 abline(v=0, lty=2)
 ```
 
-![](figure/prune_subgroups-3.png)
-
 We can make other comparisons too, like contrasting the subgroup with the largest CATE with its complement:
-
-```r
+```{r largest_vs_smallest}
 largest = subgp==11
 post_largest = get_sub_post(largest, bcf_out, weights)
 post_others  = get_sub_post(!largest, bcf_out, weights)
 plot(density(post_largest), xlim=c(0,1.2), ylim=c(0,9), main = "Largest CATE subgroup \n vs others")
 lines(density(post_others), lty=2)
-```
-
-![](figure/largest_vs_smallest-1.png)
-
-```r
 plot(density(post_largest - post_others), main = "Difference between largest\n CATE subgroup & others")
-```
-
-![](figure/largest_vs_smallest-2.png)
-
-```r
 par(mfrow=c(1,1))
 ```
 

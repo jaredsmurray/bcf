@@ -2,8 +2,8 @@ Package: bcf
 Type: Package
 Title: Causal Inference for a Binary Treatment and Continuous Outcome
         using Bayesian Causal Forests
-Version: 2.0.0
-Date: 2020-07-08
+Version: 2.0.1
+Date: 2022-06-23
 Authors@R: c(
     person("Jared S.", "Murray", , "jared.murray@mccombs.utexas.edu", c("aut", "cre")),
     person("P. Richard", "Hahn", role = "aut"),
@@ -11,7 +11,8 @@ Authors@R: c(
     person("Peter", "Mariani", role = "ctb"),
     person("Constance", "Delannoy", role = "ctb"),
     person("Mariel", "Finucane", role = "ctb"),
-    person("Lauren V.", "Forrow", role = "ctb"))
+    person("Lauren V.", "Forrow", role = "ctb"),
+    person("Andrew", "Herren", role = "ctb"))
 Description: Causal inference for a binary treatment and continuous outcome using Bayesian Causal Forests. See Hahn, Murray and Carvalho (2017) <arXiv:1706.09523> for additional information. This implementation relies on code originally accompanying Pratola et. al. (2013) <arXiv:1309.1906>.
 License: GPL-3
 LinkingTo: Rcpp, RcppArmadillo, RcppParallel

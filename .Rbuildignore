@@ -7,3 +7,6 @@
 ^tmp$
 ^.*\.txt
 cran-comments.md
+^doc$
+^Meta$
+^\.github$
