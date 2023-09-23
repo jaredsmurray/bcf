@@ -19,15 +19,15 @@ void Logger::stopContext(){
 }
 
 void Logger::getVectorHead(Rcpp::NumericVector x, char s[100]){
-    std::sprintf(s,"%f, %f, %f, %f, %f, %f, %f, %f, %f, %f ... ", x[0],x[1],x[2],x[3],x[4],x[5],x[6],x[7],x[8],x[9]);
+    Rprintf(s,"%f, %f, %f, %f, %f, %f, %f, %f, %f, %f ... ", x[0],x[1],x[2],x[3],x[4],x[5],x[6],x[7],x[8],x[9]);
 }
 
 void Logger::getVectorHead(std::vector<double> x, char s[100]){
-    std::sprintf(s,"%f, %f, %f, %f, %f, %f, %f, %f, %f, %f... ", x[0],x[1],x[2],x[3],x[4],x[5],x[6],x[7],x[8],x[9]);
+    Rprintf(s,"%f, %f, %f, %f, %f, %f, %f, %f, %f, %f... ", x[0],x[1],x[2],x[3],x[4],x[5],x[6],x[7],x[8],x[9]);
 }
 
 void Logger::getVectorHead(double* x, char s[100]){
-    std::sprintf(s,"%f, %f, %f, %f, %f, %f, %f, %f, %f, %f... ", x[0],x[1],x[2],x[3],x[4],x[5],x[6],x[7],x[8],x[9]);
+    Rprintf(s,"%f, %f, %f, %f, %f, %f, %f, %f, %f, %f... ", x[0],x[1],x[2],x[3],x[4],x[5],x[6],x[7],x[8],x[9]);
 }
 
 
