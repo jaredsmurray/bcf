@@ -1,8 +1,4 @@
-# bcf development notes
-
-This page provides more details on the latest updates to `bcf`.
-
-## bcf 2.0.1.9000
+# bcf 2.0.2
 
 ### CRAN fixes
 
