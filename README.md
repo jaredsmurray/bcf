@@ -10,11 +10,11 @@ BCF performs remarkably well in simulation and has led the pack at recent rigoro
 
 ## Getting Started
 
-If you are just getting started with `bcf`, we recommend beginning with the tutorial vignettes on the "Articles" page of this website.
+If you are just getting started with `bcf`, we recommend beginning with the tutorial vignettes.
 
 ## Installation
 
-This package requires compilation, so make sure you have Rtools properly installed -- see [this site](https://cran.r-project.org/bin/windows/Rtools/) for details.
+This package requires compilation, so make sure you have Rtools properly installed if you are on Windows -- see [this site](https://cran.r-project.org/bin/windows/Rtools/) for details.
 
 Install the latest release from CRAN:
 
