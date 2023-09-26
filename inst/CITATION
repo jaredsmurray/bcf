@@ -1,16 +1,22 @@
 citHeader("To cite bcf in publications use:")
 
-citEntry(entry = "misc",
-  title        = "Bayesian regression tree models for causal inference: regularization, confounding, and heterogeneous effects",
-  author       = personList(as.person("P. Richard Hahn"),
-                   as.person("Jared S. Murray"),
-                   as.person("Carlos M. Carvalho")),
-  year         = "2017",
-  eprint       = "arXiv:1706.09523",
-  url          = "https://arxiv.org/abs/1706.09523",
-
+citEntry(entry = "article",
+  key          = "hahn2020bayesian", 
+  title        = "Bayesian Regression Tree Models for Causal Inference: Regularization, Confounding, and Heterogeneous Effects",
+  author       = personList(person("P. Richard", "Hahn"),
+                            person("Jared S.", "Murray"),
+                            person("Carlos M.", "Carvalho")),
+  year         = "2020",
+  journal      = "Bayesian Analysis", 
+  volume       = "15",
+  number       = "3",
+  pages        = "965--1056",
+  doi          = "10.1214/19-BA1195", 
+  publisher    = "International Society for Bayesian Analysis", 
+  url          = "https://projecteuclid.org/journals/bayesian-analysis/volume-15/issue-3/Bayesian-Regression-Tree-Models-for-Causal-Inference--Regularization-Confounding/10.1214/19-BA1195.full",
+  
   textVersion  =
-  paste("Hahn, P. Richard, Jared S. Murray, and Carlos M. Carvalho (2017).",
-        "Bayesian regression tree models for causal inference: regularization, confounding, and heterogeneous effects.",
-        "URL https://arxiv.org/abs/1706.09523.")
+  paste("Hahn, P. Richard, Jared S. Murray, and Carlos M. Carvalho (2020).",
+        "Bayesian Regression Tree Models for Causal Inference: Regularization, Confounding, and Heterogeneous Effects.",
+        "URL https://projecteuclid.org/journals/bayesian-analysis/volume-15/issue-3/Bayesian-Regression-Tree-Models-for-Causal-Inference--Regularization-Confounding/10.1214/19-BA1195.full")
 )

@@ -117,7 +117,7 @@ A fitted bcf object that is a list with elements
 Fit Bayesian Causal Forests
 }
 \details{
-Fits the Bayesian Causal Forest model (Hahn et. al. 2018): For a response
+Fits the Bayesian Causal Forest model (Hahn et. al. 2020): For a response
 variable y, binary treatment z, and covariates x, we return estimates of mu, tau, and sigma in
 the model
 \deqn{y_i = \mu(x_i, \pi_i) + \tau(x_i, \pi_i)z_i + \epsilon_i}
@@ -126,6 +126,10 @@ where \eqn{\pi_i} is an (optional) estimate of the propensity score \eqn{\Pr(Z_i
 
 Some notes:
 \itemize{
+   \item By default, bcf writes each sample (including the trees in the ensemble) for each chain to a text file, 
+   which is used for prediction by the predict.bcf function. These text files may be large if bcf is run for many samples, 
+   so we also provide an option to suppress this output by setting no_output = TRUE. If bcf is run with no_output = TRUE, 
+   it will not be possible to predict from the model after the fact.
    \item x_control and x_moderate must be numeric matrices. See e.g. the makeModelMatrix function in the
    dbarts package for appropriately constructing a design matrix from a data.frame
    \item sd_control and sd_moderate are the prior SD(mu(x)) and SD(tau(x)) at a given value of x (respectively). If
@@ -133,7 +137,7 @@ Some notes:
    have prior distribution \eqn{N(0, \sigma_\mu/m)}, where m is the number of trees.
    If use_muscale=TRUE then sd_control is the prior median of a half Cauchy prior for SD(mu(x)). If use_tauscale = TRUE,
    then sd_moderate is the prior median of a half Normal prior for SD(tau(x)).
-   \item By default the prior on \eqn{\sigma^2} is calibrated as in Chipman, George and McCulloch (2008).
+   \item By default the prior on \eqn{\sigma^2} is calibrated as in Chipman, George and McCulloch (2010).
 }
 }
 \examples{
@@ -220,7 +224,7 @@ plot(tau, tauhat); abline(0,1)
 
 }
 \references{
-Hahn, Murray, and Carvalho(2017). Bayesian regression tree models for causal inference: regularization, confounding, and heterogeneous effects.
- https://arxiv.org/abs/1706.09523. (Call citation("bcf") from the
-command line for citation information in Bibtex format.)
+Hahn, Murray, and Carvalho (2020). Bayesian regression tree models for causal inference: regularization, confounding, and heterogeneous effects.
+ https://projecteuclid.org/journals/bayesian-analysis/volume-15/issue-3/Bayesian-Regression-Tree-Models-for-Causal-Inference--Regularization-Confounding/10.1214/19-BA1195.full. 
+ (Call citation("bcf") from the command line for citation information in Bibtex format.)
 }
