@@ -172,7 +172,7 @@ ggplot(NULL, aes(x = x[,3])) +
 #> Warning: Removed 6 rows containing missing values (`geom_pointrange()`).
 ```
 
-![](figure/estimated_vs_true-1.png)
+![](vignette_files/estimated_vs_true-1.png)
 
 BCF recovers the true unit-specific treatment effects with a high degree of accuracy in this simple example, with conservative estimates at extreme values of the covariate. We can also examine coverage of 95% credible intervals:
 
@@ -205,7 +205,7 @@ plot(bcf_out$tau[,ix], xlab = paste0("CATE for observation ", ix[1]),
      ylab = paste0("CATE for observation ", ix[2]))
 ```
 
-![](figure/cate_comparison-1.png)
+![](vignette_files/cate_comparison-1.png)
 
 ```r
 
@@ -216,7 +216,7 @@ plot(density(bcf_out$tau[,ix[1]] - bcf_out$tau[,ix[2]]), main="Posterior for \nd
 abline(v=tau[ix[1]] - tau[ix[2]], lty=2)
 ```
 
-![](figure/cate_comparison-2.png)
+![](vignette_files/cate_comparison-2.png)
 
 ```r
 par(mfrow=c(1,1))
@@ -260,7 +260,7 @@ plot(bcf_out$tau[,ix[1]],bcf_out$tau[,ix[2]], main="Posterior for difference in 
      xlab = paste0("CATE for observation ", ix[1]), ylab = paste0("CATE for observation ", ix[2]))
 ```
 
-![](figure/posterior_difference-1.png)
+![](vignette_files/posterior_difference-1.png)
 
 BCF was specifically designed to impose this kind of shrinkage by preferring fewer shallow $\tau$ trees that BART defaults. 
 
@@ -289,7 +289,7 @@ ggplot(groupTaus, aes(taus, fill = subgroup, color = subgroup)) +
   xlab("average subgroup treatment effect")
 ```
 
-![](figure/x3_split-1.png)
+![](vignette_files/x3_split-1.png)
 
 ```r
 qplot(whiTaus - wloTaus, geom="density", main="Posterior distribution of difference\n between subgroup ATEs", 
@@ -299,7 +299,7 @@ qplot(whiTaus - wloTaus, geom="density", main="Posterior distribution of differe
 #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.
 ```
 
-![](figure/x3_split-2.png)
+![](vignette_files/x3_split-2.png)
 
 Providing additional strong evidence that treatment effect variation is correlated with $x_3$. Of course, $0$ was an arbitrary cutoff, and we picked $x_3$ because we knew it was important. [Hahn, Murray, and Carvalho (2020)](https://projecteuclid.org/journals/bayesian-analysis/volume-15/issue-3/Bayesian-Regression-Tree-Models-for-Causal-Inference--Regularization-Confounding/10.1214/19-BA1195.full)  propose an alternative decision-theoretic approach to discovering cutpoints to define subgroups using CART.
 
@@ -318,7 +318,7 @@ tree <- rpart(colMeans(bcf_out$tau) ~ ., data=xdf, weights = weights,
 rpart.plot(tree)
 ```
 
-![](figure/tree_plot-1.png)
+![](vignette_files/tree_plot-1.png)
 
 We seem to capture the most treatment effect variability with the $x_3$ splits, although $x_2$ makes an appearance as well with patterns that line up with our data generating process.
 
@@ -375,28 +375,28 @@ plot(density(subgp_post[['4']] - subgp_post[['5']]), main="4 vs 5")
 abline(v=0, lty=2)
 ```
 
-![](figure/subgroup_posterior-1.png)
+![](vignette_files/subgroup_posterior-1.png)
 
 ```r
 plot(density(subgp_post[['7']] - subgp_post[['8']]), main="8 vs 7") 
 abline(v=0, lty=2)
 ```
 
-![](figure/subgroup_posterior-2.png)
+![](vignette_files/subgroup_posterior-2.png)
 
 ```r
 plot(density(subgp_post[['11']] - subgp_post[['12']]), main="11 vs 12") 
 abline(v=0, lty=2)
 ```
 
-![](figure/subgroup_posterior-3.png)
+![](vignette_files/subgroup_posterior-3.png)
 
 ```r
 plot(density(subgp_post[['14']] - subgp_post[['15']]), main="14 vs 15") 
 abline(v=0, lty=2)
 ```
 
-![](figure/subgroup_posterior-4.png)
+![](vignette_files/subgroup_posterior-4.png)
 
 Splits 10 and 13 pretty clearly identify subgroups with different ATEs, but there is more uncertainty considering splits 3 and 6. If we wanted a simpler summary with coarser subgroups we could prune those splits away and re-examine:
 
@@ -417,21 +417,21 @@ plot(density(subgp_post[['3']] - subgp_post[['4']]), main="3 vs 4")
 abline(v=0, lty=2)
 ```
 
-![](figure/prune_subgroups-1.png)
+![](vignette_files/prune_subgroups-1.png)
 
 ```r
 plot(density(subgp_post[['7']] - subgp_post[['8']]), main="7 vs 8") 
 abline(v=0, lty=2)
 ```
 
-![](figure/prune_subgroups-2.png)
+![](vignette_files/prune_subgroups-2.png)
 
 ```r
 plot(density(subgp_post[['10']] - subgp_post[['11']]), main="10 vs 11") 
 abline(v=0, lty=2)
 ```
 
-![](figure/prune_subgroups-3.png)
+![](vignette_files/prune_subgroups-3.png)
 
 We can make other comparisons too, like contrasting the subgroup with the largest CATE with its complement:
 
@@ -443,13 +443,13 @@ plot(density(post_largest), xlim=c(0,1.2), ylim=c(0,9), main = "Largest CATE sub
 lines(density(post_others), lty=2)
 ```
 
-![](figure/largest_vs_smallest-1.png)
+![](vignette_files/largest_vs_smallest-1.png)
 
 ```r
 plot(density(post_largest - post_others), main = "Difference between largest\n CATE subgroup & others")
 ```
 
-![](figure/largest_vs_smallest-2.png)
+![](vignette_files/largest_vs_smallest-2.png)
 
 ```r
 par(mfrow=c(1,1))

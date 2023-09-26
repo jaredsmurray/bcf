@@ -143,7 +143,7 @@ ggplot(tau_ests_preds, aes(x, Mean, color = group)) +
   ylab(TeX("$\\hat{\\tau}$")) 
 ```
 
-![](figure/comparison-1.png)
+![](vignette_files/comparison-1.png)
 
 Note that the credible intervals get wider as the $x_3$ values get closer to the end of the range, as we would hope. 
 

@@ -3,7 +3,7 @@ Type: Package
 Title: Causal Inference for a Binary Treatment and Continuous Outcome
         using Bayesian Causal Forests
 Version: 2.0.2
-Date: 2022-06-23
+Date: 2023-09-26
 Authors@R: c(
     person("Jared S.", "Murray", , "jared.murray@mccombs.utexas.edu", c("aut", "cre")),
     person("P. Richard", "Hahn", role = "aut"),
@@ -12,7 +12,7 @@ Authors@R: c(
     person("Constance", "Delannoy", role = "ctb"),
     person("Mariel", "Finucane", role = "ctb"),
     person("Lauren V.", "Forrow", role = "ctb"),
-    person("Andrew", "Herren", role = "ctb"))
+    person("Drew", "Herren", role = "ctb"))
 Description: Causal inference for a binary treatment and continuous outcome using Bayesian Causal Forests. See Hahn, Murray and Carvalho (2020) <https://projecteuclid.org/journals/bayesian-analysis/volume-15/issue-3/Bayesian-Regression-Tree-Models-for-Causal-Inference--Regularization-Confounding/10.1214/19-BA1195.full> for additional information. This implementation relies on code originally accompanying Pratola et. al. (2013) <arXiv:1309.1906>.
 License: GPL-3
 LinkingTo: Rcpp, RcppArmadillo, RcppParallel
