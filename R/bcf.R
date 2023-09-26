@@ -33,8 +33,8 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
   return(ret)
 }
 
-.get_chain_tree_files = function(tree_path, chain_id){
-  if (is.null(tree_path)){
+.get_chain_tree_files = function(tree_path, chain_id, no_output = FALSE){
+  if (is.null(tree_path) | no_output){
     out <- list(
                 "con_trees" = toString(character(0)), 
                 "mod_trees" = toString(character(0))
@@ -94,8 +94,6 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #'    If use_muscale=TRUE then sd_control is the prior median of a half Cauchy prior for SD(mu(x)). If use_tauscale = TRUE,
 #'    then sd_moderate is the prior median of a half Normal prior for SD(tau(x)).
 #'    \item By default the prior on \eqn{\sigma^2} is calibrated as in Chipman, George and McCulloch (2008).
-#'
-#'
 #' }
 #' @param y Response variable
 #' @param z Treatment variable
@@ -105,7 +103,6 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param w An optional vector of weights. When present, BCF fits a model \eqn{y | x ~ N(f(x), \sigma^2 / w)}, where \eqn{f(x)} is the unknown function.
 #' @param random_seed A random seed passed to R's set.seed
 #' @param n_chains  An optional integer of the number of MCMC chains to run
-#' @param n_cores An optional integer of the number of cores to run your MCMC chains on
 #' @param n_threads An optional integer of the number of threads to parallelize within chain bcf operations on
 #' @param nburn Number of burn-in MCMC iterations
 #' @param nsim Number of MCMC iterations to save after burn-in. The chain will run for nsim*nthin iterations after burn-in
@@ -119,6 +116,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 #' @param sd_moderate SD(tau(x)) marginally at any covariate value (or its prior median if use_tauscale=TRUE)
 #' @param base_moderate Base for tree prior on tau(x) trees (see details)
 #' @param power_moderate Power for the tree prior on tau(x) trees (see details)
+#' @param no_output logical, whether to suppress writing trees and training log to text files, defaults to FALSE.
 #' @param save_tree_directory Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory. Setting to NULL skips writing of trees.
 #' @param log_file file where BCF should save its logs when running multiple chains in parallel. This file is not written too when only running one chain. 
 #' @param nu Degrees of freedom in the chisq prior on \eqn{sigma^2}
@@ -222,8 +220,7 @@ Rcpp::loadModule(module = "TreeSamples", TRUE)
 bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL, 
                 random_seed = sample.int(.Machine$integer.max, 1),
                 n_chains = 4,
-                n_cores  = n_chains,
-                n_threads = max((RcppParallel::defaultNumThreads()-2)/n_cores,1), #max number of threads, minus a arbitrary holdback, over the number of cores
+                n_threads = max((RcppParallel::defaultNumThreads()-2),1), #max number of threads, minus a arbitrary holdback, over the number of cores
                 nburn, nsim, nthin = 1, update_interval = 100,
                 ntree_control = 200,
                 sd_control = 2*sd(y),
@@ -232,7 +229,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                 ntree_moderate = 50,
                 sd_moderate = sd(y),
                 base_moderate = 0.25,
-                power_moderate = 3,
+                power_moderate = 3, 
+                no_output = FALSE, 
                 save_tree_directory = '.',
                 log_file=file.path('.',sprintf('bcf_log_%s.txt',format(Sys.time(), "%Y%m%d_%H%M%S"))),
                 nu = 3, lambda = NULL, sigq = .9, sighat = NULL,
@@ -242,7 +240,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
   
   if(is.null(w)){
     w <- matrix(1, ncol = 1, nrow = length(y))
-    }
+  }
 
   pihat = as.matrix(pihat)
   if(!.ident(length(y),
@@ -323,6 +321,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
   RcppParallel::setThreadOptions(numThreads=n_threads)
   
+  # Hardcoding n_cores = 1, needs more attention to make multi-core works with multi-threading
+  n_cores <- 1
   do_type_config <- .get_do_type(n_cores, log_file)
   `%doType%` <- do_type_config$doType
   
@@ -333,7 +333,7 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     cat("Calling bcfoverparRcppClean From R\n")
     set.seed(this_seed)
     
-    tree_files = .get_chain_tree_files(save_tree_directory, iChain)
+    tree_files = .get_chain_tree_files(save_tree_directory, iChain, no_output)
 
     fitbcf = bcfoverparRcppClean(y_ = yscale[perm], z_ = z[perm], w_ = w[perm],
                                  x_con_ = t(x_c[perm,,drop=FALSE]), x_mod_ = t(x_m[perm,,drop=FALSE]), 
@@ -356,7 +356,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                                  treef_mod_name_ = tree_files$mod_trees, 
                                  status_interval = update_interval,
                                  use_mscale = use_muscale, use_bscale = use_tauscale, 
-                                 b_half_normal = TRUE, verbose_sigma=verbose)
+                                 b_half_normal = TRUE, verbose_sigma=verbose, 
+                                 no_output=no_output)
     
     cat("bcfoverparRcppClean returned to R\n")
 
@@ -384,9 +385,10 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
          b1 = fitbcf$b1,
          perm = perm,
          include_pi = include_pi,
-         random_seed=this_seed
+         random_seed=this_seed, 
+         has_file_output=!no_output
     )
-    
+
   }
 
 
@@ -405,18 +407,18 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
 
   n_iter = length(chain_out[[1]]$sigma)
   
-  
   for (iChain in 1:n_chains){
-    sigma        <- chain_out[[iChain]]$sigma
-    mu_scale     <- chain_out[[iChain]]$mu_scale
-    tau_scale    <- chain_out[[iChain]]$tau_scale
+    sigma            <- chain_out[[iChain]]$sigma
+    mu_scale         <- chain_out[[iChain]]$mu_scale
+    tau_scale        <- chain_out[[iChain]]$tau_scale
     
-    b0          <- chain_out[[iChain]]$b0
-    b1          <- chain_out[[iChain]]$b1
+    b0               <- chain_out[[iChain]]$b0
+    b1               <- chain_out[[iChain]]$b1
 
-    yhat         <- chain_out[[iChain]]$yhat
-    tau          <- chain_out[[iChain]]$tau
-    mu           <- chain_out[[iChain]]$mu
+    yhat             <- chain_out[[iChain]]$yhat
+    tau              <- chain_out[[iChain]]$tau
+    mu               <- chain_out[[iChain]]$mu
+    has_file_output  <- chain_out[[iChain]]$has_file_output
 
     # -----------------------------    
     # Support Old Output
@@ -455,16 +457,17 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
     
     chain_list[[iChain]] <- coda::as.mcmc(scalar_df)
     # -----------------------------    
-    # Sanity Check Constants Accross Chains
+    # Sanity Check Constants Across Chains
     # -----------------------------
-    if(chain_out[[iChain]]$sdy        != chain_out[[1]]$sdy)        stop("sdy not consistent between chains for no reason")
-    if(chain_out[[iChain]]$con_sd     != chain_out[[1]]$con_sd)     stop("con_sd not consistent between chains for no reason")
-    if(chain_out[[iChain]]$mod_sd     != chain_out[[1]]$mod_sd)     stop("mod_sd not consistent between chains for no reason")
-    if(chain_out[[iChain]]$muy        != chain_out[[1]]$muy)        stop("muy not consistent between chains for no reason")
-    if(chain_out[[iChain]]$include_pi != chain_out[[1]]$include_pi) stop("include_pi not consistent between chains for no reason")
-    if(any(chain_out[[iChain]]$perm   != chain_out[[1]]$perm))      stop("perm not consistent between chains for no reason")
+    if(chain_out[[iChain]]$sdy              != chain_out[[1]]$sdy)              stop("sdy not consistent between chains for no reason")
+    if(chain_out[[iChain]]$con_sd           != chain_out[[1]]$con_sd)           stop("con_sd not consistent between chains for no reason")
+    if(chain_out[[iChain]]$mod_sd           != chain_out[[1]]$mod_sd)           stop("mod_sd not consistent between chains for no reason")
+    if(chain_out[[iChain]]$muy              != chain_out[[1]]$muy)              stop("muy not consistent between chains for no reason")
+    if(chain_out[[iChain]]$include_pi       != chain_out[[1]]$include_pi)       stop("include_pi not consistent between chains for no reason")
+    if(any(chain_out[[iChain]]$perm         != chain_out[[1]]$perm))            stop("perm not consistent between chains for no reason")
+    if(chain_out[[iChain]]$has_file_output  != chain_out[[1]]$has_file_output)  stop("has_file_output not consistent between chains for no reason")
   }
-
+  
   fitObj <- list(sigma = all_sigma,
                  yhat = all_yhat,
                  sdy = chain_out[[1]]$sdy,
@@ -479,7 +482,8 @@ bcf <- function(y, z, x_control, x_moderate=x_control, pihat, w = NULL,
                  include_pi = chain_out[[1]]$include_pi,
                  random_seed = chain_out[[1]]$random_seed,
                  coda_chains = coda::as.mcmc.list(chain_list),
-                 raw_chains = chain_out)
+                 raw_chains = chain_out, 
+                 has_file_output = has_file_output)
   
   attr(fitObj, "class") <- "bcf"
   
@@ -576,18 +580,16 @@ summary.bcf <- function(object,
     message("Gelman and Rubin's convergence diagnostic for summary parameters")
     print(coda::gelman.diag(chains_2_summarise, autoburnin = FALSE))
     cat("\n----\n\n")
-    
   }
   
 }
 
 
-#' Takes a fitted bcf object produced by bcf() and produces predictions for a new set of covariate values
+#' Takes a fitted bcf object produced by bcf() along with serialized tree samples and produces predictions for a new set of covariate values
 #' 
 #' This function takes in an existing BCF model fit and uses it to predict estimates for new data.
 #' It is important to note that this function requires that you indicate where the trees from the model fit are saved.
 #' You can do so using the save_tree_directory argument in bcf(). Otherwise, they will be saved in the working directory.
-#' The bcf() function automatically saves those in the same directory as the 
 #' @param object output from a BCF predict run
 #' @param ... additional arguments affecting the predictions produced.
 #' @param x_predict_control matrix of covariates for the "prognostic" function mu(x) for predictions (optional)
@@ -672,6 +674,7 @@ predict.bcf <- function(object,
     if(any(!is.finite(x_predict_control))) stop("Non-numeric values in x_pred_control")
     if(any(!is.finite(pi_pred))) stop("Non-numeric values in pi_pred")
     if(!all(sort(unique(z_pred)) == c(0,1))) stop("z_pred must be a vector of 0's and 1's, with at least one of each")
+    if(!object$has_file_output) stop("No tree samples were serialized during sampling. To enable prediction, re-run bcf with no_output = FALSE \n")
 
     if((is.null(x_predict_moderate) & !is.null(x_predict_control)) | (!is.null(x_predict_moderate) & is.null(x_predict_control))) {
         stop("If you want to predict, you need to add values to both x_pred_control and x_pred_moderate")
@@ -690,7 +693,6 @@ predict.bcf <- function(object,
             "nrow(pi_pred): ", nrow(pi_pred), "\n"
         )
     }
-
 
     cat("Initializing BCF Prediction\n")
     x_pm = matrix(x_predict_moderate, ncol=ncol(x_predict_moderate))

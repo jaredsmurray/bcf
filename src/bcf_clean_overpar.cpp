@@ -42,7 +42,8 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
                   CharacterVector treef_con_name_, CharacterVector treef_mod_name_,
                   int status_interval=100,
                   bool RJ= false, bool use_mscale=true, bool use_bscale=true, bool b_half_normal=true,
-                  double trt_init = 1.0, bool verbose_sigma=false)
+                  double trt_init = 1.0, bool verbose_sigma=false, 
+                  bool no_output=false)
 {
 
   bool randeff = true;
@@ -58,14 +59,14 @@ List bcfoverparRcppClean(NumericVector y_, NumericVector z_, NumericVector w_,
   std::string treef_con_name = as<std::string>(treef_con_name_);
   std::string treef_mod_name = as<std::string>(treef_mod_name_);
 
-  if(not treef_con_name.empty()){
+  if((not treef_con_name.empty()) && (not no_output)){
     Rcout << "Saving Trees to"  << std::endl;
     Rcout << treef_con_name  << std::endl;
     Rcout << treef_mod_name  << std::endl;
 
     treef_con.open(treef_con_name.c_str());
     treef_mod.open(treef_mod_name.c_str());
-  }else{
+  } else {  
     Rcout << "Not Saving Trees to file"  << std::endl;
   }
 

@@ -27,6 +27,7 @@ bcf(
   sd_moderate = sd(y),
   base_moderate = 0.25,
   power_moderate = 3,
+  no_output = FALSE,
   save_tree_directory = ".",
   log_file = file.path(".", sprintf("bcf_log_\%s.txt", format(Sys.time(),
     "\%Y\%m\%d_\%H\%M\%S"))),
@@ -84,6 +85,8 @@ bcf(
 \item{base_moderate}{Base for tree prior on tau(x) trees (see details)}
 
 \item{power_moderate}{Power for the tree prior on tau(x) trees (see details)}
+
+\item{no_output}{logical, whether to suppress writing trees and training log to text files, defaults to FALSE.}
 
 \item{save_tree_directory}{Specify where trees should be saved. Keep track of this for predict(). Defaults to working directory. Setting to NULL skips writing of trees.}
 
