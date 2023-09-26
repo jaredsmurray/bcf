@@ -9,10 +9,6 @@ vignette: >
 
 In this vignette, we show how to use BCF to estimate treatment effects of a simulated intervention.
 
-
-
-
-
 ```r
 library(bcf)
 library(ggplot2)
@@ -30,7 +26,6 @@ Of the covariates, two affect the outcome $y$ at both levels of treatment, while
 We draw three random $x$s for each unit and generate each unit's expected outcome without treatment, $\mu$, as a function of $x_1$ and $x_2$. Each unit's probability of joining the intervention, $\pi$, is also a function of $\mu$, so that units with larger responses under control are more likely to participate in the intervention. We then assign units to treatment ($z = 1$) or comparison ($z = 0$) status as a function of $\pi$.
 
 Then we generate the true treatment effect for each unit, $\tau$. As noted above, $\tau$ is a function of $x_3$. The observed outcome, $y$, is a function of $\mu$, $\tau$, a random error term with variance $\sigma^{2}$, and weights $w$ if applicable.
-
 
 ```r
 set.seed(1)
@@ -85,9 +80,9 @@ bcf_out <- bcf(y                = y,
                nsim             = n_sim,
                w                = weights,
                n_chains         = 4,
-               n_cores          = 2,
                random_seed      = 1,
-               update_interval  = 1)
+               update_interval  = 1, 
+               no_output        = TRUE)
 ```
 
 ## Check MCMC diagnostics
@@ -172,9 +167,9 @@ ggplot(NULL, aes(x = x[,3])) +
   geom_text(aes(x = 4.5, y = 0.2, label = "Truth"), color = "black") +
   geom_segment(aes(x = 3, xend = 4, y = 0.1, yend = 0.1), color = "forestgreen", alpha = 0.7) +
   geom_text(aes(x = 5.2, y = 0.1, label = "Estimate (95% CI)"), color = "black")
-#> `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
-#> Warning: Removed 6 rows containing non-finite values (stat_smooth).
-#> Warning: Removed 6 rows containing missing values (geom_pointrange).
+#> `geom_smooth()` using method = 'gam' and formula = 'y ~ s(x, bs = "cs")'
+#> Warning: Removed 6 rows containing non-finite values (`stat_smooth()`).
+#> Warning: Removed 6 rows containing missing values (`geom_pointrange()`).
 ```
 
 ![](figure/estimated_vs_true-1.png)
@@ -230,13 +225,13 @@ library(coda)
 
 # These intervals are a little misleading with the bimodal posterior, but still informative
 HPDinterval(mcmc(bcf_out$tau[,ix[1]] - bcf_out$tau[,ix[2]]), prob=0.5)
-#>           lower        upper
-#> var1 -0.1842529 2.614575e-14
+#>           lower       upper
+#> var1 -0.1842529 3.01148e-14
 #> attr(,"Probability")
 #> [1] 0.5
 HPDinterval(mcmc(bcf_out$tau[,ix[1]] - bcf_out$tau[,ix[2]]), prob=0.75)
-#>           lower        upper
-#> var1 -0.2917351 2.614575e-14
+#>           lower       upper
+#> var1 -0.2917351 3.01148e-14
 #> attr(,"Probability")
 #> [1] 0.75
 HPDinterval(mcmc(bcf_out$tau[,ix[1]] - bcf_out$tau[,ix[2]]), prob=0.9)
@@ -299,15 +294,18 @@ ggplot(groupTaus, aes(taus, fill = subgroup, color = subgroup)) +
 ```r
 qplot(whiTaus - wloTaus, geom="density", main="Posterior distribution of difference\n between subgroup ATEs", 
       xlim=c(0, .9), xlab="Difference")+geom_vline(xintercept=0, linetype=2)
+#> Warning: `qplot()` was deprecated in ggplot2 3.4.0.
+#> This warning is displayed once every 8 hours.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.
 ```
 
 ![](figure/x3_split-2.png)
 
-Providing additional strong evidence that treatment effect variation is correlated with $x_3$. Of course, $0$ was an arbitrary cutoff, and we picked $x_3$ because we knew it was important.  [Hahn, Murray, and Carvalho](https://arxiv.org/pdf/1706.09523.pdf)  propose an alternative decision-theoretic approach to discovering cutpoints to define subgroups using CART.
+Providing additional strong evidence that treatment effect variation is correlated with $x_3$. Of course, $0$ was an arbitrary cutoff, and we picked $x_3$ because we knew it was important. [Hahn, Murray, and Carvalho (2020)](https://projecteuclid.org/journals/bayesian-analysis/volume-15/issue-3/Bayesian-Regression-Tree-Models-for-Causal-Inference--Regularization-Confounding/10.1214/19-BA1195.full)  propose an alternative decision-theoretic approach to discovering cutpoints to define subgroups using CART.
 
 ### Identifying interesting subgroups
 
-To help summarize the posterior [Hahn, Murray, and Carvalho](https://arxiv.org/pdf/1706.09523.pdf) recommend fitting a CART model where the response variable is the posterior mean unit-specific estimated treatment effect from BCF ($\hat\tau(x_i)$)
+To help summarize the posterior [Hahn, Murray, and Carvalho (2020)](https://projecteuclid.org/journals/bayesian-analysis/volume-15/issue-3/Bayesian-Regression-Tree-Models-for-Causal-Inference--Regularization-Confounding/10.1214/19-BA1195.full) recommend fitting a CART model where the response variable is the posterior mean unit-specific estimated treatment effect from BCF ($\hat\tau(x_i)$)
 and the predictor variables are the effect modifiers used to fit the BCF model. This is an attempt to find the Bayes estimate of subgroups represented by a recursive partition (under squared error loss on $\tau$ with complexity constraints/penalties); it is only an attempt to find the Bayes estimate because of the greedy nature of the CART algorithm.
 
 The complexity constraints or penalties on the tree are up to the user, but there is no particular reason to adopt rpart's default complexity penalty.  If the goal is subgroup identification a reasonable way to proceed is to grow the trees up to some depth that gives credible (i.e. relatively simple) definitions of subgroups and prune back based on the size of the difference in estimated subgroup effects across end nodes, or posterior probabilities of a meaningful difference, or other application-specific criteria.
@@ -325,7 +323,6 @@ rpart.plot(tree)
 We seem to capture the most treatment effect variability with the $x_3$ splits, although $x_2$ makes an appearance as well with patterns that line up with our data generating process.
 
 We forced the tree above to be the maximal depth 3 tree by specifying `cp=-1`. Now we consider pruning the tree, which is easiest using the partykit package:
-
 
 ```r
 # party trees are a little easier to prune
@@ -357,7 +354,6 @@ print(ptree)
 ```
 
 We can start by getting the posterior distributions for the subgroup ATEs defined by the terminal nodes of the tree, and then looking at the differences between subgroups defined by the last splits of the tree:
-
 
 ```r
 # Get terminal node for each observation

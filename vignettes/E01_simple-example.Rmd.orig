@@ -88,9 +88,9 @@ bcf_out <- bcf(y                = y,
                nsim             = n_sim,
                w                = weights,
                n_chains         = 4,
-               n_cores          = 2,
                random_seed      = 1,
-               update_interval  = 1)
+               update_interval  = 1, 
+               no_output        = TRUE)
 ```
 
 ## Check MCMC diagnostics

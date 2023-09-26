@@ -2,7 +2,7 @@
 % Please edit documentation in R/bcf.R
 \name{predict.bcf}
 \alias{predict.bcf}
-\title{Takes a fitted bcf object produced by bcf() and produces predictions for a new set of covariate values}
+\title{Takes a fitted bcf object produced by bcf() along with serialized tree samples and produces predictions for a new set of covariate values}
 \usage{
 \method{predict}{bcf}(
   object,
@@ -40,7 +40,6 @@
 This function takes in an existing BCF model fit and uses it to predict estimates for new data.
 It is important to note that this function requires that you indicate where the trees from the model fit are saved.
 You can do so using the save_tree_directory argument in bcf(). Otherwise, they will be saved in the working directory.
-The bcf() function automatically saves those in the same directory as the
 }
 \examples{
 \dontrun{
