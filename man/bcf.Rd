@@ -13,8 +13,7 @@ bcf(
   w = NULL,
   random_seed = sample.int(.Machine$integer.max, 1),
   n_chains = 4,
-  n_cores = n_chains,
-  n_threads = max((RcppParallel::defaultNumThreads() - 2)/n_cores, 1),
+  n_threads = max((RcppParallel::defaultNumThreads() - 2), 1),
   nburn,
   nsim,
   nthin = 1,
@@ -57,8 +56,6 @@ bcf(
 \item{random_seed}{A random seed passed to R's set.seed}
 
 \item{n_chains}{An optional integer of the number of MCMC chains to run}
-
-\item{n_cores}{An optional integer of the number of cores to run your MCMC chains on}
 
 \item{n_threads}{An optional integer of the number of threads to parallelize within chain bcf operations on}
 
@@ -137,8 +134,6 @@ Some notes:
    If use_muscale=TRUE then sd_control is the prior median of a half Cauchy prior for SD(mu(x)). If use_tauscale = TRUE,
    then sd_moderate is the prior median of a half Normal prior for SD(tau(x)).
    \item By default the prior on \eqn{\sigma^2} is calibrated as in Chipman, George and McCulloch (2008).
-
-
 }
 }
 \examples{
