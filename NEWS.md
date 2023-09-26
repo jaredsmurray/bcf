@@ -1,13 +1,32 @@
-# bcf 2.0.0
+# bcf development notes
 
 This page provides more details on the latest updates to `bcf`.
 
-## Major changes
+## bcf 2.0.1.9000
+
+### CRAN fixes
+
+[Noah Greifer](https://github.com/ngreifer) updated the package source to reflect [two changes to the CRAN checks](https://www.tidyverse.org/blog/2023/03/cran-checks-compiled-code/)
+that resulted in `bcf` being removed from CRAN in April 2023. Noah's updates:
+
+1. Removed `sprintf()` from the C++ source code, as it is now deprecated, and 
+2. Removed `CXX_STD = CXX11` from `src/Makevars` and `src/Makevars.win`, as C++11 is now a CRAN default.
+
+### Serialization and performance updates
+
+The prediction method introduced in the previous `bcf` version writes tree samples to text files, which can 
+grow large if many samples are retained. Users concerned about the size of text file outputs 
+may suppress writing to text files by specifying `no_output = TRUE` in the call to `bcf()`.
+
+Sampling employs within-chain parallelism through `RcppParallel`, but `bcf` does not, 
+for the time being, run multiple chains in parallel through R's high level `doParallel` interface.
+
+## bcf 2.0.1
 
 This implementation extends existing `bcf` functionality by:
 
 - allowing for heteroskedastic errors
-- automating multi-chain, multi-core implementations
+- automating multi-chain implementations
 - providing a suite of convergence diagnostic functions via the `coda` package
 - accelerating some underlying computations, resulting in shorter runtimes
 - providing a function to predict treatment effects based on an existing model using new data
@@ -29,14 +48,14 @@ Incorporating weights impacts several parts of the code, including the computati
 * leaf node means variance
 * error variance (sigma)
 
-### Automating multichain processing in parallel
+### Automating multichain processing
 
-In Bayesian analysis, it is useful to produce different runs of the same model -- with different starting values -- as a way of assessing convergence. If the different runs produce drastically different posterior distributions, it is a sign that the model has not converged fully.  In this version of `bcf` we have automated multichain processing and incorporated key MCMC diagnostics from the `coda` package, including effective sample sizes and the Gelman-Rubin statistic ("R hat"). In addition, all runs happen in parallel, on different cores, to provide all these extra benefits without increasing runtime much.
+In Bayesian analysis, it is useful to produce different runs of the same model -- with different starting values -- as a way of assessing convergence. If the different runs produce drastically different posterior distributions, it is a sign that the model has not converged fully.  In this version of `bcf` we have automated multichain processing and incorporated key MCMC diagnostics from the `coda` package, including effective sample sizes and the Gelman-Rubin statistic ("R hat").
 
-### Within-chain parallel processing
+### Within-chain parallelism
 
 Finally, our implementation conducts some steps of the sampling procedure in parallel to maximize computational efficiency. Our testing shows that these enhancements have reduced runtimes by around 50%, across various experimental conditions.
 
 ### Implementing a prediction method
 
-In this version of the package, we have incorporated code from Jared Murray (one of the original package authors) to predict the treatment effect for a new set of units. Once users have produced a satisfactory `bcf` run (using training data), they can use this fitted `bcf` object to predict on a new set of test data. This is possible even with runs that have multiple chains.
+It is now possible to predict the treatment effect for a new set of units. Once users have produced a satisfactory `bcf` run (using training data), they can use this fitted `bcf` object to predict on a new set of test data. This is possible even with runs that have multiple chains.
