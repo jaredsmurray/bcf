@@ -2,7 +2,7 @@ Package: bcf
 Type: Package
 Title: Causal Inference for a Binary Treatment and Continuous Outcome
         using Bayesian Causal Forests
-Version: 2.0.1.9000
+Version: 2.0.2
 Date: 2022-06-23
 Authors@R: c(
     person("Jared S.", "Murray", , "jared.murray@mccombs.utexas.edu", c("aut", "cre")),
